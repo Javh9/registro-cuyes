@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Muertes de Destetados</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Registrar Muertes de Destetados</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <input type="text" id="galpon" name="galpon" required>
+
+        <label for="poza">Poza:</label>
+        <input type="text" id="poza" name="poza" required>
+
+        <label for="muertos_hembras">Cuyes destetados hembras muertos:</label>
+        <input type="number" id="muertos_hembras" name="muertos_hembras" required>
+
+        <label for="muertos_machos">Cuyes destetados machos muertos:</label>
+        <input type="number" id="muertos_machos" name="muertos_machos" required>
+
+        <button type="submit">Registrar Muertes</button>
+    </form>
+    <a href="{{ url_for('index') }}">Volver al Inicio</a>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Ventas de Descarte</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Registrar Ventas de Descarte</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <input type="text" id="galpon" name="galpon" required>
+
+        <label for="poza">Poza:</label>
+        <input type="text" id="poza" name="poza" required>
+
+        <label for="cuyes_vendidos">Cuyes de descarte vendidos:</label>
+        <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" required>
+
+        <label for="costo_venta">Costo de venta:</label>
+        <input type="number" step="0.01" id="costo_venta" name="costo_venta" required>
+
+        <button type="submit">Registrar Venta</button>
+    </form>
+    <a href="{{ url_for('index') }}">Volver al Inicio</a>
+</body>
+</html>
