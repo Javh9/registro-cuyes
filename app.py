@@ -26,8 +26,11 @@ def get_db_connection():
         host=url.hostname,
         port=url.port
     )
-    return conn
 
+    # Configurar el row_factory para que los resultados sean diccionarios
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    conn.cursor = lambda: cursor  # Sobrescribir el cursor por defecto
+    return conn
 # Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
     conn = get_db_connection()
@@ -480,11 +483,11 @@ def analisis_datos():
             LEFT JOIN ventas_destetados vd ON r.galpon = vd.galpon AND r.poza = vd.poza
             LEFT JOIN ventas_descarte vc ON r.galpon = vc.galpon AND r.poza = vc.poza
         ''')
-        datos = cursor.fetchall()
+        datos = cursor.fetchall()  # Esto ahora devolverá diccionarios
 
         # Obtener los gastos por separado
         cursor.execute('SELECT descripcion, monto, tipo, fecha_gasto FROM gastos')
-        gastos = cursor.fetchall()
+        gastos = cursor.fetchall()  # Esto también devolverá diccionarios
 
         conn.close()
 
@@ -493,7 +496,6 @@ def analisis_datos():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
 # Ruta para ver el balance
 @app.route('/balance')
 def balance():
