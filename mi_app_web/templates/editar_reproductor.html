@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Reproductor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Editar Reproductor</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <input type="text" id="galpon" name="galpon" value="{{ reproductor['galpon'] }}" required>
+
+        <label for="poza">Poza:</label>
+        <input type="text" id="poza" name="poza" value="{{ reproductor['poza'] }}" required>
+
+        <label for="hembras">Hembras:</label>
+        <input type="number" id="hembras" name="hembras" value="{{ reproductor['hembras'] }}" required>
+
+        <label for="machos">Machos:</label>
+        <input type="number" id="machos" name="machos" value="{{ reproductor['machos'] }}" required>
+
+        <label for="tiempo_reproductores">Tiempo de Reproducción (meses):</label>
+        <input type="number" id="tiempo_reproductores" name="tiempo_reproductores" value="{{ reproductor['tiempo_reproductores'] }}" required>
+
+        <button type="submit">Guardar Cambios</button>
+    </form>
+
+    <!-- Botón para regresar al análisis de datos -->
+    <a href="{{ url_for('analisis_datos') }}" style="margin-top: 20px; display: inline-block;">
+        <button>Regresar al Análisis de Datos</button>
+    </a>
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

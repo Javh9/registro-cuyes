@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Partos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Registrar Partos</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <select id="galpon" name="galpon" required>
+            <option value="">Seleccione un galpón</option>
+            {% for galpon_poza in galpones_pozas %}
+                <option value="{{ galpon_poza['galpon'] }}">{{ galpon_poza['galpon'] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="poza">Poza:</label>
+        <select id="poza" name="poza" required>
+            <option value="">Seleccione una poza</option>
+            {% for galpon_poza in galpones_pozas %}
+                <option value="{{ galpon_poza['poza'] }}">{{ galpon_poza['poza'] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="numero_parto">Número de Parto:</label>
+        <input type="number" id="numero_parto" name="numero_parto" required>
+
+        <label for="nacidos">Nacidos:</label>
+        <input type="number" id="nacidos" name="nacidos" required>
+
+        <label for="muertos_bebes">Muertos Bebés:</label>
+        <input type="number" id="muertos_bebes" name="muertos_bebes" required>
+
+        <label for="muertos_reproductores">Muertos Reproductores:</label>
+        <input type="number" id="muertos_reproductores" name="muertos_reproductores" required>
+
+        <button type="submit">Registrar Parto</button>
+    </form>
+
+    <!-- Botón para regresar al inicio -->
+    <a href="{{ url_for('index') }}" style="margin-top: 20px; display: inline-block;">
+        <button>Regresar al Inicio</button>
+    </a>
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

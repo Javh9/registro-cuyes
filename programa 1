@@ -1,0 +1,494 @@
+from datetime import datetime, timedelta
+import sqlite3
+from tkinter import *
+from tkinter import messagebox, ttk
+
+class CuyesManager:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión de Cuyes")
+        self.root.geometry("1000x800")
+
+        # Conectar a la base de datos
+        self.db_name = "cuyes.db"
+        self.conn = sqlite3.connect(self.db_name)
+        self.cursor = self.conn.cursor()
+        self._crear_tablas()
+
+        # Crear pestañas
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill=BOTH, expand=True)
+
+        # Pestaña de ingreso de datos
+        self.frame_ingreso = Frame(self.notebook)
+        self.notebook.add(self.frame_ingreso, text="Ingresar Datos")
+        self._crear_formulario_ingreso()
+
+        # Pestaña de destete
+        self.frame_destete = Frame(self.notebook)
+        self.notebook.add(self.frame_destete, text="Registrar Destete")
+        self._crear_formulario_destete()
+
+        # Pestaña de muertes de destetados
+        self.frame_muertes_destetados = Frame(self.notebook)
+        self.notebook.add(self.frame_muertes_destetados, text="Registrar Muertes de Destetados")
+        self._crear_formulario_muertes_destetados()
+
+        # Pestaña de ventas de destetados
+        self.frame_ventas_destetados = Frame(self.notebook)
+        self.notebook.add(self.frame_ventas_destetados, text="Registrar Ventas de Destetados")
+        self._crear_formulario_ventas_destetados()
+
+        # Pestaña de ventas de descarte
+        self.frame_ventas_descarte = Frame(self.notebook)
+        self.notebook.add(self.frame_ventas_descarte, text="Registrar Ventas de Descarte")
+        self._crear_formulario_ventas_descarte()
+
+        # Pestaña de gastos
+        self.frame_gastos = Frame(self.notebook)
+        self.notebook.add(self.frame_gastos, text="Ingresar Gastos")
+        self._crear_formulario_gastos()
+
+        # Pestaña de análisis de datos
+        self.frame_analisis = Frame(self.notebook)
+        self.notebook.add(self.frame_analisis, text="Análisis de Datos")
+        self._crear_analisis_datos()
+
+        # Pestaña de balance
+        self.frame_balance = Frame(self.notebook)
+        self.notebook.add(self.frame_balance, text="Balance")
+        self._crear_balance()
+
+    def _crear_tablas(self):
+        # Tabla para galpones y pozas
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS galpones_pozas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                galpon TEXT NOT NULL,
+                poza TEXT NOT NULL,
+                hembras INTEGER,
+                machos INTEGER,
+                numero_parto INTEGER,
+                nacidos INTEGER,
+                muertos_bebes INTEGER,
+                muertos_reproductores INTEGER,
+                tiempo_reproductores INTEGER,
+                fecha_ingreso_reproductores TEXT,
+                fecha_descarte TEXT,
+                fecha_nacimiento TEXT,
+                destetados_hembras INTEGER,
+                destetados_machos INTEGER,
+                muertos_destetados_hembras INTEGER,
+                muertos_destetados_machos INTEGER
+            )
+        ''')
+
+        # Tabla para ventas de cuyes destetados
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ventas_destetados (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hembras_vendidas INTEGER,
+                machos_vendidos INTEGER,
+                costo_venta REAL,
+                futuros_reproductores_hembras INTEGER,
+                futuros_reproductores_machos INTEGER,
+                fecha_venta TEXT
+            )
+        ''')
+
+        # Tabla para ventas de cuyes de descarte
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ventas_descarte (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                galpon TEXT,
+                poza TEXT,
+                cuyes_vendidos INTEGER,
+                costo_venta REAL,
+                fecha_venta TEXT
+            )
+        ''')
+
+        # Tabla para gastos
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gastos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                descripcion TEXT,
+                monto REAL,
+                tipo TEXT
+            )
+        ''')
+
+        self.conn.commit()
+
+    def _crear_formulario_ingreso(self):
+        Label(self.frame_ingreso, text="Número de galpón:").grid(row=0, column=0, padx=10, pady=10)
+        self.galpon_entry = Entry(self.frame_ingreso)
+        self.galpon_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de poza:").grid(row=1, column=0, padx=10, pady=10)
+        self.poza_entry = Entry(self.frame_ingreso)
+        self.poza_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de cuyes reproductoras hembras:").grid(row=2, column=0, padx=10, pady=10)
+        self.hembras_entry = Entry(self.frame_ingreso)
+        self.hembras_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de cuyes reproductores machos:").grid(row=3, column=0, padx=10, pady=10)
+        self.machos_entry = Entry(self.frame_ingreso)
+        self.machos_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de parto de la cuy reproductora:").grid(row=4, column=0, padx=10, pady=10)
+        self.numero_parto_entry = Entry(self.frame_ingreso)
+        self.numero_parto_entry.grid(row=4, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de cuyes nacidos en este parto:").grid(row=5, column=0, padx=10, pady=10)
+        self.nacidos_entry = Entry(self.frame_ingreso)
+        self.nacidos_entry.grid(row=5, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de cuyes bebés muertos en este parto:").grid(row=6, column=0, padx=10, pady=10)
+        self.muertos_bebes_entry = Entry(self.frame_ingreso)
+        self.muertos_bebes_entry.grid(row=6, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Número de cuyes reproductores muertos:").grid(row=7, column=0, padx=10, pady=10)
+        self.muertos_reproductores_entry = Entry(self.frame_ingreso)
+        self.muertos_reproductores_entry.grid(row=7, column=1, padx=10, pady=10)
+
+        Label(self.frame_ingreso, text="Tiempo de cuyes reproductores (meses):").grid(row=8, column=0, padx=10, pady=10)
+        self.tiempo_reproductores_entry = Entry(self.frame_ingreso)
+        self.tiempo_reproductores_entry.grid(row=8, column=1, padx=10, pady=10)
+
+        Button(self.frame_ingreso, text="Guardar Datos", command=self.ingresar_datos).grid(row=9, column=0, columnspan=2, pady=20)
+
+    def ingresar_datos(self):
+        try:
+            galpon = self.galpon_entry.get()
+            poza = self.poza_entry.get()
+            hembras = int(self.hembras_entry.get())
+            machos = int(self.machos_entry.get())
+            numero_parto = int(self.numero_parto_entry.get())
+            nacidos = int(self.nacidos_entry.get())
+            muertos_bebes = int(self.muertos_bebes_entry.get())
+            muertos_reproductores = int(self.muertos_reproductores_entry.get())
+            tiempo_reproductores = int(self.tiempo_reproductores_entry.get())
+
+            # Registrar la fecha actual como fecha de ingreso de reproductores
+            fecha_ingreso_reproductores = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            fecha_descarte = (datetime.now() + timedelta(days=tiempo_reproductores * 30)).strftime('%Y-%m-%d %H:%M:%S')
+            fecha_nacimiento = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            # Insertar datos en la base de datos
+            self.cursor.execute('''
+                INSERT INTO galpones_pozas (
+                    galpon, poza, hembras, machos, numero_parto, nacidos, muertos_bebes, muertos_reproductores,
+                    tiempo_reproductores, fecha_ingreso_reproductores, fecha_descarte, fecha_nacimiento,
+                    destetados_hembras, destetados_machos, muertos_destetados_hembras, muertos_destetados_machos
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0)
+            ''', (galpon, poza, hembras, machos, numero_parto, nacidos, muertos_bebes, muertos_reproductores,
+                  tiempo_reproductores, fecha_ingreso_reproductores, fecha_descarte, fecha_nacimiento))
+
+            self.conn.commit()
+            messagebox.showinfo("Éxito", "Datos ingresados correctamente.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_formulario_destete(self):
+        Label(self.frame_destete, text="Número de galpón:").grid(row=0, column=0, padx=10, pady=10)
+        self.destete_galpon_entry = Entry(self.frame_destete)
+        self.destete_galpon_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_destete, text="Número de poza:").grid(row=1, column=0, padx=10, pady=10)
+        self.destete_poza_entry = Entry(self.frame_destete)
+        self.destete_poza_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_destete, text="Número de cuyes destetados hembras:").grid(row=2, column=0, padx=10, pady=10)
+        self.destete_hembras_entry = Entry(self.frame_destete)
+        self.destete_hembras_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_destete, text="Número de cuyes destetados machos:").grid(row=3, column=0, padx=10, pady=10)
+        self.destete_machos_entry = Entry(self.frame_destete)
+        self.destete_machos_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        Button(self.frame_destete, text="Registrar Destete", command=self.registrar_destete).grid(row=4, column=0, columnspan=2, pady=20)
+
+    def registrar_destete(self):
+        try:
+            galpon = self.destete_galpon_entry.get()
+            poza = self.destete_poza_entry.get()
+            destetados_hembras = int(self.destete_hembras_entry.get())
+            destetados_machos = int(self.destete_machos_entry.get())
+
+            # Verificar si hay suficientes cuyes nacidos vivos
+            self.cursor.execute('''
+                SELECT nacidos, muertos_bebes FROM galpones_pozas
+                WHERE galpon = ? AND poza = ?
+            ''', (galpon, poza))
+            resultado = self.cursor.fetchone()
+
+            if resultado:
+                nacidos, muertos_bebes = resultado
+                nacidos_vivos = nacidos - muertos_bebes
+                total_destetados = destetados_hembras + destetados_machos
+
+                if total_destetados > nacidos_vivos:
+                    messagebox.showerror("Error", "No hay suficientes cuyes nacidos vivos para destetar.")
+                    return
+
+                # Actualizar la base de datos
+                self.cursor.execute('''
+                    UPDATE galpones_pozas
+                    SET destetados_hembras = destetados_hembras + ?,
+                        destetados_machos = destetados_machos + ?,
+                        nacidos = 0
+                    WHERE galpon = ? AND poza = ?
+                ''', (destetados_hembras, destetados_machos, galpon, poza))
+
+                self.conn.commit()
+                messagebox.showinfo("Éxito", "Destete registrado correctamente.")
+            else:
+                messagebox.showerror("Error", "Galpón o poza no encontrados.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_formulario_muertes_destetados(self):
+        Label(self.frame_muertes_destetados, text="Número de galpón:").grid(row=0, column=0, padx=10, pady=10)
+        self.muertes_galpon_entry = Entry(self.frame_muertes_destetados)
+        self.muertes_galpon_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_muertes_destetados, text="Número de poza:").grid(row=1, column=0, padx=10, pady=10)
+        self.muertes_poza_entry = Entry(self.frame_muertes_destetados)
+        self.muertes_poza_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_muertes_destetados, text="Número de cuyes destetados hembras muertos:").grid(row=2, column=0, padx=10, pady=10)
+        self.muertes_hembras_entry = Entry(self.frame_muertes_destetados)
+        self.muertes_hembras_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_muertes_destetados, text="Número de cuyes destetados machos muertos:").grid(row=3, column=0, padx=10, pady=10)
+        self.muertes_machos_entry = Entry(self.frame_muertes_destetados)
+        self.muertes_machos_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        Button(self.frame_muertes_destetados, text="Registrar Muertes", command=self.registrar_muertes_destetados).grid(row=4, column=0, columnspan=2, pady=20)
+
+    def registrar_muertes_destetados(self):
+        try:
+            galpon = self.muertes_galpon_entry.get()
+            poza = self.muertes_poza_entry.get()
+            muertos_hembras = int(self.muertes_hembras_entry.get())
+            muertos_machos = int(self.muertes_machos_entry.get())
+
+            # Verificar si hay suficientes cuyes destetados
+            self.cursor.execute('''
+                SELECT destetados_hembras, destetados_machos FROM galpones_pozas
+                WHERE galpon = ? AND poza = ?
+            ''', (galpon, poza))
+            resultado = self.cursor.fetchone()
+
+            if resultado:
+                destetados_hembras, destetados_machos = resultado
+                if muertos_hembras > destetados_hembras or muertos_machos > destetados_machos:
+                    messagebox.showerror("Error", "No hay suficientes cuyes destetados para registrar las muertes.")
+                    return
+
+                # Actualizar la base de datos
+                self.cursor.execute('''
+                    UPDATE galpones_pozas
+                    SET muertos_destetados_hembras = muertos_destetados_hembras + ?,
+                        muertos_destetados_machos = muertos_destetados_machos + ?
+                    WHERE galpon = ? AND poza = ?
+                ''', (muertos_hembras, muertos_machos, galpon, poza))
+
+                self.conn.commit()
+                messagebox.showinfo("Éxito", "Muertes de cuyes destetados registradas correctamente.")
+            else:
+                messagebox.showerror("Error", "Galpón o poza no encontrados.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_formulario_ventas_destetados(self):
+        Label(self.frame_ventas_destetados, text="Número de cuyes hembras vendidos:").grid(row=0, column=0, padx=10, pady=10)
+        self.ventas_hembras_entry = Entry(self.frame_ventas_destetados)
+        self.ventas_hembras_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_destetados, text="Número de cuyes machos vendidos:").grid(row=1, column=0, padx=10, pady=10)
+        self.ventas_machos_entry = Entry(self.frame_ventas_destetados)
+        self.ventas_machos_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_destetados, text="Costo de venta:").grid(row=2, column=0, padx=10, pady=10)
+        self.ventas_costo_entry = Entry(self.frame_ventas_destetados)
+        self.ventas_costo_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_destetados, text="Cuyes hembras dejados para futuros reproductores:").grid(row=3, column=0, padx=10, pady=10)
+        self.ventas_futuros_hembras_entry = Entry(self.frame_ventas_destetados)
+        self.ventas_futuros_hembras_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_destetados, text="Cuyes machos dejados para futuros reproductores:").grid(row=4, column=0, padx=10, pady=10)
+        self.ventas_futuros_machos_entry = Entry(self.frame_ventas_destetados)
+        self.ventas_futuros_machos_entry.grid(row=4, column=1, padx=10, pady=10)
+
+        Button(self.frame_ventas_destetados, text="Registrar Venta", command=self.registrar_ventas_destetados).grid(row=5, column=0, columnspan=2, pady=20)
+
+    def registrar_ventas_destetados(self):
+        try:
+            hembras_vendidas = int(self.ventas_hembras_entry.get())
+            machos_vendidos = int(self.ventas_machos_entry.get())
+            costo_venta = float(self.ventas_costo_entry.get())
+            futuros_hembras = int(self.ventas_futuros_hembras_entry.get())
+            futuros_machos = int(self.ventas_futuros_machos_entry.get())
+
+            # Insertar la venta en la base de datos
+            self.cursor.execute('''
+                INSERT INTO ventas_destetados (
+                    hembras_vendidas, machos_vendidos, costo_venta,
+                    futuros_reproductores_hembras, futuros_reproductores_machos, fecha_venta
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ''', (hembras_vendidas, machos_vendidos, costo_venta,
+                  futuros_hembras, futuros_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
+            self.conn.commit()
+            messagebox.showinfo("Éxito", "Venta de cuyes destetados registrada correctamente.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_formulario_ventas_descarte(self):
+        Label(self.frame_ventas_descarte, text="Número de galpón:").grid(row=0, column=0, padx=10, pady=10)
+        self.ventas_descarte_galpon_entry = Entry(self.frame_ventas_descarte)
+        self.ventas_descarte_galpon_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_descarte, text="Número de poza:").grid(row=1, column=0, padx=10, pady=10)
+        self.ventas_descarte_poza_entry = Entry(self.frame_ventas_descarte)
+        self.ventas_descarte_poza_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_descarte, text="Número de cuyes de descarte vendidos:").grid(row=2, column=0, padx=10, pady=10)
+        self.ventas_descarte_cantidad_entry = Entry(self.frame_ventas_descarte)
+        self.ventas_descarte_cantidad_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_ventas_descarte, text="Costo de venta:").grid(row=3, column=0, padx=10, pady=10)
+        self.ventas_descarte_costo_entry = Entry(self.frame_ventas_descarte)
+        self.ventas_descarte_costo_entry.grid(row=3, column=1, padx=10, pady=10)
+
+        Button(self.frame_ventas_descarte, text="Registrar Venta", command=self.registrar_ventas_descarte).grid(row=4, column=0, columnspan=2, pady=20)
+
+    def registrar_ventas_descarte(self):
+        try:
+            galpon = self.ventas_descarte_galpon_entry.get()
+            poza = self.ventas_descarte_poza_entry.get()
+            cuyes_vendidos = int(self.ventas_descarte_cantidad_entry.get())
+            costo_venta = float(self.ventas_descarte_costo_entry.get())
+
+            # Insertar la venta en la base de datos
+            self.cursor.execute('''
+                INSERT INTO ventas_descarte (
+                    galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
+                ) VALUES (?, ?, ?, ?, ?)
+            ''', (galpon, poza, cuyes_vendidos, costo_venta, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
+            self.conn.commit()
+            messagebox.showinfo("Éxito", "Venta de cuyes de descarte registrada correctamente.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_formulario_gastos(self):
+        Label(self.frame_gastos, text="Descripción del gasto:").grid(row=0, column=0, padx=10, pady=10)
+        self.gastos_descripcion_entry = Entry(self.frame_gastos)
+        self.gastos_descripcion_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_gastos, text="Monto del gasto:").grid(row=1, column=0, padx=10, pady=10)
+        self.gastos_monto_entry = Entry(self.frame_gastos)
+        self.gastos_monto_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_gastos, text="Tipo de gasto:").grid(row=2, column=0, padx=10, pady=10)
+        self.gastos_tipo_entry = Entry(self.frame_gastos)
+        self.gastos_tipo_entry.grid(row=2, column=1, padx=10, pady=10)
+
+        Button(self.frame_gastos, text="Registrar Gasto", command=self.registrar_gastos).grid(row=3, column=0, columnspan=2, pady=20)
+
+    def registrar_gastos(self):
+        try:
+            descripcion = self.gastos_descripcion_entry.get()
+            monto = float(self.gastos_monto_entry.get())
+            tipo = self.gastos_tipo_entry.get()
+
+            # Insertar el gasto en la base de datos
+            self.cursor.execute('''
+                INSERT INTO gastos (descripcion, monto, tipo) VALUES (?, ?, ?)
+            ''', (descripcion, monto, tipo))
+
+            self.conn.commit()
+            messagebox.showinfo("Éxito", "Gasto registrado correctamente.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
+
+    def _crear_analisis_datos(self):
+        self.tree = ttk.Treeview(self.frame_analisis, columns=("Galpón", "Poza", "Parto", "Nacidos", "Muertos Bebés", "Destetados H", "Destetados M", "Muertos Destetados H", "Muertos Destetados M", "Descarte", "Muertos Reproductores", "Fecha Ingreso", "Fecha Descarte", "Fecha Nacimiento"), show="headings")
+        self.tree.heading("Galpón", text="Galpón")
+        self.tree.heading("Poza", text="Poza")
+        self.tree.heading("Parto", text="Parto")
+        self.tree.heading("Nacidos", text="Nacidos")
+        self.tree.heading("Muertos Bebés", text="Muertos Bebés")
+        self.tree.heading("Destetados H", text="Destetados H")
+        self.tree.heading("Destetados M", text="Destetados M")
+        self.tree.heading("Muertos Destetados H", text="Muertos Destetados H")
+        self.tree.heading("Muertos Destetados M", text="Muertos Destetados M")
+        self.tree.heading("Descarte", text="Descarte")
+        self.tree.heading("Muertos Reproductores", text="Muertos Reproductores")
+        self.tree.heading("Fecha Ingreso", text="Fecha Ingreso")
+        self.tree.heading("Fecha Descarte", text="Fecha Descarte")
+        self.tree.heading("Fecha Nacimiento", text="Fecha Nacimiento")
+        self.tree.pack(fill=BOTH, expand=True)
+
+        Button(self.frame_analisis, text="Actualizar Análisis", command=self.actualizar_analisis).pack(pady=10)
+
+    def actualizar_analisis(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        self.cursor.execute('SELECT * FROM galpones_pozas')
+        pozas = self.cursor.fetchall()
+
+        for poza in pozas:
+            self.tree.insert("", END, values=(
+                poza[1], poza[2], poza[5], poza[6], poza[7], poza[13], poza[14], poza[15], poza[16], poza[9], poza[8], poza[10], poza[11], poza[12]
+            ))
+
+    def _crear_balance(self):
+        Label(self.frame_balance, text="Total ventas de destetados:").grid(row=0, column=0, padx=10, pady=10)
+        self.total_ventas_destetados_label = Label(self.frame_balance, text="0")
+        self.total_ventas_destetados_label.grid(row=0, column=1, padx=10, pady=10)
+
+        Label(self.frame_balance, text="Total ventas de descarte:").grid(row=1, column=0, padx=10, pady=10)
+        self.total_ventas_descarte_label = Label(self.frame_balance, text="0")
+        self.total_ventas_descarte_label.grid(row=1, column=1, padx=10, pady=10)
+
+        Label(self.frame_balance, text="Total gastos:").grid(row=2, column=0, padx=10, pady=10)
+        self.total_gastos_label = Label(self.frame_balance, text="0")
+        self.total_gastos_label.grid(row=2, column=1, padx=10, pady=10)
+
+        Label(self.frame_balance, text="Balance final:").grid(row=3, column=0, padx=10, pady=10)
+        self.balance_label = Label(self.frame_balance, text="0")
+        self.balance_label.grid(row=3, column=1, padx=10, pady=10)
+
+        Button(self.frame_balance, text="Actualizar Balance", command=self.actualizar_balance).grid(row=4, column=0, columnspan=2, pady=10)
+
+    def actualizar_balance(self):
+        # Calcular total de ventas de destetados
+        self.cursor.execute('SELECT SUM(costo_venta) FROM ventas_destetados')
+        total_ventas_destetados = self.cursor.fetchone()[0] or 0
+        self.total_ventas_destetados_label.config(text=str(total_ventas_destetados))
+
+        # Calcular total de ventas de descarte
+        self.cursor.execute('SELECT SUM(costo_venta) FROM ventas_descarte')
+        total_ventas_descarte = self.cursor.fetchone()[0] or 0
+        self.total_ventas_descarte_label.config(text=str(total_ventas_descarte))
+
+        # Calcular total de gastos
+        self.cursor.execute('SELECT SUM(monto) FROM gastos')
+        total_gastos = self.cursor.fetchone()[0] or 0
+        self.total_gastos_label.config(text=str(total_gastos))
+
+        # Calcular balance final
+        balance = (total_ventas_destetados + total_ventas_descarte) - total_gastos
+        self.balance_label.config(text=str(balance))
+
+if __name__ == "__main__":
+    root = Tk()
+    app = CuyesManager(root)
+    root.mainloop()
