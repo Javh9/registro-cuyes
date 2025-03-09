@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-import psycopg2  # Cambiar de sqlite3 a psycopg2
+import psycopg2  # Usar psycopg2 para PostgreSQL
 from datetime import datetime
 import os
 from urllib.parse import urlparse  # Para parsear la URL de Neon
@@ -126,13 +126,6 @@ def crear_o_actualizar_tablas():
 # Llamar a la función para crear o actualizar las tablas al iniciar la aplicación
 crear_o_actualizar_tablas()
 
-# El resto del código (rutas, lógica, etc.) permanece igual...
-# Función para obtener la conexión a la base de datos
-def get_db_connection():
-    conn = sqlite3.connect('cuyes.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
 # Ruta principal
 @app.route('/')
 def index():
@@ -160,7 +153,7 @@ def ingresar_reproductores():
             # Verificar si el galpón y la poza ya están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             if cursor.fetchone():
                 flash('El galpón y la poza ya están registrados.', 'danger')
@@ -170,24 +163,24 @@ def ingresar_reproductores():
             cursor.execute('''
                 INSERT INTO reproductores (
                     galpon, poza, hembras, machos, tiempo_reproductores, fecha_ingreso
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s)
             ''', (galpon, poza, hembras, machos, tiempo_reproductores, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Reproductores registrados correctamente.', 'success')
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
+        except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
         return redirect(url_for('index'))
 
     return render_template('ingresar_reproductores.html')
-
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
@@ -223,7 +216,7 @@ def registrar_partos():
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon_seleccionado, poza_seleccionada))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
@@ -233,15 +226,11 @@ def registrar_partos():
             cursor.execute('''
                 INSERT INTO partos (
                     galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             ''', (galpon_seleccionado, poza_seleccionada, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Parto registrado correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -252,7 +241,6 @@ def registrar_partos():
 
     # Mostrar el formulario de registro de partos
     return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
-
 
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
@@ -275,7 +263,7 @@ def registrar_destete():
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
@@ -285,15 +273,11 @@ def registrar_destete():
             cursor.execute('''
                 INSERT INTO destetes (
                     galpon, poza, destetados_hembras, destetados_machos, fecha_destete
-                ) VALUES (?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s)
             ''', (galpon, poza, destetados_hembras, destetados_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Destete registrado correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -324,7 +308,7 @@ def registrar_muertes_destetados():
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
@@ -334,15 +318,11 @@ def registrar_muertes_destetados():
             cursor.execute('''
                 INSERT INTO muertes_destetados (
                     galpon, poza, muertos_hembras, muertos_machos, fecha_muerte
-                ) VALUES (?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s)
             ''', (galpon, poza, muertos_hembras, muertos_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Muertes de destetados registradas correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -374,7 +354,7 @@ def registrar_ventas_destetados():
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
@@ -384,15 +364,11 @@ def registrar_ventas_destetados():
             cursor.execute('''
                 INSERT INTO ventas_destetados (
                     galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s)
             ''', (galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Ventas de destetados registradas correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -423,7 +399,7 @@ def registrar_ventas_descarte():
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
                 SELECT id FROM reproductores
-                WHERE galpon = ? AND poza = ?
+                WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
@@ -433,15 +409,11 @@ def registrar_ventas_descarte():
             cursor.execute('''
                 INSERT INTO ventas_descarte (
                     galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
-                ) VALUES (?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s)
             ''', (galpon, poza, cuyes_vendidos, costo_venta, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Ventas de descarte registradas correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -472,15 +444,11 @@ def registrar_gastos():
             cursor.execute('''
                 INSERT INTO gastos (
                     descripcion, monto, tipo, fecha_gasto
-                ) VALUES (?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s)
             ''', (descripcion, monto, tipo, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Gasto registrado correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -522,9 +490,10 @@ def analisis_datos():
 
         # Pasar los datos y los gastos al template
         return render_template('analisis_datos.html', datos=datos, gastos=gastos)
-    except sqlite3.Error as e:
-        flash(f'Error en la base de datos: {str(e)}', 'danger')
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
+
 # Ruta para ver el balance
 @app.route('/balance')
 def balance():
@@ -553,8 +522,8 @@ def balance():
                              total_ventas_descarte=total_ventas_descarte,
                              total_gastos=total_gastos,
                              balance=balance)
-    except sqlite3.Error as e:
-        flash(f'Error en la base de datos: {str(e)}', 'danger')
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
 
 # Ruta para ver resultados
@@ -595,9 +564,10 @@ def resultados():
                              ventas_destetados=ventas_destetados,
                              ventas_descarte=ventas_descarte,
                              gastos=gastos)
-    except sqlite3.Error as e:
-        flash(f'Error en la base de datos: {str(e)}', 'danger')
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
+
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
@@ -621,16 +591,12 @@ def editar_reproductor(id):
             # Actualizar los datos en la base de datos
             cursor.execute('''
                 UPDATE reproductores
-                SET galpon = ?, poza = ?, hembras = ?, machos = ?, tiempo_reproductores = ?
-                WHERE id = ?
+                SET galpon = %s, poza = %s, hembras = %s, machos = %s, tiempo_reproductores = %s
+                WHERE id = %s
             ''', (galpon, poza, hembras, machos, tiempo_reproductores, id))
 
             conn.commit()
             flash('Reproductor actualizado correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
@@ -639,7 +605,7 @@ def editar_reproductor(id):
         return redirect(url_for('analisis_datos'))
 
     # Obtener los datos actuales del reproductor
-    cursor.execute('SELECT * FROM reproductores WHERE id = ?', (id,))
+    cursor.execute('SELECT * FROM reproductores WHERE id = %s', (id,))
     reproductor = cursor.fetchone()
     conn.close()
 
@@ -678,15 +644,12 @@ def eliminar_todos_los_datos():
 
         conn.commit()
         flash('Todos los datos han sido eliminados correctamente.', 'success')
-    except sqlite3.Error as e:
-        flash(f'Error al eliminar los datos: {str(e)}', 'danger')
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
     finally:
         conn.close()
 
     return redirect(url_for('index'))
-# Otras rutas (registrar_destete, registrar_muertes_destetados, etc.) se mantienen igual...
 
 if __name__ == '__main__':
     # Configuración para Heroku
