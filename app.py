@@ -1,21 +1,42 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-import sqlite3
+import psycopg2  # Cambiar de sqlite3 a psycopg2
 from datetime import datetime
 import os
+from urllib.parse import urlparse  # Para parsear la URL de Neon
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
 
+# Función para obtener la conexión a la base de datos
+def get_db_connection():
+    # Obtener la URL de la base de datos de la variable de entorno
+    database_url = os.environ.get('DATABASE_URL')
+    
+    if not database_url:
+        raise ValueError("No se ha configurado DATABASE_URL")
+
+    # Parsear la URL de la base de datos
+    url = urlparse(database_url)
+    
+    conn = psycopg2.connect(
+        dbname=url.path[1:],  # Eliminar el '/' inicial
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    return conn
+
 # Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
-    conn = sqlite3.connect('cuyes.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     # Crear tabla de reproductores si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS reproductores (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             hembras INTEGER NOT NULL,
@@ -28,7 +49,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de partos si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS partos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             numero_parto INTEGER NOT NULL,
@@ -42,7 +63,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de destetes si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS destetes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             destetados_hembras INTEGER NOT NULL,
@@ -54,7 +75,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de muertes de destetados si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS muertes_destetados (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             muertos_hembras INTEGER NOT NULL,
@@ -66,7 +87,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de ventas de destetados si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ventas_destetados (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             hembras_vendidas INTEGER NOT NULL,
@@ -79,7 +100,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de ventas de descarte si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ventas_descarte (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             galpon TEXT NOT NULL,
             poza TEXT NOT NULL,
             cuyes_vendidos INTEGER NOT NULL,
@@ -91,7 +112,7 @@ def crear_o_actualizar_tablas():
     # Crear tabla de gastos si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gastos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             descripcion TEXT NOT NULL,
             monto REAL NOT NULL,
             tipo TEXT NOT NULL,
@@ -105,6 +126,7 @@ def crear_o_actualizar_tablas():
 # Llamar a la función para crear o actualizar las tablas al iniciar la aplicación
 crear_o_actualizar_tablas()
 
+# El resto del código (rutas, lógica, etc.) permanece igual...
 # Función para obtener la conexión a la base de datos
 def get_db_connection():
     conn = sqlite3.connect('cuyes.db')
