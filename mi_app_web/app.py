@@ -624,4 +624,4 @@ def editar_reproductor(id):
 
     return render_template('editar_reproductor.html', reproductor=reproductor)
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
