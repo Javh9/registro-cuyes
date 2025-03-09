@@ -3,10 +3,11 @@ import sqlite3
 from datetime import datetime
 import os
 
+# Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
 
-# Función para crear o actualizar las tablas
+# Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
     conn = sqlite3.connect('cuyes.db')
     cursor = conn.cursor()
@@ -229,6 +230,8 @@ def registrar_partos():
 
     # Mostrar el formulario de registro de partos
     return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
+
+
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
@@ -623,5 +626,47 @@ def editar_reproductor(id):
         return redirect(url_for('analisis_datos'))
 
     return render_template('editar_reproductor.html', reproductor=reproductor)
+
+# Ruta para eliminar todos los datos
+@app.route('/eliminar_todos_los_datos', methods=['POST'])
+def eliminar_todos_los_datos():
+    # Obtener la clave enviada por el usuario
+    clave_ingresada = request.form.get('clave')
+
+    # Clave de autorización (cámbiala por la que desees)
+    CLAVE_AUTORIZACION = "0429"
+
+    # Verificar si la clave es correcta
+    if clave_ingresada != CLAVE_AUTORIZACION:
+        flash('Clave incorrecta. No se han eliminado los datos.', 'danger')
+        return redirect(url_for('index'))
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Eliminar todos los registros de cada tabla
+        cursor.execute('DELETE FROM reproductores')
+        cursor.execute('DELETE FROM partos')
+        cursor.execute('DELETE FROM destetes')
+        cursor.execute('DELETE FROM muertes_destetados')
+        cursor.execute('DELETE FROM ventas_destetados')
+        cursor.execute('DELETE FROM ventas_descarte')
+        cursor.execute('DELETE FROM gastos')
+
+        conn.commit()
+        flash('Todos los datos han sido eliminados correctamente.', 'success')
+    except sqlite3.Error as e:
+        flash(f'Error al eliminar los datos: {str(e)}', 'danger')
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+    finally:
+        conn.close()
+
+    return redirect(url_for('index'))
+# Otras rutas (registrar_destete, registrar_muertes_destetados, etc.) se mantienen igual...
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Configuración para Heroku
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
