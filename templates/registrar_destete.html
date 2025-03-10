@@ -1,59 +1,43 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Partos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <h1>Registrar Partos</h1>
-    <form method="POST">
-        <label for="galpon">Galpón:</label>
-        <select id="galpon" name="galpon" required>
-            <option value="">Seleccione un galpón</option>
-            {% for galpon_poza in galpones_pozas %}
-                <option value="{{ galpon_poza['galpon'] }}">{{ galpon_poza['galpon'] }}</option>
-            {% endfor %}
-        </select>
+@app.route('/registrar_destete', methods=['GET', 'POST'])
+def registrar_destete():
+    if request.method == 'POST':
+        try:
+            # Obtener los datos del formulario
+            galpon = request.form['galpon']
+            poza = request.form['poza']
+            destetados_hembras = int(request.form['destetados_hembras'])
+            destetados_machos = int(request.form['destetados_machos'])
 
-        <label for="poza">Poza:</label>
-        <select id="poza" name="poza" required>
-            <option value="">Seleccione una poza</option>
-            {% for galpon_poza in galpones_pozas %}
-                <option value="{{ galpon_poza['poza'] }}">{{ galpon_poza['poza'] }}</option>
-            {% endfor %}
-        </select>
+            # Validar que los valores no sean negativos
+            if destetados_hembras < 0 or destetados_machos < 0:
+                flash('Los valores de destetados no pueden ser negativos.', 'danger')
+                return redirect(url_for('registrar_destete'))
 
-        <label for="numero_parto">Número de Parto:</label>
-        <input type="number" id="numero_parto" name="numero_parto" required>
+            conn, cursor = get_db_connection()
 
-        <label for="nacidos">Nacidos:</label>
-        <input type="number" id="nacidos" name="nacidos" required>
+            # Verificar si el galpón y la poza están registrados
+            cursor.execute('''
+                SELECT id FROM reproductores
+                WHERE galpon = %s AND poza = %s
+            ''', (galpon, poza))
+            if not cursor.fetchone():
+                flash('El galpón y la poza no están registrados.', 'danger')
+                return redirect(url_for('registrar_destete'))
 
-        <label for="muertos_bebes">Muertos Bebés:</label>
-        <input type="number" id="muertos_bebes" name="muertos_bebes" required>
+            # Insertar datos del destete
+            cursor.execute('''
+                INSERT INTO destetes (
+                    galpon, poza, destetados_hembras, destetados_machos, fecha_destete
+                ) VALUES (%s, %s, %s, %s, %s)
+            ''', (galpon, poza, destetados_hembras, destetados_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        <label for="muertos_reproductores">Muertos Reproductores:</label>
-        <input type="number" id="muertos_reproductores" name="muertos_reproductores" required>
+            conn.commit()
+            flash('Destete registrado correctamente.', 'success')
+        except Exception as e:
+            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+        finally:
+            conn.close()
 
-        <button type="submit">Registrar Parto</button>
-    </form>
+        return redirect(url_for('index'))
 
-    <!-- Botón para regresar al inicio -->
-    <a href="{{ url_for('index') }}" style="margin-top: 20px; display: inline-block;">
-        <button>Regresar al Inicio</button>
-    </a>
-
-    <!-- Mostrar mensajes flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-</body>
-</html>
+    return render_template('registrar_destete.html')
