@@ -4,9 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análisis de Datos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <h1>Análisis de Datos</h1>
+
+    <h2>Datos de Reproductores</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Hembras</th>
+                <th>Machos</th>
+                <th>Tiempo Reproductores</th>
+                <th>Fecha de Ingreso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dato in datos %}
+                <tr>
+                    <td>{{ dato.galpon }}</td>
+                    <td>{{ dato.poza }}</td>
+                    <td>{{ dato.hembras }}</td>
+                    <td>{{ dato.machos }}</td>
+                    <td>{{ dato.tiempo_reproductores }}</td>
+                    <td>{{ dato.fecha_ingreso }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <h2>Datos de Partos</h2>
     <table border="1">
@@ -57,5 +84,21 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Botón para regresar al inicio -->
+    <a href="{{ url_for('index') }}" style="margin-top: 20px; display: inline-block;">
+        <button>Regresar al Inicio</button>
+    </a>
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 </body>
 </html>

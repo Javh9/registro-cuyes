@@ -507,7 +507,7 @@ def analisis_datos():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
+    
 # Ruta para ver el balance
 @app.route('/balance')
 def balance():
