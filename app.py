@@ -189,7 +189,7 @@ def ingresar_reproductores():
 def registrar_partos():
     conn, cursor = get_db_connection()
 
-    # Obtener los galpones y pozas registrados
+    # Obtener los galpones y pozas registrados (valores únicos)
     cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
     galpones_pozas = cursor.fetchall()
     conn.close()
@@ -246,10 +246,9 @@ def registrar_partos():
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
-    # Obtener la conexión y el cursor
     conn, cursor = get_db_connection()
 
-    # Obtener los galpones y pozas registrados
+    # Obtener los galpones y pozas registrados (valores únicos)
     cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
     galpones_pozas = cursor.fetchall()
     conn.close()
@@ -260,7 +259,6 @@ def registrar_destete():
 
     if request.method == 'POST':
         try:
-            # Obtener los datos del formulario
             galpon_seleccionado = request.form['galpon']
             poza_seleccionada = request.form['poza']
             destetados_hembras = int(request.form['destetados_hembras'])
