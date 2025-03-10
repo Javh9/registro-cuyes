@@ -301,6 +301,7 @@ def registrar_destete():
     return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
 # Ruta para registrar muertes de destetados
+# Ruta para registrar muertes de destetados
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():
     if request.method == 'POST':
@@ -315,8 +316,7 @@ def registrar_muertes_destetados():
                 flash('Los valores de muertes no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_muertes_destetados'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
@@ -339,7 +339,8 @@ def registrar_muertes_destetados():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
         return redirect(url_for('index'))
 
@@ -361,8 +362,7 @@ def registrar_ventas_destetados():
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_ventas_destetados'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
@@ -385,12 +385,14 @@ def registrar_ventas_destetados():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
         return redirect(url_for('index'))
 
     return render_template('registrar_ventas_destetados.html')
 
+# Ruta para registrar ventas de descarte
 # Ruta para registrar ventas de descarte
 @app.route('/registrar_ventas_descarte', methods=['GET', 'POST'])
 def registrar_ventas_descarte():
@@ -406,8 +408,7 @@ def registrar_ventas_descarte():
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_ventas_descarte'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
@@ -430,12 +431,14 @@ def registrar_ventas_descarte():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
         return redirect(url_for('index'))
 
     return render_template('registrar_ventas_descarte.html')
 
+# Ruta para registrar gastos
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
@@ -450,8 +453,7 @@ def registrar_gastos():
                 flash('El monto no puede ser negativo.', 'danger')
                 return redirect(url_for('registrar_gastos'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
             # Insertar datos del gasto
             cursor.execute('''
@@ -465,12 +467,10 @@ def registrar_gastos():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
 
         return redirect(url_for('index'))
-
-    return render_template('registrar_gastos.html')
-
 # Ruta para ver análisis de datos
 @app.route('/analisis_datos')
 def analisis_datos():
