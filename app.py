@@ -497,8 +497,7 @@ def analisis_datos():
 @app.route('/balance')
 def balance():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
         # Obtener total de ventas de destetados
         cursor.execute('SELECT SUM(costo_venta) FROM ventas_destetados')
@@ -524,13 +523,11 @@ def balance():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
 # Ruta para ver resultados
 @app.route('/resultados')
 def resultados():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
         # Obtener todos los datos de las tablas
         cursor.execute('SELECT * FROM reproductores')
@@ -566,7 +563,6 @@ def resultados():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
