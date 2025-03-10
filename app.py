@@ -479,12 +479,37 @@ def analisis_datos():
 
         # Obtener datos de reproductores, partos, destetes, muertes y ventas
         cursor.execute('''
-            SELECT r.id, r.galpon, r.poza, r.hembras, r.machos, r.tiempo_reproductores, r.fecha_ingreso,
-                   p.numero_parto, p.nacidos, p.muertos_bebes, p.muertos_reproductores, p.fecha_nacimiento,
-                   d.destetados_hembras, d.destetados_machos, d.fecha_destete,
-                   m.muertos_hembras, m.muertos_machos, m.fecha_muerte,
-                   vd.hembras_vendidas, vd.machos_vendidos, vd.costo_venta, vd.fecha_venta,
-                   vc.cuyes_vendidos, vc.costo_venta, vc.fecha_venta
+            SELECT 
+                r.id AS reproductor_id,
+                r.galpon AS galpon_reproductor,
+                r.poza AS poza_reproductor,
+                r.hembras AS hembras_reproductor,
+                r.machos AS machos_reproductor,
+                r.tiempo_reproductores,
+                r.fecha_ingreso,
+                p.id AS parto_id,
+                p.numero_parto,
+                p.nacidos,
+                p.muertos_bebes,
+                p.muertos_reproductores,
+                p.fecha_nacimiento,
+                d.id AS destete_id,
+                d.destetados_hembras,
+                d.destetados_machos,
+                d.fecha_destete,
+                m.id AS muerte_id,
+                m.muertos_hembras AS muertes_hembras,
+                m.muertos_machos AS muertes_machos,
+                m.fecha_muerte,
+                vd.id AS venta_destetado_id,
+                vd.hembras_vendidas,
+                vd.machos_vendidos,
+                vd.costo_venta AS costo_venta_destetados,
+                vd.fecha_venta AS fecha_venta_destetados,
+                vc.id AS venta_descarte_id,
+                vc.cuyes_vendidos,
+                vc.costo_venta AS costo_venta_descarte,
+                vc.fecha_venta AS fecha_venta_descarte
             FROM reproductores r
             LEFT JOIN partos p ON r.galpon = p.galpon AND r.poza = p.poza
             LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
@@ -505,7 +530,7 @@ def analisis_datos():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-    
+      
 # Ruta para ver el balance
 @app.route('/balance')
 def balance():

@@ -9,6 +9,7 @@
 <body>
     <h1>Análisis de Datos</h1>
 
+    <!-- Datos de Reproductores -->
     <h2>Datos de Reproductores</h2>
     <table border="1">
         <thead>
@@ -24,10 +25,10 @@
         <tbody>
             {% for dato in datos %}
                 <tr>
-                    <td>{{ dato.galpon }}</td>
-                    <td>{{ dato.poza }}</td>
-                    <td>{{ dato.hembras }}</td>
-                    <td>{{ dato.machos }}</td>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.hembras_reproductor }}</td>
+                    <td>{{ dato.machos_reproductor }}</td>
                     <td>{{ dato.tiempo_reproductores }}</td>
                     <td>{{ dato.fecha_ingreso }}</td>
                 </tr>
@@ -35,6 +36,7 @@
         </tbody>
     </table>
 
+    <!-- Datos de Partos -->
     <h2>Datos de Partos</h2>
     <table border="1">
         <thead>
@@ -51,18 +53,121 @@
         <tbody>
             {% for dato in datos %}
                 <tr>
-                    <td>{{ dato.galpon }}</td>
-                    <td>{{ dato.poza }}</td>
-                    <td>{{ dato.numero_parto }}</td>
-                    <td>{{ dato.nacidos }}</td>
-                    <td>{{ dato.muertos_bebes }}</td>
-                    <td>{{ dato.muertos_reproductores }}</td>
-                    <td>{{ dato.fecha_nacimiento }}</td>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.numero_parto or 'N/A' }}</td>
+                    <td>{{ dato.nacidos or 'N/A' }}</td>
+                    <td>{{ dato.muertos_bebes or 'N/A' }}</td>
+                    <td>{{ dato.muertos_reproductores or 'N/A' }}</td>
+                    <td>{{ dato.fecha_nacimiento or 'N/A' }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
+    <!-- Datos de Destetes -->
+    <h2>Datos de Destetes</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Destetados Hembras</th>
+                <th>Destetados Machos</th>
+                <th>Fecha de Destete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dato in datos %}
+                <tr>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.destetados_hembras or 'N/A' }}</td>
+                    <td>{{ dato.destetados_machos or 'N/A' }}</td>
+                    <td>{{ dato.fecha_destete or 'N/A' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Datos de Muertes de Destetados -->
+    <h2>Datos de Muertes de Destetados</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Muertos Hembras</th>
+                <th>Muertos Machos</th>
+                <th>Fecha de Muerte</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dato in datos %}
+                <tr>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.muertes_hembras or 'N/A' }}</td>
+                    <td>{{ dato.muertes_machos or 'N/A' }}</td>
+                    <td>{{ dato.fecha_muerte or 'N/A' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Datos de Ventas de Destetados -->
+    <h2>Datos de Ventas de Destetados</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Hembras Vendidas</th>
+                <th>Machos Vendidos</th>
+                <th>Costo de Venta</th>
+                <th>Fecha de Venta</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dato in datos %}
+                <tr>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.hembras_vendidas or 'N/A' }}</td>
+                    <td>{{ dato.machos_vendidos or 'N/A' }}</td>
+                    <td>{{ dato.costo_venta_destetados or 'N/A' }}</td>
+                    <td>{{ dato.fecha_venta_destetados or 'N/A' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Datos de Ventas de Descarte -->
+    <h2>Datos de Ventas de Descarte</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Cuyes Vendidos</th>
+                <th>Costo de Venta</th>
+                <th>Fecha de Venta</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dato in datos %}
+                <tr>
+                    <td>{{ dato.galpon_reproductor }}</td>
+                    <td>{{ dato.poza_reproductor }}</td>
+                    <td>{{ dato.cuyes_vendidos or 'N/A' }}</td>
+                    <td>{{ dato.costo_venta_descarte or 'N/A' }}</td>
+                    <td>{{ dato.fecha_venta_descarte or 'N/A' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Datos de Gastos -->
     <h2>Gastos</h2>
     <table border="1">
         <thead>
