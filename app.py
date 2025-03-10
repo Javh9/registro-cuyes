@@ -28,7 +28,7 @@ def get_db_connection():
     )
 
     # Configurar el row_factory para que los resultados sean diccionarios
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # Use the imported extras module
     conn.cursor = lambda: cursor  # Sobrescribir el cursor por defecto
     return conn
 # Función para crear o actualizar las tablas en la base de datos
