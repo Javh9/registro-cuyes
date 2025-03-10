@@ -246,18 +246,30 @@ def registrar_partos():
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
+    # Obtener la conexión y el cursor
+    conn, cursor = get_db_connection()
+
+    # Obtener los galpones y pozas registrados
+    cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
+    galpones_pozas = cursor.fetchall()
+    conn.close()
+
+    # Inicializar variables para los valores seleccionados
+    galpon_seleccionado = None
+    poza_seleccionada = None
+
     if request.method == 'POST':
         try:
             # Obtener los datos del formulario
-            galpon = request.form['galpon']
-            poza = request.form['poza']
+            galpon_seleccionado = request.form['galpon']
+            poza_seleccionada = request.form['poza']
             destetados_hembras = int(request.form['destetados_hembras'])
             destetados_machos = int(request.form['destetados_machos'])
 
             # Validar que los valores no sean negativos
             if destetados_hembras < 0 or destetados_machos < 0:
                 flash('Los valores de destetados no pueden ser negativos.', 'danger')
-                return redirect(url_for('registrar_destete'))
+                return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
             conn, cursor = get_db_connection()
 
@@ -265,17 +277,17 @@ def registrar_destete():
             cursor.execute('''
                 SELECT id FROM reproductores
                 WHERE galpon = %s AND poza = %s
-            ''', (galpon, poza))
+            ''', (galpon_seleccionado, poza_seleccionada))
             if not cursor.fetchone():
                 flash('El galpón y la poza no están registrados.', 'danger')
-                return redirect(url_for('registrar_destete'))
+                return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
             # Insertar datos del destete
             cursor.execute('''
                 INSERT INTO destetes (
                     galpon, poza, destetados_hembras, destetados_machos, fecha_destete
                 ) VALUES (%s, %s, %s, %s, %s)
-            ''', (galpon, poza, destetados_hembras, destetados_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            ''', (galpon_seleccionado, poza_seleccionada, destetados_hembras, destetados_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             conn.commit()
             flash('Destete registrado correctamente.', 'success')
@@ -284,9 +296,11 @@ def registrar_destete():
         finally:
             conn.close()
 
-        return redirect(url_for('index'))
+        # Mantener la ventana de registro abierta con los valores seleccionados
+        return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
-    return render_template('registrar_destete.html')
+    # Mostrar el formulario de registro de destetes
+    return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
 # Ruta para registrar muertes de destetados
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
