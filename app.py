@@ -248,6 +248,7 @@ def registrar_partos():
 def registrar_destete():
     if request.method == 'POST':
         try:
+            # Obtener los datos del formulario
             galpon = request.form['galpon']
             poza = request.form['poza']
             destetados_hembras = int(request.form['destetados_hembras'])
@@ -258,8 +259,7 @@ def registrar_destete():
                 flash('Los valores de destetados no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_destete'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()
 
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
