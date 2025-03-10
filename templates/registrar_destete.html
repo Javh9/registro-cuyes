@@ -1,43 +1,26 @@
-@app.route('/registrar_destete', methods=['GET', 'POST'])
-def registrar_destete():
-    if request.method == 'POST':
-        try:
-            # Obtener los datos del formulario
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            destetados_hembras = int(request.form['destetados_hembras'])
-            destetados_machos = int(request.form['destetados_machos'])
-
-            # Validar que los valores no sean negativos
-            if destetados_hembras < 0 or destetados_machos < 0:
-                flash('Los valores de destetados no pueden ser negativos.', 'danger')
-                return redirect(url_for('registrar_destete'))
-
-            conn, cursor = get_db_connection()
-
-            # Verificar si el galpón y la poza están registrados
-            cursor.execute('''
-                SELECT id FROM reproductores
-                WHERE galpon = %s AND poza = %s
-            ''', (galpon, poza))
-            if not cursor.fetchone():
-                flash('El galpón y la poza no están registrados.', 'danger')
-                return redirect(url_for('registrar_destete'))
-
-            # Insertar datos del destete
-            cursor.execute('''
-                INSERT INTO destetes (
-                    galpon, poza, destetados_hembras, destetados_machos, fecha_destete
-                ) VALUES (%s, %s, %s, %s, %s)
-            ''', (galpon, poza, destetados_hembras, destetados_machos, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-
-            conn.commit()
-            flash('Destete registrado correctamente.', 'success')
-        except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        finally:
-            conn.close()
-
-        return redirect(url_for('index'))
-
-    return render_template('registrar_destete.html')
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Destete</title>
+</head>
+<body>
+    <h1>Registrar Destete</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <input type="text" id="galpon" name="galpon" required>
+        <br>
+        <label for="poza">Poza:</label>
+        <input type="text" id="poza" name="poza" required>
+        <br>
+        <label for="destetados_hembras">Destetados Hembras:</label>
+        <input type="number" id="destetados_hembras" name="destetados_hembras" required>
+        <br>
+        <label for="destetados_machos">Destetados Machos:</label>
+        <input type="number" id="destetados_machos" name="destetados_machos" required>
+        <br>
+        <button type="submit">Registrar Destete</button>
+    </form>
+</body>
+</html>
