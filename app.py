@@ -471,6 +471,9 @@ def registrar_gastos():
                 conn.close()
 
         return redirect(url_for('index'))
+
+    return render_template('registrar_gastos.html')
+
 # Ruta para ver análisis de datos
 @app.route('/analisis_datos')
 def analisis_datos():
