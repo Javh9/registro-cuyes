@@ -463,8 +463,7 @@ def registrar_gastos():
 @app.route('/analisis_datos')
 def analisis_datos():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
         # Obtener datos de reproductores, partos, destetes, muertes y ventas
         cursor.execute('''
