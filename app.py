@@ -28,15 +28,13 @@ def get_db_connection():
         port=url.port
     )
 
-    # Configurar el row_factory para que los resultados sean diccionarios
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)  # Usar extras.DictCursor
-    conn.cursor = lambda: cursor  # Sobrescribir el cursor por defecto
-    return conn
+    # Configurar el cursor para que los resultados sean diccionarios
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    return conn, cursor  # Retornar tanto la conexión como el cursor
 
 # Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn, cursor = get_db_connection()  # Obtener la conexión y el cursor
 
     # Crear tabla de reproductores si no existe
     cursor.execute('''
@@ -152,8 +150,7 @@ def ingresar_reproductores():
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return redirect(url_for('ingresar_reproductores'))
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()
 
             # Verificar si el galpón y la poza ya están registrados
             cursor.execute('''
@@ -187,12 +184,10 @@ def ingresar_reproductores():
 
     return render_template('ingresar_reproductores.html')
 
-# Resto del código sigue igual...
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn, cursor = get_db_connection()
 
     # Obtener los galpones y pozas registrados
     cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
@@ -217,8 +212,7 @@ def registrar_partos():
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon_seleccionado, poza_seleccionada=poza_seleccionada)
 
-            conn = get_db_connection()
-            cursor = conn.cursor()
+            conn, cursor = get_db_connection()
 
             # Verificar si el galpón y la poza están registrados
             cursor.execute('''
