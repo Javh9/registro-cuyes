@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import psycopg2  # Usar psycopg2 para PostgreSQL
+from psycopg2 import extras  # Importar extras explícitamente
 from datetime import datetime
 import os
 from urllib.parse import urlparse  # Para parsear la URL de Neon
@@ -28,9 +29,10 @@ def get_db_connection():
     )
 
     # Configurar el row_factory para que los resultados sean diccionarios
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # Use the imported extras module
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)  # Usar extras.DictCursor
     conn.cursor = lambda: cursor  # Sobrescribir el cursor por defecto
     return conn
+
 # Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
     conn = get_db_connection()
@@ -184,6 +186,8 @@ def ingresar_reproductores():
         return redirect(url_for('index'))
 
     return render_template('ingresar_reproductores.html')
+
+# Resto del código sigue igual...
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
