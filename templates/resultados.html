@@ -205,9 +205,6 @@
         new Chart(document.getElementById('costosGananciasChart'), { ...config, data: costosGananciasData });
         new Chart(document.getElementById('proyeccionChart'), { ...config, data: proyeccionData });
     </script>
-    <!-- Botón para exportar datos -->
-    <div class="my-4">
-        <a href="{{ url_for('exportar_excel') }}" class="btn btn-success">Exportar a Excel</a>
-    </div>
+    
 </body>
 </html>
