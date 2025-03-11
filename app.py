@@ -184,8 +184,7 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=False)
 
 
-# Ruta para ingresar reproductores
-@app.route('/')
+
 def index():
     try:
         with get_db_connection() as conn:
