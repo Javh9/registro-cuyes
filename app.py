@@ -619,9 +619,18 @@ def resultados():
                 df_nacimientos = pd.DataFrame(proyeccion_nacimientos, columns=['mes', 'total_nacidos'])
                 df_ventas = pd.DataFrame(proyeccion_ventas, columns=['mes', 'total_ventas'])
 
-                # Proyección lineal de nacimientos y ventas
-                df_nacimientos['mes'] = pd.to_datetime(df_nacimientos['mes'])
-                df_ventas['mes'] = pd.to_datetime(df_ventas['mes'])
+                # Verificar y limpiar fechas
+                df_nacimientos['mes'] = pd.to_datetime(df_nacimientos['mes'], errors='coerce')
+                df_ventas['mes'] = pd.to_datetime(df_ventas['mes'], errors='coerce')
+
+                # Eliminar filas con fechas NaT
+                df_nacimientos = df_nacimientos.dropna(subset=['mes'])
+                df_ventas = df_ventas.dropna(subset=['mes'])
+
+                # Verificar que haya datos para proyección
+                if df_nacimientos.empty or df_ventas.empty:
+                    flash('No hay suficientes datos para realizar la proyección.', 'warning')
+                    return redirect(url_for('index'))
 
                 # Calcular proyección para los próximos 6 meses
                 future_months = pd.date_range(start=df_nacimientos['mes'].max(), periods=6, freq='M')
@@ -659,8 +668,7 @@ def resultados():
                              proyeccion_futura=proyeccion_futura)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))
-       
+        return redirect(url_for('index'))  
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
