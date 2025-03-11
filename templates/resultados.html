@@ -3,39 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Resultados y Análisis</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Resultados</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Galpón</th>
-                <th>Poza</th>
-                <th>Hembras</th>
-                <th>Machos</th>
-                <th>Nacidos</th>
-                <th>Muertos Bebés</th>
-                <th>Muertos Reproductores</th>
-                <th>Tiempo Reproductores</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for dato in datos %}
+    <div class="container">
+        <h1 class="my-4">Resultados y Análisis</h1>
+
+        <!-- Mortalidad por Mes y Poza/Galpón -->
+        <h2>Mortalidad por Mes y Poza/Galpón</h2>
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td>{{ dato['galpon'] }}</td>
-                    <td>{{ dato['poza'] }}</td>
-                    <td>{{ dato['hembras'] }}</td>
-                    <td>{{ dato['machos'] }}</td>
-                    <td>{{ dato['nacidos'] }}</td>
-                    <td>{{ dato['muertos_bebes'] }}</td>
-                    <td>{{ dato['muertos_reproductores'] }}</td>
-                    <td>{{ dato['tiempo_reproductores'] }}</td>
+                    <th>Mes</th>
+                    <th>Galpón</th>
+                    <th>Poza</th>
+                    <th>Total Muertes</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{{ url_for('index') }}">Volver al Inicio</a>
+            </thead>
+            <tbody>
+                {% for row in mortalidad_por_mes %}
+                <tr>
+                    <td>{{ row.mes }}</td>
+                    <td>{{ row.galpon }}</td>
+                    <td>{{ row.poza }}</td>
+                    <td>{{ row.total_muertes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Nacimientos por Mes y Poza/Galpón -->
+        <h2>Nacimientos por Mes y Poza/Galpón</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th>Galpón</th>
+                    <th>Poza</th>
+                    <th>Total Nacidos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in nacimientos_por_mes %}
+                <tr>
+                    <td>{{ row.mes }}</td>
+                    <td>{{ row.galpon }}</td>
+                    <td>{{ row.poza }}</td>
+                    <td>{{ row.total_nacidos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Costos y Ganancias por Mes -->
+        <h2>Costos y Ganancias por Mes</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th>Total Gastos</th>
+                    <th>Total Ventas Destetados</th>
+                    <th>Total Ventas Descarte</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gasto in gastos_por_mes %}
+                <tr>
+                    <td>{{ gasto.mes }}</td>
+                    <td>{{ gasto.total_gastos }}</td>
+                    <td>{{ ventas_destetados_por_mes[loop.index0].total_ventas if ventas_destetados_por_mes[loop.index0] else 0 }}</td>
+                    <td>{{ ventas_descarte_por_mes[loop.index0].total_ventas if ventas_descarte_por_mes[loop.index0] else 0 }}</td>
+                    <td>{{ (ventas_destetados_por_mes[loop.index0].total_ventas if ventas_destetados_por_mes[loop.index0] else 0) + (ventas_descarte_por_mes[loop.index0].total_ventas if ventas_descarte_por_mes[loop.index0] else 0) - gasto.total_gastos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Proyección de Crecimiento -->
+        <h2>Proyección de Crecimiento</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th>Total Nacidos</th>
+                    <th>Total Ventas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proyeccion in proyeccion_nacimientos %}
+                <tr>
+                    <td>{{ proyeccion.mes }}</td>
+                    <td>{{ proyeccion.total_nacidos }}</td>
+                    <td>{{ proyeccion_ventas[loop.index0].total_ventas if proyeccion_ventas[loop.index0] else 0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

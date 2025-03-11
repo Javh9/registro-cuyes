@@ -511,6 +511,7 @@ def resultados():
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener todos los datos de las tablas
                 cursor.execute('SELECT * FROM reproductores')
                 reproductores = cursor.fetchall()
 
@@ -532,6 +533,86 @@ def resultados():
                 cursor.execute('SELECT * FROM gastos')
                 gastos = cursor.fetchall()
 
+                # Análisis estadístico
+                # 1. Mortalidad por mes y poza/galpón
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_muerte, 'YYYY-MM-DD')) AS mes,
+                        galpon,
+                        poza,
+                        SUM(muertos_hembras + muertos_machos) AS total_muertes
+                    FROM muertes_destetados
+                    GROUP BY mes, galpon, poza
+                    ORDER BY mes, galpon, poza
+                ''')
+                mortalidad_por_mes = cursor.fetchall()
+
+                # 2. Nacimientos por mes y poza/galpón
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_nacimiento, 'YYYY-MM-DD')) AS mes,
+                        galpon,
+                        poza,
+                        SUM(nacidos) AS total_nacidos
+                    FROM partos
+                    GROUP BY mes, galpon, poza
+                    ORDER BY mes, galpon, poza
+                ''')
+                nacimientos_por_mes = cursor.fetchall()
+
+                # 3. Costos y ganancias por mes
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_gasto, 'YYYY-MM-DD')) AS mes,
+                        SUM(monto) AS total_gastos
+                    FROM gastos
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                gastos_por_mes = cursor.fetchall()
+
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        SUM(costo_venta) AS total_ventas
+                    FROM ventas_destetados
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                ventas_destetados_por_mes = cursor.fetchall()
+
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        SUM(costo_venta) AS total_ventas
+                    FROM ventas_descarte
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                ventas_descarte_por_mes = cursor.fetchall()
+
+                # 4. Proyección de crecimiento (basado en nacimientos y ventas)
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_nacimiento, 'YYYY-MM-DD')) AS mes,
+                        SUM(nacidos) AS total_nacidos
+                    FROM partos
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                proyeccion_nacimientos = cursor.fetchall()
+
+                cursor.execute('''
+                    SELECT 
+                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        SUM(costo_venta) AS total_ventas
+                    FROM ventas_destetados
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                proyeccion_ventas = cursor.fetchall()
+
+        # Pasar todos los datos a la plantilla
         return render_template('resultados.html', 
                              reproductores=reproductores,
                              partos=partos,
@@ -539,11 +620,18 @@ def resultados():
                              muertes_destetados=muertes_destetados,
                              ventas_destetados=ventas_destetados,
                              ventas_descarte=ventas_descarte,
-                             gastos=gastos)
+                             gastos=gastos,
+                             mortalidad_por_mes=mortalidad_por_mes,
+                             nacimientos_por_mes=nacimientos_por_mes,
+                             gastos_por_mes=gastos_por_mes,
+                             ventas_destetados_por_mes=ventas_destetados_por_mes,
+                             ventas_descarte_por_mes=ventas_descarte_por_mes,
+                             proyeccion_nacimientos=proyeccion_nacimientos,
+                             proyeccion_ventas=proyeccion_ventas)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
+    
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
