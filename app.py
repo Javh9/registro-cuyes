@@ -3,7 +3,10 @@ import psycopg2
 from psycopg2 import extras
 from datetime import datetime
 import os
+import pandas as pd
 from urllib.parse import urlparse
+from flask import Response
+import io
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
@@ -591,7 +594,7 @@ def resultados():
                 ''')
                 ventas_descarte_por_mes = cursor.fetchall()
 
-                # 4. Proyección de crecimiento (basado en nacimientos y ventas)
+                # 4. Proyección de crecimiento (usando Pandas)
                 cursor.execute('''
                     SELECT 
                         DATE_TRUNC('month', TO_DATE(fecha_nacimiento, 'YYYY-MM-DD')) AS mes,
@@ -612,6 +615,31 @@ def resultados():
                 ''')
                 proyeccion_ventas = cursor.fetchall()
 
+                # Convertir a DataFrame de Pandas para proyecciones
+                df_nacimientos = pd.DataFrame(proyeccion_nacimientos, columns=['mes', 'total_nacidos'])
+                df_ventas = pd.DataFrame(proyeccion_ventas, columns=['mes', 'total_ventas'])
+
+                # Proyección lineal de nacimientos y ventas
+                df_nacimientos['mes'] = pd.to_datetime(df_nacimientos['mes'])
+                df_ventas['mes'] = pd.to_datetime(df_ventas['mes'])
+
+                # Calcular proyección para los próximos 6 meses
+                future_months = pd.date_range(start=df_nacimientos['mes'].max(), periods=6, freq='M')
+                df_future = pd.DataFrame({'mes': future_months})
+
+                # Proyección de nacimientos (regresión lineal)
+                df_nacimientos.set_index('mes', inplace=True)
+                df_nacimientos['proyeccion_nacidos'] = df_nacimientos['total_nacidos'].interpolate(method='linear')
+                df_future['proyeccion_nacidos'] = df_nacimientos['proyeccion_nacidos'].iloc[-1]  # Extender la tendencia
+
+                # Proyección de ventas (regresión lineal)
+                df_ventas.set_index('mes', inplace=True)
+                df_ventas['proyeccion_ventas'] = df_ventas['total_ventas'].interpolate(method='linear')
+                df_future['proyeccion_ventas'] = df_ventas['proyeccion_ventas'].iloc[-1]  # Extender la tendencia
+
+                # Convertir proyecciones a lista para la plantilla
+                proyeccion_futura = df_future.reset_index(drop=True).to_dict('records')
+
         # Pasar todos los datos a la plantilla
         return render_template('resultados.html', 
                              reproductores=reproductores,
@@ -627,11 +655,12 @@ def resultados():
                              ventas_destetados_por_mes=ventas_destetados_por_mes,
                              ventas_descarte_por_mes=ventas_descarte_por_mes,
                              proyeccion_nacimientos=proyeccion_nacimientos,
-                             proyeccion_ventas=proyeccion_ventas)
+                             proyeccion_ventas=proyeccion_ventas,
+                             proyeccion_futura=proyeccion_futura)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-    
+       
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
@@ -700,6 +729,62 @@ def eliminar_todos_los_datos():
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
     return redirect(url_for('index'))
+
+# Ruta para Exportar a Excel
+
+@app.route('/exportar_excel')
+def exportar_excel():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener todos los datos de las tablas
+                cursor.execute('SELECT * FROM reproductores')
+                reproductores = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM partos')
+                partos = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM destetes')
+                destetes = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM muertes_destetados')
+                muertes_destetados = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM ventas_destetados')
+                ventas_destetados = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM ventas_descarte')
+                ventas_descarte = cursor.fetchall()
+
+                cursor.execute('SELECT * FROM gastos')
+                gastos = cursor.fetchall()
+
+                # Crear un DataFrame de Pandas
+                df_reproductores = pd.DataFrame(reproductores)
+                df_partos = pd.DataFrame(partos)
+                df_destetes = pd.DataFrame(destetes)
+                df_muertes = pd.DataFrame(muertes_destetados)
+                df_ventas_destetados = pd.DataFrame(ventas_destetados)
+                df_ventas_descarte = pd.DataFrame(ventas_descarte)
+                df_gastos = pd.DataFrame(gastos)
+
+                # Crear un archivo Excel en memoria
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    df_reproductores.to_excel(writer, sheet_name='Reproductores', index=False)
+                    df_partos.to_excel(writer, sheet_name='Partos', index=False)
+                    df_destetes.to_excel(writer, sheet_name='Destetes', index=False)
+                    df_muertes.to_excel(writer, sheet_name='Muertes', index=False)
+                    df_ventas_destetados.to_excel(writer, sheet_name='Ventas Destetados', index=False)
+                    df_ventas_descarte.to_excel(writer, sheet_name='Ventas Descarte', index=False)
+                    df_gastos.to_excel(writer, sheet_name='Gastos', index=False)
+
+                output.seek(0)
+                return Response(output, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                headers={"Content-Disposition": "attachment;filename=datos_granja.xlsx"})
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
