@@ -71,8 +71,37 @@
         <!-- Contenido principal -->
         <p class="lead text-center">Bienvenido a la aplicación de gestión de cuyes.</p>
 
+        <!-- Tabla de información de galpones y pozas -->
+        <h2 class="text-center my-4">Información Actual del Galpón</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Galpón</th>
+                        <th>Poza</th>
+                        <th>Reproductores</th>
+                        <th>Nacidos</th>
+                        <th>Total Cuyes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for galpon, pozas in datos_galpones.items() %}
+                        {% for poza, datos in pozas.items() %}
+                            <tr>
+                                <td>{{ galpon }}</td>
+                                <td>{{ poza }}</td>
+                                <td>{{ datos['reproductores'] }}</td>
+                                <td>{{ datos['nacidos'] }}</td>
+                                <td>{{ datos['reproductores'] + datos['nacidos'] }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Botón para eliminar todos los datos -->
-        <div class="text-center">
+        <div class="text-center my-4">
             <form action="{{ url_for('eliminar_todos_los_datos') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar todos los datos? Esta acción no se puede deshacer.');">
                 <div class="mb-3">
                     <label for="clave" class="form-label">Ingrese la clave de autorización:</label>

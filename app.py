@@ -136,47 +136,51 @@ def index():
     return render_template('index.html')
 
 # Ruta para ingresar reproductores
-@app.route('/ingresar_reproductores', methods=['GET', 'POST'])
-def ingresar_reproductores():
-    if request.method == 'POST':
-        try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            hembras = int(request.form['hembras'])
-            machos = int(request.form['machos'])
-            tiempo_reproductores = int(request.form['tiempo_reproductores'])
+@app.route('/')
+def index():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener datos de reproductores por galpón y poza
+                cursor.execute('''
+                    SELECT galpon, poza, SUM(hembras + machos) AS total_reproductores
+                    FROM reproductores
+                    GROUP BY galpon, poza
+                    ORDER BY galpon, poza
+                ''')
+                reproductores_por_poza = cursor.fetchall()
 
-            validate_positive_values(hembras=hembras, machos=machos, tiempo_reproductores=tiempo_reproductores)
+                # Obtener datos de nacidos por galpón y poza
+                cursor.execute('''
+                    SELECT galpon, poza, SUM(nacidos) AS total_nacidos
+                    FROM partos
+                    GROUP BY galpon, poza
+                    ORDER BY galpon, poza
+                ''')
+                nacidos_por_poza = cursor.fetchall()
 
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    cursor.execute('''
-                        SELECT id FROM reproductores
-                        WHERE galpon = %s AND poza = %s
-                    ''', (galpon, poza))
-                    if cursor.fetchone():
-                        flash('El galpón y la poza ya están registrados.', 'danger')
-                        return redirect(url_for('ingresar_reproductores'))
+        # Combinar los datos de reproductores y nacidos
+        datos_galpones = {}
+        for row in reproductores_por_poza:
+            galpon = row['galpon']
+            poza = row['poza']
+            if galpon not in datos_galpones:
+                datos_galpones[galpon] = {}
+            datos_galpones[galpon][poza] = {
+                'reproductores': row['total_reproductores'],
+                'nacidos': 0  # Inicializar nacidos en 0
+            }
 
-                    cursor.execute('''
-                        INSERT INTO reproductores (
-                            galpon, poza, hembras, machos, tiempo_reproductores, fecha_ingreso
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ''', (galpon, poza, hembras, machos, tiempo_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+        for row in nacidos_por_poza:
+            galpon = row['galpon']
+            poza = row['poza']
+            if galpon in datos_galpones and poza in datos_galpones[galpon]:
+                datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos']
 
-                    conn.commit()
-                    flash('Reproductores registrados correctamente.', 'success')
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
-        except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
+        return render_template('index.html', datos_galpones=datos_galpones)
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
-
-    return render_template('ingresar_reproductores.html')
-
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
