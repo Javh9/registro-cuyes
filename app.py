@@ -179,57 +179,7 @@ def index():
 
 # Otras rutas (ingresar_reproductores, registrar_partos, etc.)...
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
 
-
-
-def index():
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                # Obtener datos de reproductores por galpón y poza
-                cursor.execute('''
-                    SELECT galpon, poza, SUM(hembras + machos) AS total_reproductores
-                    FROM reproductores
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, poza
-                ''')
-                reproductores_por_poza = cursor.fetchall()
-
-                # Obtener datos de nacidos por galpón y poza
-                cursor.execute('''
-                    SELECT galpon, poza, SUM(nacidos) AS total_nacidos
-                    FROM partos
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, poza
-                ''')
-                nacidos_por_poza = cursor.fetchall()
-
-        # Combinar los datos de reproductores y nacidos
-        datos_galpones = {}
-        for row in reproductores_por_poza:
-            galpon = row['galpon']
-            poza = row['poza']
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-            datos_galpones[galpon][poza] = {
-                'reproductores': row['total_reproductores'],
-                'nacidos': 0  # Inicializar nacidos en 0
-            }
-
-        for row in nacidos_por_poza:
-            galpon = row['galpon']
-            poza = row['poza']
-            if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos']
-
-        return render_template('index.html', datos_galpones=datos_galpones)
-    except Exception as e:
-        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))
-    
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
