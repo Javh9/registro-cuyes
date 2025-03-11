@@ -173,8 +173,44 @@ def index():
 
         return render_template('index.html', datos_galpones=datos_galpones)
     except Exception as e:
-        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return render_template('error.html')  # Redirige a una página de error en lugar de a index().
+        error_message = f'Ocurrió un error inesperado: {str(e)}'
+        return render_template('error.html', error_message=error_message)
+# Ruta para ingresar reproductores
+@app.route('/ingresar_reproductores', methods=['GET', 'POST'])
+def ingresar_reproductores():
+    if request.method == 'POST':
+        try:
+            # Obtener datos del formulario
+            galpon = request.form['galpon']
+            poza = request.form['poza']
+            hembras = int(request.form['hembras'])
+            machos = int(request.form['machos'])
+            tiempo_reproductores = int(request.form['tiempo_reproductores'])
+
+            # Validar que los valores sean positivos
+            validate_positive_values(hembras=hembras, machos=machos, tiempo_reproductores=tiempo_reproductores)
+
+            # Insertar datos en la base de datos
+            with get_db_connection() as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                    cursor.execute('''
+                        INSERT INTO reproductores (
+                            galpon, poza, hembras, machos, tiempo_reproductores, fecha_ingreso
+                        ) VALUES (%s, %s, %s, %s, %s, %s)
+                    ''', (galpon, poza, hembras, machos, tiempo_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+
+                    conn.commit()
+                    flash('Reproductores registrados correctamente.', 'success')
+                    return redirect(url_for('index'))
+
+        except ValueError as e:
+            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
+        except psycopg2.Error as e:
+            flash(f'Error en la base de datos: {str(e)}', 'danger')
+        except Exception as e:
+            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+
+    return render_template('ingresar_reproductores.html')
 
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
