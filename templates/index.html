@@ -86,6 +86,14 @@
                 </thead>
                 <tbody>
                     {% for galpon, pozas in datos_galpones.items() %}
+                        <!-- Mostrar totales por galpón -->
+                        <tr class="table-info">
+                            <td colspan="2"><strong>Total Galpón {{ galpon }}</strong></td>
+                            <td><strong>{{ total_reproductores_por_galpon[galpon] }}</strong></td>
+                            <td><strong>{{ total_nacidos_por_galpon[galpon] }}</strong></td>
+                            <td><strong>{{ total_reproductores_por_galpon[galpon] + total_nacidos_por_galpon[galpon] }}</strong></td>
+                        </tr>
+                        <!-- Mostrar datos por poza -->
                         {% for poza, datos in pozas.items() %}
                             <tr>
                                 <td>{{ galpon }}</td>
