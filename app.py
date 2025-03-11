@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 import psycopg2
 from psycopg2 import extras
 from datetime import datetime
 import os
 import pandas as pd
 from urllib.parse import urlparse
-from flask import Response
 import io
 
 # Inicializar la aplicación Flask
@@ -175,10 +174,7 @@ def index():
         return render_template('index.html', datos_galpones=datos_galpones)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))
-
-# Otras rutas (ingresar_reproductores, registrar_partos, etc.)...
-
+        return render_template('error.html')  # Redirige a una página de error en lugar de a index().
 
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
@@ -217,14 +213,13 @@ def registrar_partos():
 
                     conn.commit()
                     flash('Parto registrado correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon, poza_seleccionada=poza)
 
     return render_template('registrar_partos.html', galpones_pozas=galpones_pozas)
 
@@ -263,14 +258,13 @@ def registrar_destete():
 
                     conn.commit()
                     flash('Destete registrado correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpon_seleccionado=galpon, poza_seleccionada=poza)
 
     return render_template('registrar_destete.html', galpones_pozas=galpones_pozas)
 
@@ -304,14 +298,13 @@ def registrar_muertes_destetados():
 
                     conn.commit()
                     flash('Muertes de destetados registradas correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return redirect(url_for('index'))
 
     return render_template('registrar_muertes_destetados.html')
 
@@ -346,14 +339,13 @@ def registrar_ventas_destetados():
 
                     conn.commit()
                     flash('Ventas de destetados registradas correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return redirect(url_for('index'))
 
     return render_template('registrar_ventas_destetados.html')
 
@@ -387,14 +379,13 @@ def registrar_ventas_descarte():
 
                     conn.commit()
                     flash('Ventas de descarte registradas correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return redirect(url_for('index'))
 
     return render_template('registrar_ventas_descarte.html')
 
@@ -419,14 +410,13 @@ def registrar_gastos():
 
                     conn.commit()
                     flash('Gasto registrado correctamente.', 'success')
+                    return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
         except psycopg2.Error as e:
             flash(f'Error en la base de datos: {str(e)}', 'danger')
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-        return redirect(url_for('index'))
 
     return render_template('registrar_gastos.html')
 
@@ -483,7 +473,7 @@ def analisis_datos():
         return render_template('analisis_datos.html', datos=datos, gastos=gastos)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))
+        return render_template('error.html')
 
 # Ruta para ver el balance
 @app.route('/balance')
@@ -509,7 +499,7 @@ def balance():
                              balance=balance)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))
+        return render_template('error.html')
 
 # Ruta para ver resultados
 @app.route('/resultados')
@@ -671,7 +661,8 @@ def resultados():
                              proyeccion_futura=proyeccion_futura)
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return redirect(url_for('index'))  
+        return render_template('error.html')
+
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
@@ -695,14 +686,13 @@ def editar_reproductor(id):
 
                     conn.commit()
                     flash('Reproductor actualizado correctamente.', 'success')
+                    return redirect(url_for('analisis_datos'))
                 except ValueError as e:
                     flash(f'Error en los datos ingresados: {str(e)}', 'danger')
                 except psycopg2.Error as e:
                     flash(f'Error en la base de datos: {str(e)}', 'danger')
                 except Exception as e:
                     flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-                return redirect(url_for('analisis_datos'))
 
             cursor.execute('SELECT * FROM reproductores WHERE id = %s', (id,))
             reproductor = cursor.fetchone()
@@ -742,7 +732,6 @@ def eliminar_todos_los_datos():
     return redirect(url_for('index'))
 
 # Ruta para Exportar a Excel
-
 @app.route('/exportar_excel')
 def exportar_excel():
     try:
