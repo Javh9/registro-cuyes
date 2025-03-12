@@ -144,16 +144,19 @@ def index():
                 ''')
                 reproductores_por_poza = cursor.fetchall()
 
-                # Obtener datos de nacidos por galpón y poza, ordenando las pozas numéricamente
+                # Obtener datos de nacidos y muertos por galpón y poza, ordenando las pozas numéricamente
                 cursor.execute('''
-                    SELECT galpon, poza, SUM(nacidos) AS total_nacidos
-                    FROM partos
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, CAST(poza AS INTEGER)
+                    SELECT p.galpon, p.poza, 
+                           SUM(p.nacidos) AS total_nacidos,
+                           COALESCE(SUM(m.muertos_hembras + m.muertos_machos), 0) AS total_muertos
+                    FROM partos p
+                    LEFT JOIN muertes_destetados m ON p.galpon = m.galpon AND p.poza = m.poza
+                    GROUP BY p.galpon, p.poza
+                    ORDER BY p.galpon, CAST(p.poza AS INTEGER)
                 ''')
-                nacidos_por_poza = cursor.fetchall()
+                nacidos_y_muertos_por_poza = cursor.fetchall()
 
-        # Combinar los datos de reproductores y nacidos
+        # Combinar los datos de reproductores, nacidos y muertos
         datos_galpones = {}
         total_reproductores_por_galpon = {}
         total_nacidos_por_galpon = {}
@@ -168,16 +171,18 @@ def index():
 
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
-                'nacidos': 0  # Inicializar nacidos en 0
+                'nacidos': 0,  # Inicializar nacidos en 0
+                'muertos': 0   # Inicializar muertos en 0
             }
             total_reproductores_por_galpon[galpon] += row['total_reproductores']
 
-        for row in nacidos_por_poza:
+        for row in nacidos_y_muertos_por_poza:
             galpon = row['galpon']
             poza = row['poza']
             if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos']
-                total_nacidos_por_galpon[galpon] += row['total_nacidos']
+                datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos'] - row['total_muertos']
+                datos_galpones[galpon][poza]['muertos'] = row['total_muertos']
+                total_nacidos_por_galpon[galpon] += (row['total_nacidos'] - row['total_muertos'])
 
         return render_template(
             'index.html',

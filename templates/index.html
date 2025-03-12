@@ -81,6 +81,8 @@
                         <th>Poza</th>
                         <th>Reproductores</th>
                         <th>Nacidos</th>
+                        <th>Muertos</th>
+                        <th>Nacidos Netos</th>
                         <th>Total Cuyes</th>
                     </tr>
                 </thead>
@@ -90,6 +92,8 @@
                         <tr class="table-info">
                             <td colspan="2"><strong>Total Galpón {{ galpon }}</strong></td>
                             <td><strong>{{ total_reproductores_por_galpon[galpon] }}</strong></td>
+                            <td><strong>{{ total_nacidos_por_galpon[galpon] + total_muertos_por_galpon[galpon] }}</strong></td>
+                            <td><strong>{{ total_muertos_por_galpon[galpon] }}</strong></td>
                             <td><strong>{{ total_nacidos_por_galpon[galpon] }}</strong></td>
                             <td><strong>{{ total_reproductores_por_galpon[galpon] + total_nacidos_por_galpon[galpon] }}</strong></td>
                         </tr>
@@ -99,6 +103,8 @@
                                 <td>{{ galpon }}</td>
                                 <td>{{ poza }}</td>
                                 <td>{{ datos['reproductores'] }}</td>
+                                <td>{{ datos['nacidos'] + datos['muertos'] }}</td>
+                                <td>{{ datos['muertos'] }}</td>
                                 <td>{{ datos['nacidos'] }}</td>
                                 <td>{{ datos['reproductores'] + datos['nacidos'] }}</td>
                             </tr>
