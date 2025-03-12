@@ -144,15 +144,14 @@ def index():
                 ''')
                 reproductores_por_poza = cursor.fetchall()
 
-                # Obtener datos de nacidos y muertos por galpón y poza
+                # Obtener datos de nacidos y muertos_bebes por galpón y poza
                 cursor.execute('''
-                    SELECT p.galpon, p.poza, 
-                           SUM(p.nacidos) AS total_nacidos,
-                           COALESCE(SUM(m.muertos_hembras + m.muertos_machos), 0) AS total_muertos
-                    FROM partos p
-                    LEFT JOIN muertes_destetados m ON p.galpon = m.galpon AND p.poza = m.poza
-                    GROUP BY p.galpon, p.poza
-                    ORDER BY p.galpon, CAST(p.poza AS INTEGER)
+                    SELECT galpon, poza, 
+                           SUM(nacidos) AS total_nacidos,
+                           SUM(muertos_bebes) AS total_muertos_bebes  -- Incluir muertos_bebes
+                    FROM partos
+                    GROUP BY galpon, poza
+                    ORDER BY galpon, CAST(poza AS INTEGER)
                 ''')
                 nacidos_y_muertos_por_poza = cursor.fetchall()
 
@@ -175,22 +174,23 @@ def index():
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
                 'nacidos': 0,  # Inicializar nacidos en 0
-                'muertos': 0    # Inicializar muertos en 0
+                'muertos': 0   # Inicializar muertos en 0
             }
             total_reproductores_por_galpon[galpon] += row['total_reproductores']
 
-        # Procesar datos de nacidos y muertos
+        # Procesar datos de nacidos y muertos_bebes
         for row in nacidos_y_muertos_por_poza:
             galpon = row['galpon']
             poza = row['poza']
             if galpon in datos_galpones and poza in datos_galpones[galpon]:
                 total_nacidos = int(row['total_nacidos']) if row['total_nacidos'] else 0
-                total_muertos = int(row['total_muertos']) if row['total_muertos'] else 0
+                total_muertos_bebes = int(row['total_muertos_bebes']) if row['total_muertos_bebes'] else 0
 
-                datos_galpones[galpon][poza]['nacidos'] = total_nacidos - total_muertos
-                datos_galpones[galpon][poza]['muertos'] = total_muertos
-                total_nacidos_por_galpon[galpon] += (total_nacidos - total_muertos)
-                total_muertos_por_galpon[galpon] += total_muertos  # Sumar muertos por galpón
+                # Calcular nacidos netos (nacidos - muertos_bebes)
+                datos_galpones[galpon][poza]['nacidos'] = total_nacidos - total_muertos_bebes
+                datos_galpones[galpon][poza]['muertos'] = total_muertos_bebes
+                total_nacidos_por_galpon[galpon] += (total_nacidos - total_muertos_bebes)
+                total_muertos_por_galpon[galpon] += total_muertos_bebes  # Sumar muertos por galpón
 
         # Pasar los datos a la plantilla
         return render_template(
@@ -202,7 +202,8 @@ def index():
         )
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
-        return render_template('error.html', error_message=error_message)  
+        return render_template('error.html', error_message=error_message)
+       
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
