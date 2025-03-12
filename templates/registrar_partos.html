@@ -13,10 +13,8 @@
         <select id="galpon" name="galpon" required>
             <option value="">Seleccione un galpón</option>
             {% for galpon_poza in galpones_pozas %}
-                <!--<option value="{{ galpon_poza['galpon'] }}" {% if galpon_poza['galpon'] == galpon_seleccionado %}selected{% endif %}>
-                    {{ galpon_poza['galpon'] }}-->
-                    <option value="{{ galpon}}">
-                        {{ galpon }}
+                <option value="{{ galpon_poza['galpon'] }}" {% if galpon_poza['galpon'] == galpon_seleccionado %}selected{% endif %}>
+                    {{ galpon_poza['galpon'] }}
                 </option>
             {% endfor %}
         </select>
@@ -25,10 +23,8 @@
         <select id="poza" name="poza" required>
             <option value="">Seleccione una poza</option>
             {% for galpon_poza in galpones_pozas %}
-                 <!--<option value="{{ galpon_poza['poza'] }}" {% if galpon_poza['poza'] == poza_seleccionada %}selected{% endif %}> 
-                    {{ galpon_poza['poza'] }}-->
-                    <option value="{{ poza }}">
-                        {{ poza }}
+                <option value="{{ galpon_poza['poza'] }}" {% if galpon_poza['poza'] == poza_seleccionada %}selected{% endif %}>
+                    {{ galpon_poza['poza'] }}
                 </option>
             {% endfor %}
         </select>

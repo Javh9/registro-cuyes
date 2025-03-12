@@ -246,12 +246,16 @@ def ingresar_reproductores():
 def registrar_partos():
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            # Obtener valores únicos de galpón y poza
+            cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
+            galpones_pozas = cursor.fetchall()
+
             # Obtener valores únicos de galpón
-            cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
+            cursor.execute('SELECT DISTINCT galpon FROM reproductores')
             galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
 
             # Obtener valores únicos de poza
-            cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
+            cursor.execute('SELECT DISTINCT poza FROM reproductores')
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
 
     if request.method == 'POST':
@@ -283,19 +287,23 @@ def registrar_partos():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
-    return render_template('registrar_partos.html', galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
+    return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
 
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            # Obtener valores únicos de galpón y poza
+            cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
+            galpones_pozas = cursor.fetchall()
+
             # Obtener valores únicos de galpón
-            cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
+            cursor.execute('SELECT DISTINCT galpon FROM reproductores')
             galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
 
             # Obtener valores únicos de poza
-            cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
+            cursor.execute('SELECT DISTINCT poza FROM reproductores')
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
 
     if request.method == 'POST':
@@ -325,7 +333,7 @@ def registrar_destete():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
-    return render_template('registrar_destete.html', galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
+    return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
 
 # Ruta para registrar muertes de destetados
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
