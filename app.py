@@ -160,6 +160,7 @@ def index():
         datos_galpones = {}
         total_reproductores_por_galpon = {}
         total_nacidos_por_galpon = {}
+        total_muertos_por_galpon = {}  # Nueva variable para almacenar los muertos por galpón
 
         for row in reproductores_por_poza:
             galpon = row['galpon']
@@ -168,6 +169,7 @@ def index():
                 datos_galpones[galpon] = {}
                 total_reproductores_por_galpon[galpon] = 0
                 total_nacidos_por_galpon[galpon] = 0
+                total_muertos_por_galpon[galpon] = 0  # Inicializar muertos en 0
 
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
@@ -183,12 +185,14 @@ def index():
                 datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos'] - row['total_muertos']
                 datos_galpones[galpon][poza]['muertos'] = row['total_muertos']
                 total_nacidos_por_galpon[galpon] += (row['total_nacidos'] - row['total_muertos'])
+                total_muertos_por_galpon[galpon] += row['total_muertos']  # Sumar muertos por galpón
 
         return render_template(
             'index.html',
             datos_galpones=datos_galpones,
             total_reproductores_por_galpon=total_reproductores_por_galpon,
-            total_nacidos_por_galpon=total_nacidos_por_galpon
+            total_nacidos_por_galpon=total_nacidos_por_galpon,
+            total_muertos_por_galpon=total_muertos_por_galpon  # Pasar la nueva variable a la plantilla
         )
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
