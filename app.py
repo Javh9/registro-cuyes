@@ -135,7 +135,7 @@ def index():
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                # Obtener datos de reproductores por galpón y poza, ordenando las pozas numéricamente
+                # Obtener datos de reproductores por galpón y poza
                 cursor.execute('''
                     SELECT galpon, poza, SUM(hembras + machos) AS total_reproductores
                     FROM reproductores
@@ -144,7 +144,7 @@ def index():
                 ''')
                 reproductores_por_poza = cursor.fetchall()
 
-                # Obtener datos de nacidos y muertos por galpón y poza, ordenando las pozas numéricamente
+                # Obtener datos de nacidos y muertos por galpón y poza
                 cursor.execute('''
                     SELECT p.galpon, p.poza, 
                            SUM(p.nacidos) AS total_nacidos,
@@ -160,7 +160,7 @@ def index():
         datos_galpones = {}
         total_reproductores_por_galpon = {}
         total_nacidos_por_galpon = {}
-        total_muertos_por_galpon = {}  # Nueva variable para almacenar los muertos por galpón
+        total_muertos_por_galpon = {}
 
         for row in reproductores_por_poza:
             galpon = row['galpon']
@@ -169,12 +169,12 @@ def index():
                 datos_galpones[galpon] = {}
                 total_reproductores_por_galpon[galpon] = 0
                 total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0  # Inicializar muertos en 0
+                total_muertos_por_galpon[galpon] = 0
 
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
-                'nacidos': 0,  # Inicializar nacidos en 0
-                'muertos': 0   # Inicializar muertos en 0
+                'nacidos': 0,
+                'muertos': 0
             }
             total_reproductores_por_galpon[galpon] += row['total_reproductores']
 
@@ -182,21 +182,26 @@ def index():
             galpon = row['galpon']
             poza = row['poza']
             if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                datos_galpones[galpon][poza]['nacidos'] = row['total_nacidos'] - row['total_muertos']
-                datos_galpones[galpon][poza]['muertos'] = row['total_muertos']
-                total_nacidos_por_galpon[galpon] += (row['total_nacidos'] - row['total_muertos'])
-                total_muertos_por_galpon[galpon] += row['total_muertos']  # Sumar muertos por galpón
+                # Asegurarse de que los valores sean números válidos
+                total_nacidos = int(row['total_nacidos']) if row['total_nacidos'] else 0
+                total_muertos = int(row['total_muertos']) if row['total_muertos'] else 0
+
+                datos_galpones[galpon][poza]['nacidos'] = total_nacidos - total_muertos
+                datos_galpones[galpon][poza]['muertos'] = total_muertos
+                total_nacidos_por_galpon[galpon] += (total_nacidos - total_muertos)
+                total_muertos_por_galpon[galpon] += total_muertos
 
         return render_template(
             'index.html',
             datos_galpones=datos_galpones,
             total_reproductores_por_galpon=total_reproductores_por_galpon,
             total_nacidos_por_galpon=total_nacidos_por_galpon,
-            total_muertos_por_galpon=total_muertos_por_galpon  # Pasar la nueva variable a la plantilla
+            total_muertos_por_galpon=total_muertos_por_galpon
         )
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
         return render_template('error.html', error_message=error_message)
+    
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
