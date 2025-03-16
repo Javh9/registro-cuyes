@@ -8,6 +8,8 @@
 </head>
 <body>
     <h1>Registrar Partos</h1>
+
+    <!-- Formulario para registrar un nuevo parto -->
     <form method="POST">
         <label for="galpon">Galpón:</label>
         <select id="galpon" name="galpon" required>
@@ -48,15 +50,57 @@
 
     <!-- Botón para buscar partos -->
     <form method="GET" action="{{ url_for('buscar_partos') }}" style="margin-top: 20px;">
-        <input type="hidden" name="galpon" value="{{ request.form.get('galpon', '') }}">
-        <input type="hidden" name="poza" value="{{ request.form.get('poza', '') }}">
+        <label for="galpon_buscar">Galpón:</label>
+        <select id="galpon_buscar" name="galpon" required>
+            <option value="">Seleccione un galpón</option>
+            {% for galpon in galpones_unicos %}
+                <option value="{{ galpon }}">{{ galpon }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="poza_buscar">Poza:</label>
+        <select id="poza_buscar" name="poza" required>
+            <option value="">Seleccione una poza</option>
+            {% for poza in pozas_unicas %}
+                <option value="{{ poza }}">{{ poza }}</option>
+            {% endfor %}
+        </select>
+
         <button type="submit">Buscar Partos</button>
     </form>
 
-    <!-- Botón para editar partos -->
-    <form method="GET" action="{{ url_for('editar_parto') }}" style="margin-top: 20px;">
-        <button type="submit">Editar Parto</button>
-    </form>
+    <!-- Tabla para mostrar partos existentes -->
+    <h2>Partos Existentes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Número de Parto</th>
+                <th>Nacidos</th>
+                <th>Muertos Bebés</th>
+                <th>Muertos Reproductores</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for parto in partos_existentes %}
+                <tr>
+                    <td>{{ parto.galpon }}</td>
+                    <td>{{ parto.poza }}</td>
+                    <td>{{ parto.numero_parto }}</td>
+                    <td>{{ parto.nacidos }}</td>
+                    <td>{{ parto.muertos_bebes }}</td>
+                    <td>{{ parto.muertos_reproductores }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_parto', id=parto.id) }}">
+                            <button>Editar</button>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <!-- Botón para regresar al inicio -->
     <a href="{{ url_for('index') }}" style="margin-top: 20px; display: inline-block;">
