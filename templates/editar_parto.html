@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Parto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Editar Parto</h1>
+    <form method="POST">
+        <label for="galpon">Galpón:</label>
+        <input type="text" id="galpon" name="galpon" value="{{ parto.galpon }}" required>
+
+        <label for="poza">Poza:</label>
+        <input type="text" id="poza" name="poza" value="{{ parto.poza }}" required>
+
+        <label for="numero_parto">Número de Parto:</label>
+        <input type="number" id="numero_parto" name="numero_parto" value="{{ parto.numero_parto }}" required>
+
+        <label for="nacidos">Nacidos:</label>
+        <input type="number" id="nacidos" name="nacidos" value="{{ parto.nacidos }}" required>
+
+        <label for="muertos_bebes">Muertos Bebés:</label>
+        <input type="number" id="muertos_bebes" name="muertos_bebes" value="{{ parto.muertos_bebes }}" required>
+
+        <label for="muertos_reproductores">Muertos Reproductores:</label>
+        <input type="number" id="muertos_reproductores" name="muertos_reproductores" value="{{ parto.muertos_reproductores }}" required>
+
+        <button type="submit">Actualizar Parto</button>
+    </form>
+    <a href="{{ url_for('registrar_partos') }}" style="margin-top: 20px; display: inline-block;">
+        <button>Regresar a Registrar Partos</button>
+    </a>
+</body>
+</html>

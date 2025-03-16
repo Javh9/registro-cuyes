@@ -242,6 +242,13 @@ def ingresar_reproductores():
     return render_template('ingresar_reproductores.html')
 
 # Ruta para registrar partos
+# Función para validar valores positivos
+def validate_positive_values(**kwargs):
+    for key, value in kwargs.items():
+        if value < 0:
+            raise ValueError(f"{key} no puede ser negativo")
+
+# Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
 def registrar_partos():
     with get_db_connection() as conn:
@@ -257,6 +264,10 @@ def registrar_partos():
             # Obtener valores únicos de poza
             cursor.execute('SELECT DISTINCT poza FROM reproductores')
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
+
+            # Obtener partos existentes
+            cursor.execute('SELECT DISTINCT numero_parto FROM partos')
+            partos_existentes = cursor.fetchall()
 
     if request.method == 'POST':
         try:
@@ -287,7 +298,65 @@ def registrar_partos():
         except Exception as e:
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
-    return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
+    return render_template('registrar_partos.html', galpones_pozas=galpones_pozas, galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas, partos_existentes=partos_existentes)
+
+# Ruta para buscar partos
+@app.route('/buscar_partos', methods=['GET'])
+def buscar_partos():
+    galpon = request.args.get('galpon')
+    poza = request.args.get('poza')
+
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            cursor.execute('''
+                SELECT * FROM partos
+                WHERE galpon = %s AND poza = %s
+            ''', (galpon, poza))
+            partos = cursor.fetchall()
+
+    return render_template('buscar_partos.html', partos=partos)
+
+# Ruta para editar partos
+@app.route('/editar_parto/<int:id>', methods=['GET', 'POST'])
+def editar_parto(id):
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            if request.method == 'POST':
+                try:
+                    galpon = request.form['galpon']
+                    poza = request.form['poza']
+                    numero_parto = int(request.form['numero_parto'])
+                    nacidos = int(request.form['nacidos'])
+                    muertos_bebes = int(request.form['muertos_bebes'])
+                    muertos_reproductores = int(request.form['muertos_reproductores'])
+
+                    validate_positive_values(numero_parto=numero_parto, nacidos=nacidos, muertos_bebes=muertos_bebes, muertos_reproductores=muertos_reproductores)
+
+                    cursor.execute('''
+                        UPDATE partos
+                        SET galpon = %s, poza = %s, numero_parto = %s, nacidos = %s, muertos_bebes = %s, muertos_reproductores = %s
+                        WHERE id = %s
+                    ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, id))
+
+                    conn.commit()
+                    flash('Parto actualizado correctamente.', 'success')
+                    return redirect(url_for('index'))
+                except ValueError as e:
+                    flash(f'Error en los datos ingresados: {str(e)}', 'danger')
+                except psycopg2.Error as e:
+                    flash(f'Error en la base de datos: {str(e)}', 'danger')
+                except Exception as e:
+                    flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+
+            cursor.execute('SELECT * FROM partos WHERE id = %s', (id,))
+            parto = cursor.fetchone()
+
+    if parto is None:
+        flash('Parto no encontrado.', 'danger')
+        return redirect(url_for('index'))
+
+    return render_template('editar_parto.html', parto=parto)
+
 
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])

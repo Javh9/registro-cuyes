@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Partos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Resultados de la Búsqueda</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Galpón</th>
+                <th>Poza</th>
+                <th>Número de Parto</th>
+                <th>Nacidos</th>
+                <th>Muertos Bebés</th>
+                <th>Muertos Reproductores</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for parto in partos %}
+                <tr>
+                    <td>{{ parto.galpon }}</td>
+                    <td>{{ parto.poza }}</td>
+                    <td>{{ parto.numero_parto }}</td>
+                    <td>{{ parto.nacidos }}</td>
+                    <td>{{ parto.muertos_bebes }}</td>
+                    <td>{{ parto.muertos_reproductores }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('registrar_partos') }}" style="margin-top: 20px; display: inline-block;">
+        <button>Regresar a Registrar Partos</button>
+    </a>
+</body>
+</html>
