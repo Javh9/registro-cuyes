@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscar Partos</title>
+    <title>Resultados de Búsqueda</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Resultados de la Búsqueda</h1>
+    <h1>Resultados de Búsqueda</h1>
     <table>
         <thead>
             <tr>
@@ -17,6 +17,7 @@
                 <th>Nacidos</th>
                 <th>Muertos Bebés</th>
                 <th>Muertos Reproductores</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -28,6 +29,9 @@
                     <td>{{ parto.nacidos }}</td>
                     <td>{{ parto.muertos_bebes }}</td>
                     <td>{{ parto.muertos_reproductores }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_parto', id=parto.id) }}">Editar</a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>

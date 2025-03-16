@@ -305,6 +305,7 @@ def registrar_partos():
 def buscar_partos():
     galpon = request.args.get('galpon')
     poza = request.args.get('poza')
+    print(f"Buscando partos para galpón: {galpon}, poza: {poza}")  # Depuración
 
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
@@ -313,12 +314,14 @@ def buscar_partos():
                 WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             partos = cursor.fetchall()
+            print(f"Partos encontrados: {partos}")  # Depuración
 
     return render_template('buscar_partos.html', partos=partos)
 
 # Ruta para editar partos
 @app.route('/editar_parto/<int:id>', methods=['GET', 'POST'])
 def editar_parto(id):
+    print(f"Editando parto con ID: {id}")  # Depuración
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if request.method == 'POST':
@@ -350,13 +353,13 @@ def editar_parto(id):
 
             cursor.execute('SELECT * FROM partos WHERE id = %s', (id,))
             parto = cursor.fetchone()
+            print(f"Parto encontrado: {parto}")  # Depuración
 
     if parto is None:
         flash('Parto no encontrado.', 'danger')
         return redirect(url_for('index'))
 
     return render_template('editar_parto.html', parto=parto)
-
 
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
