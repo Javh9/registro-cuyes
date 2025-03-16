@@ -330,7 +330,6 @@ def buscar_partos():
 def buscar_partos():
     galpon = request.args.get('galpon')
     poza = request.args.get('poza')
-    print(f"Buscando partos para galpón: {galpon}, poza: {poza}")  # Depuración
 
     with get_db_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
@@ -339,7 +338,6 @@ def buscar_partos():
                 WHERE galpon = %s AND poza = %s
             ''', (galpon, poza))
             partos = cursor.fetchall()
-            print(f"Partos encontrados: {partos}")  # Depuración
 
     return render_template('buscar_partos.html', partos=partos)
 
