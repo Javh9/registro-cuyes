@@ -8,6 +8,8 @@
 </head>
 <body>
     <h1>Resultados de Búsqueda</h1>
+
+    <!-- Tabla para mostrar partos encontrados -->
     <table>
         <thead>
             <tr>
@@ -30,12 +32,16 @@
                     <td>{{ parto.muertos_bebes }}</td>
                     <td>{{ parto.muertos_reproductores }}</td>
                     <td>
-                        <a href="{{ url_for('editar_parto', id=parto.id) }}">Editar</a>
+                        <a href="{{ url_for('editar_parto', id=parto.id) }}">
+                            <button>Editar</button>
+                        </a>
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Botón para regresar a registrar partos -->
     <a href="{{ url_for('registrar_partos') }}" style="margin-top: 20px; display: inline-block;">
         <button>Regresar a Registrar Partos</button>
     </a>

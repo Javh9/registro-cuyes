@@ -265,17 +265,66 @@ def registrar_partos():
             cursor.execute('SELECT DISTINCT poza FROM reproductores')
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
 
-            # Obtener partos existentes
-            cursor.execute('SELECT * FROM partos')
-            partos_existentes = cursor.fetchall()
+    if request.method == 'POST':
+        try:
+            galpon = request.form['galpon']
+            poza = request.form['poza']
+            numero_parto = int(request.form['numero_parto'])
+            nacidos = int(request.form['nacidos'])
+            muertos_bebes = int(request.form['muertos_bebes'])
+            muertos_reproductores = int(request.form['muertos_reproductores'])
+
+            # Validar que el número de parto no esté repetido para el galpón y poza
+            with get_db_connection() as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                    cursor.execute('''
+                        SELECT id FROM partos
+                        WHERE galpon = %s AND poza = %s AND numero_parto = %s
+                    ''', (galpon, poza, numero_parto))
+                    if cursor.fetchone():
+                        flash('El número de parto ya existe para este galpón y poza.', 'danger')
+                        return redirect(url_for('registrar_partos'))
+
+            # Insertar el nuevo parto
+            with get_db_connection() as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                    cursor.execute('''
+                        INSERT INTO partos (
+                            galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+
+                    conn.commit()
+                    flash('Parto registrado correctamente.', 'success')
+                    return redirect(url_for('registrar_partos'))
+        except ValueError as e:
+            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
+        except psycopg2.Error as e:
+            flash(f'Error en la base de datos: {str(e)}', 'danger')
+        except Exception as e:
+            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
     return render_template(
         'registrar_partos.html',
         galpones_pozas=galpones_pozas,
         galpones_unicos=galpones_unicos,
-        pozas_unicas=pozas_unicas,
-        partos_existentes=partos_existentes  # Pasar los partos existentes a la plantilla
+        pozas_unicas=pozas_unicas
     )
+
+@app.route('/buscar_partos', methods=['GET'])
+def buscar_partos():
+    galpon = request.args.get('galpon')
+    poza = request.args.get('poza')
+
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            cursor.execute('''
+                SELECT * FROM partos
+                WHERE galpon = %s AND poza = %s
+            ''', (galpon, poza))
+            partos = cursor.fetchall()
+
+    return render_template('buscar_partos.html', partos=partos)
 # Ruta para buscar partos
 @app.route('/buscar_partos', methods=['GET'])
 def buscar_partos():
