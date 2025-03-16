@@ -310,21 +310,6 @@ def registrar_partos():
         galpones_unicos=galpones_unicos,
         pozas_unicas=pozas_unicas
     )
-
-@app.route('/buscar_partos', methods=['GET'])
-def buscar_partos():
-    galpon = request.args.get('galpon')
-    poza = request.args.get('poza')
-
-    with get_db_connection() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-            cursor.execute('''
-                SELECT * FROM partos
-                WHERE galpon = %s AND poza = %s
-            ''', (galpon, poza))
-            partos = cursor.fetchall()
-
-    return render_template('buscar_partos.html', partos=partos)
 # Ruta para buscar partos
 @app.route('/buscar_partos', methods=['GET'])
 def buscar_partos():
@@ -340,6 +325,7 @@ def buscar_partos():
             partos = cursor.fetchall()
 
     return render_template('buscar_partos.html', partos=partos)
+
 
 # Ruta para editar partos
 @app.route('/editar_parto/<int:id>', methods=['GET', 'POST'])
