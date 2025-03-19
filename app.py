@@ -510,8 +510,6 @@ def registrar_muertes_destetados():
 def registrar_ventas_destetados():
     if request.method == 'POST':
         try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
             hembras_vendidas = int(request.form['hembras_vendidas'])
             machos_vendidos = int(request.form['machos_vendidos'])
             costo_venta = float(request.form['costo_venta'])
@@ -528,9 +526,9 @@ def registrar_ventas_destetados():
                     # Insertar datos en la base de datos
                     cursor.execute('''
                         INSERT INTO ventas_destetados (
-                            galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ''', (galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                            hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
+                        ) VALUES (%s, %s, %s, %s)
+                    ''', (hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
                     conn.commit()
                     flash('Venta de destetados registrada correctamente.', 'success')
