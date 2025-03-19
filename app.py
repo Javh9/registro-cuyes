@@ -526,9 +526,9 @@ def registrar_ventas_destetados():
                     # Insertar datos en la base de datos
                     cursor.execute('''
                         INSERT INTO ventas_destetados (
-                            hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s)
-                    ''', (hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                            galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
+                        ) VALUES (%s, %s, %s, %s, %s, %s)
+                    ''', ('N/A', 'N/A', hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
                     conn.commit()
                     flash('Venta de destetados registrada correctamente.', 'success')
