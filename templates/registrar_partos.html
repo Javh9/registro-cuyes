@@ -42,28 +42,6 @@
         <button type="submit">Registrar Parto</button>
     </form>
 
-    <!-- Formulario para buscar partos -->
-    <h2>Buscar Partos</h2>
-    <form method="GET" action="{{ url_for('buscar_partos') }}">
-        <label for="galpon_buscar">Galpón:</label>
-        <select id="galpon_buscar" name="galpon" required>
-            <option value="">Seleccione un galpón</option>
-            {% for galpon in galpones_unicos %}
-                <option value="{{ galpon }}">{{ galpon }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="poza_buscar">Poza:</label>
-        <select id="poza_buscar" name="poza" required>
-            <option value="">Seleccione una poza</option>
-            {% for poza in pozas_unicas %}
-                <option value="{{ poza }}">{{ poza }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Buscar Partos</button>
-    </form>
-
     <!-- Botón para regresar al inicio -->
     <a href="{{ url_for('index') }}" style="margin-top: 20px; display: inline-block;">
         <button>Regresar al Inicio</button>

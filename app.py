@@ -274,25 +274,31 @@ def registrar_partos():
             muertos_bebes = int(request.form['muertos_bebes'])
             muertos_reproductores = int(request.form['muertos_reproductores'])
 
-            # Validar que el número de parto no esté repetido para el galpón y poza
             with get_db_connection() as conn:
                 with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                    # Verificar si el parto ya existe
                     cursor.execute('''
                         SELECT id FROM partos
                         WHERE galpon = %s AND poza = %s AND numero_parto = %s
                     ''', (galpon, poza, numero_parto))
-                    if cursor.fetchone():
-                        flash('El número de parto ya existe para este galpón y poza.', 'danger')
-                        return redirect(url_for('registrar_partos'))
+                    parto_existente = cursor.fetchone()
 
-            # Insertar el nuevo parto
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    cursor.execute('''
-                        INSERT INTO partos (
-                            galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                    if parto_existente:
+                        # Si el parto ya existe, actualizar los valores
+                        cursor.execute('''
+                            UPDATE partos
+                            SET nacidos = nacidos + %s,
+                                muertos_bebes = muertos_bebes + %s,
+                                muertos_reproductores = muertos_reproductores + %s
+                            WHERE id = %s
+                        ''', (nacidos, muertos_bebes, muertos_reproductores, parto_existente['id']))
+                    else:
+                        # Si el parto no existe, insertar un nuevo registro
+                        cursor.execute('''
+                            INSERT INTO partos (
+                                galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
                     conn.commit()
                     flash('Parto registrado correctamente.', 'success')
