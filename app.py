@@ -148,18 +148,28 @@ def index():
                 cursor.execute('''
                     SELECT galpon, poza, 
                            SUM(nacidos) AS total_nacidos,
-                           SUM(muertos_bebes) AS total_muertos_bebes  -- Incluir muertos_bebes
+                           SUM(muertos_bebes) AS total_muertos_bebes
                     FROM partos
                     GROUP BY galpon, poza
                     ORDER BY galpon, CAST(poza AS INTEGER)
                 ''')
                 nacidos_y_muertos_por_poza = cursor.fetchall()
 
+                # Obtener datos de destetes por galpón y poza
+                cursor.execute('''
+                    SELECT galpon, poza, 
+                           SUM(destetados_hembras + destetados_machos) AS total_destetados
+                    FROM destetes
+                    GROUP BY galpon, poza
+                    ORDER BY galpon, CAST(poza AS INTEGER)
+                ''')
+                destetes_por_poza = cursor.fetchall()
+
         # Inicializar estructuras de datos
         datos_galpones = {}
         total_reproductores_por_galpon = {}
         total_nacidos_por_galpon = {}
-        total_muertos_por_galpon = {}  # Inicializar la variable para muertos por galpón
+        total_muertos_por_galpon = {}
 
         # Procesar datos de reproductores
         for row in reproductores_por_poza:
@@ -169,7 +179,7 @@ def index():
                 datos_galpones[galpon] = {}
                 total_reproductores_por_galpon[galpon] = 0
                 total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0  # Inicializar muertos en 0
+                total_muertos_por_galpon[galpon] = 0
 
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
@@ -190,7 +200,18 @@ def index():
                 datos_galpones[galpon][poza]['nacidos'] = total_nacidos - total_muertos_bebes
                 datos_galpones[galpon][poza]['muertos'] = total_muertos_bebes
                 total_nacidos_por_galpon[galpon] += (total_nacidos - total_muertos_bebes)
-                total_muertos_por_galpon[galpon] += total_muertos_bebes  # Sumar muertos por galpón
+                total_muertos_por_galpon[galpon] += total_muertos_bebes
+
+        # Procesar datos de destetes
+        for row in destetes_por_poza:
+            galpon = row['galpon']
+            poza = row['poza']
+            if galpon in datos_galpones and poza in datos_galpones[galpon]:
+                total_destetados = int(row['total_destetados']) if row['total_destetados'] else 0
+
+                # Restar destetados a los nacidos netos
+                datos_galpones[galpon][poza]['nacidos'] -= total_destetados
+                total_nacidos_por_galpon[galpon] -= total_destetados
 
         # Pasar los datos a la plantilla
         return render_template(
@@ -198,12 +219,11 @@ def index():
             datos_galpones=datos_galpones,
             total_reproductores_por_galpon=total_reproductores_por_galpon,
             total_nacidos_por_galpon=total_nacidos_por_galpon,
-            total_muertos_por_galpon=total_muertos_por_galpon  # Pasar la variable a la plantilla
+            total_muertos_por_galpon=total_muertos_por_galpon
         )
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
-        return render_template('error.html', error_message=error_message)
-       
+        return render_template('error.html', error_message=error_message)        
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
