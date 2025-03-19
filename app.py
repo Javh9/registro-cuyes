@@ -184,7 +184,8 @@ def index():
             datos_galpones[galpon][poza] = {
                 'reproductores': row['total_reproductores'],
                 'nacidos': 0,  # Inicializar nacidos en 0
-                'muertos': 0   # Inicializar muertos en 0
+                'muertos': 0,  # Inicializar muertos en 0
+                'destetados': 0  # Inicializar destetados en 0
             }
             total_reproductores_por_galpon[galpon] += row['total_reproductores']
 
@@ -211,6 +212,7 @@ def index():
 
                 # Restar destetados a los nacidos netos
                 datos_galpones[galpon][poza]['nacidos'] -= total_destetados
+                datos_galpones[galpon][poza]['destetados'] = total_destetados
                 total_nacidos_por_galpon[galpon] -= total_destetados
 
         # Pasar los datos a la plantilla
@@ -223,7 +225,7 @@ def index():
         )
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
-        return render_template('error.html', error_message=error_message)        
+        return render_template('error.html', error_message=error_message)
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
