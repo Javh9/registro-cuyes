@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Partos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function prepararBusqueda() {
+            // Desactivar la validación de los campos adicionales
+            document.getElementById('numero_parto').required = false;
+            document.getElementById('nacidos').required = false;
+            document.getElementById('muertos_bebes').required = false;
+            document.getElementById('muertos_reproductores').required = false;
+            return true; // Continuar con el envío del formulario
+        }
+    </script>
 </head>
 <body>
     <h1>Registrar Partos</h1>
@@ -41,7 +51,7 @@
 
         <!-- Botones para registrar o buscar -->
         <button type="submit" name="action" value="registrar">Registrar Parto</button>
-        <button type="submit" name="action" value="buscar">Buscar Partos</button>
+        <button type="submit" name="action" value="buscar" onclick="return prepararBusqueda()">Buscar Partos</button>
     </form>
 
     <!-- Botón para regresar al inicio -->

@@ -269,13 +269,14 @@ def registrar_partos():
         action = request.form.get('action')  # Obtener la acción (registrar o buscar)
         galpon = request.form['galpon']
         poza = request.form['poza']
-        numero_parto = int(request.form['numero_parto'])
-        nacidos = int(request.form['nacidos'])
-        muertos_bebes = int(request.form['muertos_bebes'])
-        muertos_reproductores = int(request.form['muertos_reproductores'])
 
         if action == 'registrar':
             try:
+                numero_parto = int(request.form['numero_parto'])
+                nacidos = int(request.form['nacidos'])
+                muertos_bebes = int(request.form['muertos_bebes'])
+                muertos_reproductores = int(request.form['muertos_reproductores'])
+
                 with get_db_connection() as conn:
                     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                         # Verificar si el parto ya existe
