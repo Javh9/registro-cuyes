@@ -266,49 +266,69 @@ def registrar_partos():
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
 
     if request.method == 'POST':
-        try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            numero_parto = int(request.form['numero_parto'])
-            nacidos = int(request.form['nacidos'])
-            muertos_bebes = int(request.form['muertos_bebes'])
-            muertos_reproductores = int(request.form['muertos_reproductores'])
+        action = request.form.get('action')  # Obtener la acción (registrar o buscar)
+        galpon = request.form['galpon']
+        poza = request.form['poza']
+        numero_parto = int(request.form['numero_parto'])
+        nacidos = int(request.form['nacidos'])
+        muertos_bebes = int(request.form['muertos_bebes'])
+        muertos_reproductores = int(request.form['muertos_reproductores'])
 
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    # Verificar si el parto ya existe
-                    cursor.execute('''
-                        SELECT id FROM partos
-                        WHERE galpon = %s AND poza = %s AND numero_parto = %s
-                    ''', (galpon, poza, numero_parto))
-                    parto_existente = cursor.fetchone()
-
-                    if parto_existente:
-                        # Si el parto ya existe, actualizar los valores
+        if action == 'registrar':
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                        # Verificar si el parto ya existe
                         cursor.execute('''
-                            UPDATE partos
-                            SET nacidos = nacidos + %s,
-                                muertos_bebes = muertos_bebes + %s,
-                                muertos_reproductores = muertos_reproductores + %s
-                            WHERE id = %s
-                        ''', (nacidos, muertos_bebes, muertos_reproductores, parto_existente['id']))
-                    else:
-                        # Si el parto no existe, insertar un nuevo registro
-                        cursor.execute('''
-                            INSERT INTO partos (
-                                galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                            SELECT id FROM partos
+                            WHERE galpon = %s AND poza = %s AND numero_parto = %s
+                        ''', (galpon, poza, numero_parto))
+                        parto_existente = cursor.fetchone()
 
-                    conn.commit()
-                    flash('Parto registrado correctamente.', 'success')
-                    return redirect(url_for('registrar_partos'))
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
-        except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+                        if parto_existente:
+                            # Si el parto ya existe, actualizar los valores
+                            cursor.execute('''
+                                UPDATE partos
+                                SET nacidos = nacidos + %s,
+                                    muertos_bebes = muertos_bebes + %s,
+                                    muertos_reproductores = muertos_reproductores + %s
+                                WHERE id = %s
+                            ''', (nacidos, muertos_bebes, muertos_reproductores, parto_existente['id']))
+                        else:
+                            # Si el parto no existe, insertar un nuevo registro
+                            cursor.execute('''
+                                INSERT INTO partos (
+                                    galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, fecha_nacimiento
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            ''', (galpon, poza, numero_parto, nacidos, muertos_bebes, muertos_reproductores, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+
+                        conn.commit()
+                        flash('Parto registrado correctamente.', 'success')
+                        return redirect(url_for('registrar_partos'))
+            except ValueError as e:
+                flash(f'Error en los datos ingresados: {str(e)}', 'danger')
+            except psycopg2.Error as e:
+                flash(f'Error en la base de datos: {str(e)}', 'danger')
+            except Exception as e:
+                flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+
+        elif action == 'buscar':
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                        # Buscar partos existentes
+                        cursor.execute('''
+                            SELECT * FROM partos
+                            WHERE galpon = %s AND poza = %s
+                        ''', (galpon, poza))
+                        partos = cursor.fetchall()
+
+                        if partos:
+                            return render_template('buscar_partos.html', partos=partos)
+                        else:
+                            flash('No se encontraron partos para el galpón y poza seleccionados.', 'warning')
+            except Exception as e:
+                flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
     return render_template(
         'registrar_partos.html',

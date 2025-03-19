@@ -9,8 +9,8 @@
 <body>
     <h1>Registrar Partos</h1>
 
-    <!-- Formulario para registrar un nuevo parto o agregar nacidos a un parto existente -->
-    <form method="POST">
+    <!-- Formulario único para registrar y buscar partos -->
+    <form method="POST" action="{{ url_for('registrar_partos') }}">
         <label for="galpon">Galpón:</label>
         <select id="galpon" name="galpon" required>
             <option value="">Seleccione un galpón</option>
@@ -39,28 +39,9 @@
         <label for="muertos_reproductores">Muertos Reproductores:</label>
         <input type="number" id="muertos_reproductores" name="muertos_reproductores" required>
 
-        <button type="submit">Registrar Parto</button>
-    </form>
-
-    <!-- Botón para buscar partos -->
-    <form method="GET" action="{{ url_for('buscar_partos') }}" style="margin-top: 20px;">
-        <label for="galpon_buscar">Galpón:</label>
-        <select id="galpon_buscar" name="galpon" required>
-            <option value="">Seleccione un galpón</option>
-            {% for galpon in galpones_unicos %}
-                <option value="{{ galpon }}">{{ galpon }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="poza_buscar">Poza:</label>
-        <select id="poza_buscar" name="poza" required>
-            <option value="">Seleccione una poza</option>
-            {% for poza in pozas_unicas %}
-                <option value="{{ poza }}">{{ poza }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Buscar Partos</button>
+        <!-- Botones para registrar o buscar -->
+        <button type="submit" name="action" value="registrar">Registrar Parto</button>
+        <button type="submit" name="action" value="buscar">Buscar Partos</button>
     </form>
 
     <!-- Botón para regresar al inicio -->
