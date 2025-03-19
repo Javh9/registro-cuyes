@@ -516,18 +516,16 @@ def registrar_ventas_destetados():
             machos_vendidos = int(request.form['machos_vendidos'])
             costo_venta = float(request.form['costo_venta'])
 
-            validate_positive_values(hembras_vendidas=hembras_vendidas, machos_vendidos=machos_vendidos, costo_venta=costo_venta)
+            # Validar que los valores sean positivos
+            validate_positive_values(
+                hembras_vendidas=hembras_vendidas,
+                machos_vendidos=machos_vendidos,
+                costo_venta=costo_venta
+            )
 
             with get_db_connection() as conn:
                 with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    cursor.execute('''
-                        SELECT id FROM reproductores
-                        WHERE galpon = %s AND poza = %s
-                    ''', (galpon, poza))
-                    if not cursor.fetchone():
-                        flash('El galpón y la poza no están registrados.', 'danger')
-                        return redirect(url_for('registrar_ventas_destetados'))
-
+                    # Insertar datos en la base de datos
                     cursor.execute('''
                         INSERT INTO ventas_destetados (
                             galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
@@ -535,7 +533,7 @@ def registrar_ventas_destetados():
                     ''', (galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
                     conn.commit()
-                    flash('Ventas de destetados registradas correctamente.', 'success')
+                    flash('Venta de destetados registrada correctamente.', 'success')
                     return redirect(url_for('index'))
         except ValueError as e:
             flash(f'Error en los datos ingresados: {str(e)}', 'danger')
