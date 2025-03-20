@@ -6,11 +6,92 @@ import os
 import pandas as pd
 from urllib.parse import urlparse
 import io
+from sklearn.linear_model import LinearRegression
+import pandas as pd
+import numpy as np
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
 
+from sklearn.linear_model import LinearRegression
+import pandas as pd
+import numpy as np
+
+def entrenar_modelos():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener datos históricos de mortalidad
+                cursor.execute('''
+                    SELECT 
+                        TO_CHAR(TO_DATE(fecha_muerte, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
+                        SUM(muertos_hembras + muertos_machos) AS total_muertes
+                    FROM muertes_destetados
+                    WHERE fecha_muerte IS NOT NULL
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                mortalidad_data = cursor.fetchall()
+
+                # Obtener datos históricos de nacimientos
+                cursor.execute('''
+                    SELECT 
+                        TO_CHAR(TO_DATE(fecha_nacimiento, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
+                        SUM(nacidos) AS total_nacidos
+                    FROM partos
+                    WHERE fecha_nacimiento IS NOT NULL
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                nacimientos_data = cursor.fetchall()
+
+                # Obtener datos históricos de ganancias
+                cursor.execute('''
+                    SELECT 
+                        TO_CHAR(TO_DATE(fecha_venta, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
+                        SUM(costo_venta) AS total_ganancias
+                    FROM ventas_destetados
+                    WHERE fecha_venta IS NOT NULL
+                    GROUP BY mes
+                    ORDER BY mes
+                ''')
+                ganancias_data = cursor.fetchall()
+
+        # Convertir a DataFrames de Pandas
+        df_mortalidad = pd.DataFrame(mortalidad_data, columns=['mes', 'total_muertes'])
+        df_nacimientos = pd.DataFrame(nacimientos_data, columns=['mes', 'total_nacidos'])
+        df_ganancias = pd.DataFrame(ganancias_data, columns=['mes', 'total_ganancias'])
+
+        # Convertir fechas a formato numérico (meses desde el inicio)
+        df_mortalidad['mes_num'] = (pd.to_datetime(df_mortalidad['mes']) - pd.to_datetime(df_mortalidad['mes'].min())).dt.days / 30
+        df_nacimientos['mes_num'] = (pd.to_datetime(df_nacimientos['mes']) - pd.to_datetime(df_nacimientos['mes'].min())).dt.days / 30
+        df_ganancias['mes_num'] = (pd.to_datetime(df_ganancias['mes']) - pd.to_datetime(df_ganancias['mes'].min())).dt.days / 30
+
+        # Entrenar modelo de mortalidad
+        X_mortalidad = df_mortalidad[['mes_num']]
+        y_mortalidad = df_mortalidad['total_muertes']
+        modelo_mortalidad = LinearRegression()
+        modelo_mortalidad.fit(X_mortalidad, y_mortalidad)
+
+        # Entrenar modelo de nacimientos
+        X_nacimientos = df_nacimientos[['mes_num']]
+        y_nacimientos = df_nacimientos['total_nacidos']
+        modelo_nacimientos = LinearRegression()
+        modelo_nacimientos.fit(X_nacimientos, y_nacimientos)
+
+        # Entrenar modelo de ganancias
+        X_ganancias = df_ganancias[['mes_num']]
+        y_ganancias = df_ganancias['total_ganancias']
+        modelo_ganancias = LinearRegression()
+        modelo_ganancias.fit(X_ganancias, y_ganancias)
+
+        return modelo_mortalidad, modelo_nacimientos, modelo_ganancias
+
+    except Exception as e:
+        print(f"Error al entrenar los modelos: {str(e)}")
+        return None, None, None
+    
 # Función para obtener la conexión a la base de datos
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
@@ -997,6 +1078,49 @@ def exportar_excel():
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
 
+# Ruta para predicciones
+@app.route('/predicciones', methods=['GET', 'POST'])
+def predicciones():
+    if request.method == 'POST':
+        try:
+            # Obtener el número de meses a predecir desde el formulario
+            meses_a_predecir = int(request.form['meses_a_predecir'])
+
+            # Entrenar los modelos
+            modelo_mortalidad, modelo_nacimientos, modelo_ganancias = entrenar_modelos()
+
+            if modelo_mortalidad is None or modelo_nacimientos is None or modelo_ganancias is None:
+                flash('Error al entrenar los modelos predictivos.', 'danger')
+                return redirect(url_for('predicciones'))
+
+            # Crear fechas futuras para la predicción
+            ultima_fecha = pd.to_datetime('now')  # Fecha actual
+            fechas_futuras = pd.date_range(start=ultima_fecha, periods=meses_a_predecir, freq='M')
+            meses_futuros = (fechas_futuras - fechas_futuras.min()).days / 30
+
+            # Realizar predicciones
+            predicciones_mortalidad = modelo_mortalidad.predict(meses_futuros.reshape(-1, 1))
+            predicciones_nacimientos = modelo_nacimientos.predict(meses_futuros.reshape(-1, 1))
+            predicciones_ganancias = modelo_ganancias.predict(meses_futuros.reshape(-1, 1))
+
+            # Crear un DataFrame con las predicciones
+            df_predicciones = pd.DataFrame({
+                'mes': fechas_futuras.strftime('%Y-%m'),
+                'prediccion_mortalidad': predicciones_mortalidad,
+                'prediccion_nacimientos': predicciones_nacimientos,
+                'prediccion_ganancias': predicciones_ganancias
+            })
+
+            # Convertir el DataFrame a una lista de diccionarios para la plantilla
+            predicciones = df_predicciones.to_dict('records')
+
+            return render_template('predicciones.html', predicciones=predicciones)
+
+        except Exception as e:
+            flash(f'Ocurrió un error al realizar las predicciones: {str(e)}', 'danger')
+            return redirect(url_for('predicciones'))
+
+    return render_template('predicciones.html')
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

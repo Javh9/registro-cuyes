@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicciones</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Predicciones</h1>
+
+        <!-- Formulario para ingresar el número de meses a predecir -->
+        <form method="POST" action="{{ url_for('predicciones') }}">
+            <div class="form-group">
+                <label for="meses_a_predecir">Número de meses a predecir:</label>
+                <input type="number" class="form-control" id="meses_a_predecir" name="meses_a_predecir" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Predecir</button>
+        </form>
+
+        <!-- Mostrar predicciones -->
+        {% if predicciones %}
+            <h2 class="my-4">Resultados de las Predicciones</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th>Predicción de Mortalidad</th>
+                        <th>Predicción de Nacidos</th>
+                        <th>Predicción de Ganancias</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prediccion in predicciones %}
+                        <tr>
+                            <td>{{ prediccion.mes }}</td>
+                            <td>{{ prediccion.prediccion_mortalidad | round(2) }}</td>
+                            <td>{{ prediccion.prediccion_nacimientos | round(2) }}</td>
+                            <td>{{ prediccion.prediccion_ganancias | round(2) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</body>
+</html>
