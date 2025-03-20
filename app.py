@@ -723,7 +723,7 @@ def resultados():
                 gastos = cursor.fetchall()
 
                 # Análisis estadístico
-                # 1. Mortalidad por mes y poza/galpón
+                # 1. Mortalidad por mes y poza/galpón (incluyendo todas las fuentes)
                 cursor.execute('''
                     SELECT 
                         TO_CHAR(TO_DATE(fecha_muerte, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
@@ -733,7 +733,17 @@ def resultados():
                     FROM muertes_destetados
                     WHERE fecha_muerte IS NOT NULL
                     GROUP BY mes, galpon, poza
-                    ORDER BY mes, galpon, poza
+
+                    UNION ALL
+
+                    SELECT 
+                        TO_CHAR(TO_DATE(fecha_nacimiento, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
+                        galpon,
+                        poza,
+                        SUM(muertos_bebes + muertos_reproductores) AS total_muertes
+                    FROM partos
+                    WHERE fecha_nacimiento IS NOT NULL
+                    GROUP BY mes, galpon, poza
                 ''')
                 mortalidad_por_mes = cursor.fetchall()
 
@@ -863,6 +873,7 @@ def resultados():
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return render_template('error.html')
     
+
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):
