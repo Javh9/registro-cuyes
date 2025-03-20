@@ -736,14 +736,16 @@ def resultados():
                     ORDER BY mes, galpon, poza
                 ''')
                 mortalidad_por_mes = cursor.fetchall()
+
                 # 2. Nacimientos por mes y poza/galpón
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_nacimiento, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_nacimiento, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         galpon,
                         poza,
                         SUM(nacidos) AS total_nacidos
                     FROM partos
+                    WHERE fecha_nacimiento IS NOT NULL
                     GROUP BY mes, galpon, poza
                     ORDER BY mes, galpon, poza
                 ''')
@@ -752,9 +754,10 @@ def resultados():
                 # 3. Costos y ganancias por mes
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_gasto, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_gasto, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         SUM(monto) AS total_gastos
                     FROM gastos
+                    WHERE fecha_gasto IS NOT NULL
                     GROUP BY mes
                     ORDER BY mes
                 ''')
@@ -762,9 +765,10 @@ def resultados():
 
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_venta, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         SUM(costo_venta) AS total_ventas
                     FROM ventas_destetados
+                    WHERE fecha_venta IS NOT NULL
                     GROUP BY mes
                     ORDER BY mes
                 ''')
@@ -772,9 +776,10 @@ def resultados():
 
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_venta, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         SUM(costo_venta) AS total_ventas
                     FROM ventas_descarte
+                    WHERE fecha_venta IS NOT NULL
                     GROUP BY mes
                     ORDER BY mes
                 ''')
@@ -783,9 +788,10 @@ def resultados():
                 # 4. Proyección de crecimiento (usando Pandas)
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_nacimiento, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_nacimiento, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         SUM(nacidos) AS total_nacidos
                     FROM partos
+                    WHERE fecha_nacimiento IS NOT NULL
                     GROUP BY mes
                     ORDER BY mes
                 ''')
@@ -793,9 +799,10 @@ def resultados():
 
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_venta, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_venta, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         SUM(costo_venta) AS total_ventas
                     FROM ventas_destetados
+                    WHERE fecha_venta IS NOT NULL
                     GROUP BY mes
                     ORDER BY mes
                 ''')
@@ -855,7 +862,7 @@ def resultados():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return render_template('error.html')
-
+    
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
 def editar_reproductor(id):

@@ -189,9 +189,60 @@
             }]
         };
 
-        const configMortalidad = {
+        const nacimientosData = {
+            labels: {{ nacimientos_por_mes | map(attribute='mes') | list | tojson if nacimientos_por_mes else [] }},
+            datasets: [{
+                label: 'Total Nacidos',
+                data: {{ nacimientos_por_mes | map(attribute='total_nacidos') | list | tojson if nacimientos_por_mes else [] }},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const costosGananciasData = {
+            labels: {{ gastos_por_mes | map(attribute='mes') | list | tojson if gastos_por_mes else [] }},
+            datasets: [
+                {
+                    label: 'Total Gastos',
+                    data: {{ gastos_por_mes | map(attribute='total_gastos') | list | tojson if gastos_por_mes else [] }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Total Ventas',
+                    data: {{ ventas_destetados_por_mes | map(attribute='total_ventas') | list | tojson if ventas_destetados_por_mes else [] }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        const proyeccionData = {
+            labels: {{ proyeccion_nacimientos | map(attribute='mes') | list | tojson if proyeccion_nacimientos else [] }},
+            datasets: [
+                {
+                    label: 'Total Nacidos',
+                    data: {{ proyeccion_nacimientos | map(attribute='total_nacidos') | list | tojson if proyeccion_nacimientos else [] }},
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Total Ventas',
+                    data: {{ proyeccion_ventas | map(attribute='total_ventas') | list | tojson if proyeccion_ventas else [] }},
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        // Configuración de los gráficos
+        const config = {
             type: 'line',
-            data: mortalidadData,
             options: {
                 scales: {
                     y: {
@@ -201,8 +252,18 @@
             }
         };
 
+        // Crear los gráficos si hay datos disponibles
         if (mortalidadData.labels.length > 0) {
-            new Chart(document.getElementById('mortalidadChart'), configMortalidad);
+            new Chart(document.getElementById('mortalidadChart'), { ...config, data: mortalidadData });
+        }
+        if (nacimientosData.labels.length > 0) {
+            new Chart(document.getElementById('nacimientosChart'), { ...config, data: nacimientosData });
+        }
+        if (costosGananciasData.labels.length > 0) {
+            new Chart(document.getElementById('costosGananciasChart'), { ...config, data: costosGananciasData });
+        }
+        if (proyeccionData.labels.length > 0) {
+            new Chart(document.getElementById('proyeccionChart'), { ...config, data: proyeccionData });
         }
     </script>
 
