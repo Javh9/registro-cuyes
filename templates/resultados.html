@@ -30,246 +30,40 @@
             <p>No hay datos de mortalidad disponibles.</p>
         {% endif %}
 
-        <!-- Gráfico de Nacimientos por Mes -->
-        <h2>Nacimientos por Mes</h2>
-        {% if nacimientos_por_mes %}
-            <canvas id="nacimientosChart" width="400" height="200"></canvas>
-        {% else %}
-            <p>No hay datos de nacimientos disponibles.</p>
-        {% endif %}
-
-        <!-- Gráfico de Costos y Ganancias por Mes -->
-        <h2>Costos y Ganancias por Mes</h2>
-        {% if gastos_por_mes and ventas_destetados_por_mes and ventas_descarte_por_mes %}
-            <canvas id="costosGananciasChart" width="400" height="200"></canvas>
-        {% else %}
-            <p>No hay datos de costos y ganancias disponibles.</p>
-        {% endif %}
-
-        <!-- Gráfico de Proyección de Crecimiento -->
-        <h2>Proyección de Crecimiento</h2>
-        {% if proyeccion_nacimientos and proyeccion_ventas %}
-            <canvas id="proyeccionChart" width="400" height="200"></canvas>
-        {% else %}
-            <p>No hay datos de proyección disponibles.</p>
-        {% endif %}
-
-        <!-- Tablas de Datos -->
-        <h2>Datos Detallados</h2>
-
-        <!-- Mortalidad por Mes y Poza/Galpón -->
-        <h3>Mortalidad por Mes y Poza/Galpón</h3>
-        {% if mortalidad_por_mes %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Galpón</th>
-                        <th>Poza</th>
-                        <th>Total Muertes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in mortalidad_por_mes %}
-                        <tr>
-                            <td>{{ row.mes }}</td>
-                            <td>{{ row.galpon }}</td>
-                            <td>{{ row.poza }}</td>
-                            <td>{{ row.total_muertes }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No hay datos de mortalidad disponibles.</p>
-        {% endif %}
-
-        <!-- Nacimientos por Mes y Poza/Galpón -->
-        <h3>Nacimientos por Mes y Poza/Galpón</h3>
-        {% if nacimientos_por_mes %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Galpón</th>
-                        <th>Poza</th>
-                        <th>Total Nacidos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in nacimientos_por_mes %}
-                        <tr>
-                            <td>{{ row.mes }}</td>
-                            <td>{{ row.galpon }}</td>
-                            <td>{{ row.poza }}</td>
-                            <td>{{ row.total_nacidos }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No hay datos de nacimientos disponibles.</p>
-        {% endif %}
-
-        <!-- Costos y Ganancias por Mes -->
-        <h3>Costos y Ganancias por Mes</h3>
-        {% if gastos_por_mes %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Total Gastos</th>
-                        <th>Total Ventas Destetados</th>
-                        <th>Total Ventas Descarte</th>
-                        <th>Balance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for gasto in gastos_por_mes %}
-                        <tr>
-                            <td>{{ gasto.mes }}</td>
-                            <td>{{ gasto.total_gastos }}</td>
-                            <td>
-                                {% set ventas_destetados = ventas_destetados_por_mes[loop.index0].total_ventas if loop.index0 < ventas_destetados_por_mes|length else 0 %}
-                                {{ ventas_destetados }}
-                            </td>
-                            <td>
-                                {% set ventas_descarte = ventas_descarte_por_mes[loop.index0].total_ventas if loop.index0 < ventas_descarte_por_mes|length else 0 %}
-                                {{ ventas_descarte }}
-                            </td>
-                            <td>{{ ventas_destetados + ventas_descarte - gasto.total_gastos }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No hay datos de costos y ganancias disponibles.</p>
-        {% endif %}
-
-        <!-- Proyección de Crecimiento -->
-        <h3>Proyección de Crecimiento</h3>
-        {% if proyeccion_nacimientos %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Total Nacidos</th>
-                        <th>Total Ventas</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for proyeccion in proyeccion_nacimientos %}
-                        <tr>
-                            <td>{{ proyeccion.mes }}</td>
-                            <td>{{ proyeccion.total_nacidos }}</td>
-                            <td>
-                                {% set ventas = proyeccion_ventas[loop.index0].total_ventas if loop.index0 < proyeccion_ventas|length else 0 %}
-                                {{ ventas }}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No hay datos de proyección disponibles.</p>
-        {% endif %}
-    </div>
-
-    <!-- Scripts para los Gráficos -->
-    <script>
-        // Datos para los gráficos
-        const mortalidadData = {
-            labels: {{ mortalidad_por_mes | map(attribute='mes') | list | tojson if mortalidad_por_mes else [] }},
-            datasets: [{
-                label: 'Total Muertes',
-                data: {{ mortalidad_por_mes | map(attribute='total_muertes') | list | tojson if mortalidad_por_mes else [] }},
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        const nacimientosData = {
-            labels: {{ nacimientos_por_mes | map(attribute='mes') | list | tojson if nacimientos_por_mes else [] }},
-            datasets: [{
-                label: 'Total Nacidos',
-                data: {{ nacimientos_por_mes | map(attribute='total_nacidos') | list | tojson if nacimientos_por_mes else [] }},
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        const costosGananciasData = {
-            labels: {{ gastos_por_mes | map(attribute='mes') | list | tojson if gastos_por_mes else [] }},
-            datasets: [
-                {
-                    label: 'Total Gastos',
-                    data: {{ gastos_por_mes | map(attribute='total_gastos') | list | tojson if gastos_por_mes else [] }},
+        <!-- Script para el gráfico de mortalidad -->
+        <script>
+            const mortalidadData = {
+                labels: {{ mortalidad_por_mes | map(attribute='mes') | list | tojson if mortalidad_por_mes else [] }},
+                datasets: [{
+                    label: 'Total Muertes',
+                    data: {{ mortalidad_por_mes | map(attribute='total_muertes') | list | tojson if mortalidad_por_mes else [] }},
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     borderWidth: 1
-                },
-                {
-                    label: 'Total Ventas',
-                    data: {{ ventas_destetados_por_mes | map(attribute='total_ventas') | list | tojson if ventas_destetados_por_mes else [] }},
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }
-            ]
-        };
+                }]
+            };
 
-        const proyeccionData = {
-            labels: {{ proyeccion_nacimientos | map(attribute='mes') | list | tojson if proyeccion_nacimientos else [] }},
-            datasets: [
-                {
-                    label: 'Total Nacidos',
-                    data: {{ proyeccion_nacimientos | map(attribute='total_nacidos') | list | tojson if proyeccion_nacimientos else [] }},
-                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Total Ventas',
-                    data: {{ proyeccion_ventas | map(attribute='total_ventas') | list | tojson if proyeccion_ventas else [] }},
-                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
-                    borderWidth: 1
-                }
-            ]
-        };
-
-        // Configuración de los gráficos
-        const config = {
-            type: 'line',
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
+            const configMortalidad = {
+                type: 'line',
+                data: mortalidadData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
+            };
+
+            if (mortalidadData.labels.length > 0) {
+                new Chart(document.getElementById('mortalidadChart'), configMortalidad);
             }
-        };
+        </script>
 
-        // Crear los gráficos si hay datos disponibles
-        if (mortalidadData.labels.length > 0) {
-            new Chart(document.getElementById('mortalidadChart'), { ...config, data: mortalidadData });
-        }
-        if (nacimientosData.labels.length > 0) {
-            new Chart(document.getElementById('nacimientosChart'), { ...config, data: nacimientosData });
-        }
-        if (costosGananciasData.labels.length > 0) {
-            new Chart(document.getElementById('costosGananciasChart'), { ...config, data: costosGananciasData });
-        }
-        if (proyeccionData.labels.length > 0) {
-            new Chart(document.getElementById('proyeccionChart'), { ...config, data: proyeccionData });
-        }
-    </script>
-
-    <!-- Botón para exportar datos -->
-    <div class="my-4">
-        <a href="{{ url_for('exportar_excel') }}" class="btn btn-success">Exportar a Excel</a>
+        <!-- Botón para exportar datos -->
+        <div class="my-4">
+            <a href="{{ url_for('exportar_excel') }}" class="btn btn-success">Exportar a Excel</a>
+        </div>
     </div>
 </body>
 </html>

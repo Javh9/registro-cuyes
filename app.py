@@ -726,16 +726,16 @@ def resultados():
                 # 1. Mortalidad por mes y poza/galpón
                 cursor.execute('''
                     SELECT 
-                        DATE_TRUNC('month', TO_DATE(fecha_muerte, 'YYYY-MM-DD')) AS mes,
+                        TO_CHAR(TO_DATE(fecha_muerte, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
                         galpon,
                         poza,
                         SUM(muertos_hembras + muertos_machos) AS total_muertes
                     FROM muertes_destetados
+                    WHERE fecha_muerte IS NOT NULL
                     GROUP BY mes, galpon, poza
                     ORDER BY mes, galpon, poza
                 ''')
                 mortalidad_por_mes = cursor.fetchall()
-
                 # 2. Nacimientos por mes y poza/galpón
                 cursor.execute('''
                     SELECT 
