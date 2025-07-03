@@ -211,6 +211,7 @@ def crear_o_actualizar_tablas():
 crear_o_actualizar_tablas()
 
 # Ruta principal
+
 @app.route('/')
 def index():
     try:
@@ -1077,6 +1078,23 @@ def exportar_excel():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
+
+# ---- Añade esta nueva ruta aquí ----
+@app.route('/health')
+def health_check():
+    """Endpoint para monitoreo de salud (HEAD request compatible)"""
+    try:
+        # Verifica conexión a la base de datos
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1")  # Consulta ligera
+        
+        # Respuesta mínima en texto plano
+        return "Application and database: OK", 200, {'Content-Type': 'text/plain'}
+    
+    except Exception as e:
+        return f"Database connection failed: {str(e)}", 500
+
 
 # Ruta para predicciones
 @app.route('/predicciones', methods=['GET', 'POST'])
