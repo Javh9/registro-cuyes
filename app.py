@@ -9,9 +9,11 @@ import io
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
-
+from flask import Flask
+app = Flask(__name__)
 # Inicializar la aplicación Flask
 app = Flask(__name__)
+
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
 
 from sklearn.linear_model import LinearRegression
