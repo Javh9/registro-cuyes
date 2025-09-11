@@ -10,6 +10,8 @@ from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
 from flask import Flask
+import sqlite3  # ✅ Añade esta importación
+from urllib.parse import urlparse
 app = Flask(__name__)
 # Inicializar la aplicación Flask
 app = Flask(__name__)
@@ -19,6 +21,11 @@ app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_com
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
+
+print("=== INICIANDO APLICACIÓN ===")
+print(f"Python version: {os.sys.version}")
+print(f"Variables de entorno: {list(os.environ.keys())}")
+print(f"DATABASE_URL: {os.environ.get('DATABASE_URL', 'NO CONFIGURADA')}")
 
 def entrenar_modelos():
     try:
@@ -96,7 +103,7 @@ def entrenar_modelos():
     
 # Función para obtener la conexión a la base de datos
 def get_db_connection():
-    database_url = os.environ.get('DATABASE_URL')
+    database_url = os.environ.get(postgresql://postgres:PJOvgAIXmzPqIRIoKHSuoBZThzkeFaKA@postgres.railway.internal:5432/railway)
     if not database_url:
         raise ValueError("No se ha configurado DATABASE_URL")
 
@@ -109,7 +116,6 @@ def get_db_connection():
         port=url.port
     )
     return conn
-
 # Función para validar valores positivos
 def validate_positive_values(**kwargs):
     for key, value in kwargs.items():
@@ -119,7 +125,7 @@ def validate_positive_values(**kwargs):
 # Función para crear o actualizar las tablas en la base de datos
 def crear_o_actualizar_tablas():
     with get_db_connection() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        with conn.cursor() as cursor:
             # Crear tabla de reproductores si no existe
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS reproductores (
@@ -210,7 +216,11 @@ def crear_o_actualizar_tablas():
             conn.commit()
 
 # Llamar a la función para crear o actualizar las tablas al iniciar la aplicación
-crear_o_actualizar_tablas()
+try:
+    crear_o_actualizar_tablas()
+    print("✅ Aplicación iniciada correctamente")
+except Exception as e:
+    print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
 
@@ -1142,5 +1152,4 @@ def predicciones():
 
     return render_template('predicciones.html')
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
