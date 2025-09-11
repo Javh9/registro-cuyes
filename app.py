@@ -7,20 +7,11 @@ import pandas as pd
 from urllib.parse import urlparse
 import io
 from sklearn.linear_model import LinearRegression
-import pandas as pd
 import numpy as np
-from flask import Flask
-import sqlite3  # ✅ Añade esta importación
-from urllib.parse import urlparse
-app = Flask(__name__)
+
 # Inicializar la aplicación Flask
 app = Flask(__name__)
-
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
-
-from sklearn.linear_model import LinearRegression
-import pandas as pd
-import numpy as np
 
 print("=== INICIANDO APLICACIÓN ===")
 print(f"Python version: {os.sys.version}")
@@ -100,10 +91,10 @@ def entrenar_modelos():
     except Exception as e:
         print(f"Error al entrenar los modelos: {str(e)}")
         return None, None, None
-    
-# Función para obtener la conexión a la base de datos
+
+# Función para obtener la conexión a la base de datos CORREGIDA
 def get_db_connection():
-    database_url = os.environ.get(postgresql://postgres:PJOvgAIXmzPqIRIoKHSuoBZThzkeFaKA@postgres.railway.internal:5432/railway)
+    database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         raise ValueError("No se ha configurado DATABASE_URL")
 
@@ -116,6 +107,7 @@ def get_db_connection():
         port=url.port
     )
     return conn
+
 # Función para validar valores positivos
 def validate_positive_values(**kwargs):
     for key, value in kwargs.items():
@@ -223,7 +215,6 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-
 @app.route('/')
 def index():
     try:
@@ -320,6 +311,7 @@ def index():
     except Exception as e:
         error_message = f'Ocurrió un error inesperado: {str(e)}'
         return render_template('error.html', error_message=error_message)
+
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
@@ -356,13 +348,6 @@ def ingresar_reproductores():
             flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
 
     return render_template('ingresar_reproductores.html')
-
-# Ruta para registrar partos
-# Función para validar valores positivos
-def validate_positive_values(**kwargs):
-    for key, value in kwargs.items():
-        if value < 0:
-            raise ValueError(f"{key} no puede ser negativo")
 
 # Ruta para registrar partos
 @app.route('/registrar_partos', methods=['GET', 'POST'])
@@ -453,6 +438,7 @@ def registrar_partos():
         galpones_unicos=galpones_unicos,
         pozas_unicas=pozas_unicas
     )
+
 # Ruta para buscar partos
 @app.route('/buscar_partos', methods=['GET'])
 def buscar_partos():
@@ -468,7 +454,6 @@ def buscar_partos():
             partos = cursor.fetchall()
 
     return render_template('buscar_partos.html', partos=partos)
-
 
 # Ruta para editar partos
 @app.route('/editar_parto/<int:id>', methods=['GET', 'POST'])
@@ -855,7 +840,7 @@ def resultados():
                 ''')
                 nacimientos_por_mes = cursor.fetchall()
 
-                # 3. Costos y ganancias por mes
+                # 3. Costos и ganancias por mes
                 cursor.execute('''
                     SELECT 
                         TO_CHAR(TO_DATE(fecha_gasto, 'YYYY-MM-DD'), 'YYYY-MM') AS mes,
@@ -966,7 +951,6 @@ def resultados():
     except Exception as e:
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return render_template('error.html')
-    
 
 # Ruta para editar datos de reproductores
 @app.route('/editar_reproductor/<int:id>', methods=['GET', 'POST'])
@@ -1091,7 +1075,7 @@ def exportar_excel():
         flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
         return redirect(url_for('index'))
 
-# ---- Añade esta nueva ruta aquí ----
+# Ruta para health check
 @app.route('/health')
 def health_check():
     """Endpoint para monitoreo de salud (HEAD request compatible)"""
@@ -1106,7 +1090,6 @@ def health_check():
     
     except Exception as e:
         return f"Database connection failed: {str(e)}", 500
-
 
 # Ruta para predicciones
 @app.route('/predicciones', methods=['GET', 'POST'])
@@ -1151,5 +1134,6 @@ def predicciones():
             return redirect(url_for('predicciones'))
 
     return render_template('predicciones.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
