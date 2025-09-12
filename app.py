@@ -499,7 +499,7 @@ def editar_parto(id):
     return render_template('editar_parto.html', parto=parto)
 
 # Ruta para registrar destete
-# Ruta para registrar destete
+# Ruta para registrar destete (versión robusta)
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
     galpones_unicos = []
@@ -508,48 +508,56 @@ def registrar_destete():
     destetados_mes = 0
     total_destetados = 0
 
+    # Obtener galpones/pozas y estadísticas (GET parte)
     try:
-        conn = get_db_connection()
-        if conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 # Galpones y pozas
                 cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
-                galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
+                galpones_unicos = [r['galpon'] for r in cursor.fetchall()]
 
                 cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
-                pozas_unicas = [row['poza'] for row in cursor.fetchall()]
+                pozas_unicas = [r['poza'] for r in cursor.fetchall()]
 
-                # --- Estadísticas ---
-                # Hoy
+                # NOTA: usamos SUBSTRING(fecha_destete FROM 1 FOR 10) para extraer 'YYYY-MM-DD'
+                # esto funciona si fecha_destete está guardada como 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM:SS'
+                # 1) Destetados hoy
                 cursor.execute("""
-                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) 
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
                     FROM destetes
-                    WHERE DATE(fecha_destete) = CURRENT_DATE
+                    WHERE TO_DATE(SUBSTRING(fecha_destete FROM 1 FOR 10), 'YYYY-MM-DD') = CURRENT_DATE
                 """)
-                destetados_hoy = cursor.fetchone()[0]
+                destetados_hoy = int(cursor.fetchone()['suma'] or 0)
 
-                # Mes actual
+                # 2) Destetados en el mes actual
                 cursor.execute("""
-                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
                     FROM destetes
-                    WHERE DATE_TRUNC('month', fecha_destete) = DATE_TRUNC('month', CURRENT_DATE)
+                    WHERE DATE_TRUNC('month', TO_DATE(SUBSTRING(fecha_destete FROM 1 FOR 10), 'YYYY-MM-DD')) =
+                          DATE_TRUNC('month', CURRENT_DATE)
                 """)
-                destetados_mes = cursor.fetchone()[0]
+                destetados_mes = int(cursor.fetchone()['suma'] or 0)
 
-                # Totales
+                # 3) Total destetados acumulado
                 cursor.execute("""
-                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
                     FROM destetes
                 """)
-                total_destetados = cursor.fetchone()[0]
+                total_destetados = int(cursor.fetchone()['suma'] or 0)
 
-            conn.close()
+        print(f"[debug] destetados_hoy={destetados_hoy}, destetados_mes={destetados_mes}, total={total_destetados}")
+
     except Exception as e:
-        print(f"Error al obtener datos: {str(e)}")
-        galpones_unicos = ['Galpón 1', 'Galpón 2']
-        pozas_unicas = ['Poza 1', 'Poza 2']
+        # Si algo falla, mostramos en consola y continuamos con valores por defecto
+        print(f"Error al obtener datos para destetes: {e}")
+        flash('Advertencia: error al calcular estadísticas (ver logs).', 'warning')
+        # Opcional: setear listas por defecto si la consulta falló
+        if not galpones_unicos:
+            galpones_unicos = ['Galpón 1', 'Galpón 2']
+        if not pozas_unicas:
+            pozas_unicas = ['Poza 1', 'Poza 2']
 
-    # Manejo POST
+    # Manejo POST (inserción)
     if request.method == 'POST':
         try:
             galpon = request.form['galpon']
@@ -557,25 +565,38 @@ def registrar_destete():
             destetados_hembras = int(request.form['destetados_hembras'])
             destetados_machos = int(request.form['destetados_machos'])
 
+            # Validaciones
             if destetados_hembras < 0 or destetados_machos < 0:
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_destete'))
 
-            conn = get_db_connection()
-            if conn:
+            if destetados_hembras == 0 and destetados_machos == 0:
+                flash('Debe ingresar al menos un animal destetado.', 'danger')
+                return redirect(url_for('registrar_destete'))
+
+            with get_db_connection() as conn:
                 with conn.cursor() as cursor:
+                    # Insertamos con formato ISO en texto (si la columna es TEXT),
+                    # o puedes usar NOW() si prefieres que Postgres ponga la hora.
+                    fecha_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     cursor.execute('''
                         INSERT INTO destetes (galpon, poza, destetados_hembras, destetados_machos, fecha_destete)
-                        VALUES (%s, %s, %s, %s, NOW())
-                    ''', (galpon, poza, destetados_hembras, destetados_machos))
-                    conn.commit()
-                conn.close()
-                flash('Destete registrado correctamente.', 'success')
-                return redirect(url_for('registrar_destete'))
-        except Exception as e:
-            print(f"Error al registrar destete: {str(e)}")
-            flash('Error al registrar el destete. Intente nuevamente.', 'danger')
+                        VALUES (%s, %s, %s, %s, %s)
+                    ''', (galpon, poza, destetados_hembras, destetados_machos, fecha_str))
+                conn.commit()
 
+            flash('Destete registrado correctamente.', 'success')
+            # Redirigir para evitar doble envío y para recalcular estadísticas en la nueva GET
+            return redirect(url_for('registrar_destete'))
+
+        except ValueError:
+            flash('Por favor ingrese valores numéricos válidos.', 'danger')
+        except Exception as e:
+            print(f"Error al registrar destete: {e}")
+            flash('Error al registrar el destete. Revisa los logs.', 'danger')
+            return redirect(url_for('registrar_destete'))
+
+    # Al final renderizamos la plantilla con las variables calculadas
     return render_template('registrar_destete.html',
                            galpones_unicos=galpones_unicos,
                            pozas_unicas=pozas_unicas,
