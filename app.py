@@ -646,83 +646,105 @@ def registrar_muertes_destetados():
     return render_template('registrar_muertes_destetados.html')
 
 # Ruta para registrar ventas de destetados
-# Ruta principal para mostrar el formulario de ventas (GET)
+# =========================
+# SECCIÓN: VENTAS
+# =========================
+
+# Ruta principal: muestra la página de ventas
 @app.route('/registrar_ventas', methods=['GET'])
 def registrar_ventas():
-    return render_template('registrar_ventas.html')
+    try:
+        conn = get_db_connection()
+        ventas_destetados = []
+        ventas_descarte = []
 
-# Ruta para procesar ventas de destetados (POST)
+        if conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener ventas de destetados
+                cursor.execute("""
+                    SELECT id, fecha_venta, cantidad, precio_unitario, (cantidad * precio_unitario) AS total
+                    FROM ventas_destetados
+                    ORDER BY fecha_venta DESC
+                """)
+                ventas_destetados = cursor.fetchall()
+
+                # Obtener ventas de descarte
+                cursor.execute("""
+                    SELECT id, fecha_venta, cantidad, precio_unitario, (cantidad * precio_unitario) AS total
+                    FROM ventas_descarte
+                    ORDER BY fecha_venta DESC
+                """)
+                ventas_descarte = cursor.fetchall()
+            conn.close()
+    except Exception as e:
+        print(f"Error al cargar ventas: {str(e)}")
+        flash("No se pudieron cargar las ventas.", "danger")
+
+    return render_template("registrar_ventas.html",
+                           ventas_destetados=ventas_destetados,
+                           ventas_descarte=ventas_descarte)
+
+
+# Ruta para registrar ventas de destetados
 @app.route('/registrar_ventas_destetados', methods=['POST'])
 def registrar_ventas_destetados():
     try:
-        hembras_vendidas = int(request.form['hembras_vendidas'])
-        machos_vendidos = int(request.form['machos_vendidos'])
-        costo_venta = float(request.form['costo_venta'])
+        cantidad = int(request.form["cantidad"])
+        precio_unitario = float(request.form["precio_unitario"])
 
-        # Validar valores
-        if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta < 0:
-            flash('Los valores no pueden ser negativos.', 'danger')
-            return redirect(url_for('registrar_ventas'))
+        if cantidad <= 0 or precio_unitario <= 0:
+            flash("Cantidad y precio deben ser mayores que cero.", "danger")
+            return redirect(url_for("registrar_ventas"))
 
-        # Insertar en BD
         conn = get_db_connection()
         if conn:
             with conn.cursor() as cursor:
-                cursor.execute('''
-                    INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha_venta)
-                    VALUES (%s, %s, %s, NOW())
-                ''', (hembras_vendidas, machos_vendidos, costo_venta))
+                cursor.execute("""
+                    INSERT INTO ventas_destetados (cantidad, precio_unitario, fecha_venta)
+                    VALUES (%s, %s, NOW())
+                """, (cantidad, precio_unitario))
                 conn.commit()
             conn.close()
-            
-            flash('Venta de destetados registrada correctamente.', 'success')
+            flash("Venta de destetados registrada con éxito.", "success")
         else:
-            flash('Error de conexión a la base de datos.', 'danger')
+            flash("Error de conexión a la base de datos.", "danger")
 
-    except ValueError:
-        flash('Por favor ingrese valores numéricos válidos.', 'danger')
     except Exception as e:
         print(f"Error al registrar venta destetados: {str(e)}")
-        flash('Error al registrar la venta.', 'danger')
-    
-    return redirect(url_for('registrar_ventas'))
+        flash("No se pudo registrar la venta de destetados.", "danger")
 
-# Ruta para procesar ventas de descarte (POST)
+    return redirect(url_for("registrar_ventas"))
+
+
+# Ruta para registrar ventas de descarte
 @app.route('/registrar_ventas_descarte', methods=['POST'])
 def registrar_ventas_descarte():
     try:
-        galpon = request.form['galpon']
-        poza = request.form['poza']
-        cuyes_vendidos = int(request.form['cuyes_vendidos'])
-        costo_venta = float(request.form['costo_venta'])
+        cantidad = int(request.form["cantidad"])
+        precio_unitario = float(request.form["precio_unitario"])
 
-        # Validar valores
-        if cuyes_vendidos < 0 or costo_venta < 0:
-            flash('Los valores no pueden ser negativos.', 'danger')
-            return redirect(url_for('registrar_ventas'))
+        if cantidad <= 0 or precio_unitario <= 0:
+            flash("Cantidad y precio deben ser mayores que cero.", "danger")
+            return redirect(url_for("registrar_ventas"))
 
-        # Insertar en BD
         conn = get_db_connection()
         if conn:
             with conn.cursor() as cursor:
-                cursor.execute('''
-                    INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha_venta)
-                    VALUES (%s, %s, %s, %s, NOW())
-                ''', (galpon, poza, cuyes_vendidos, costo_venta))
+                cursor.execute("""
+                    INSERT INTO ventas_descarte (cantidad, precio_unitario, fecha_venta)
+                    VALUES (%s, %s, NOW())
+                """, (cantidad, precio_unitario))
                 conn.commit()
             conn.close()
-            
-            flash('Venta de descarte registrada correctamente.', 'success')
+            flash("Venta de descarte registrada con éxito.", "success")
         else:
-            flash('Error de conexión a la base de datos.', 'danger')
+            flash("Error de conexión a la base de datos.", "danger")
 
-    except ValueError:
-        flash('Por favor ingrese valores numéricos válidos.', 'danger')
     except Exception as e:
         print(f"Error al registrar venta descarte: {str(e)}")
-        flash('Error al registrar la venta.', 'danger')
-    
-    return redirect(url_for('registrar_ventas'))
+        flash("No se pudo registrar la venta de descarte.", "danger")
+
+    return redirect(url_for("registrar_ventas"))
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
