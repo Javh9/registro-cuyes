@@ -499,6 +499,7 @@ def editar_parto(id):
     return render_template('editar_parto.html', parto=parto)
 
 # Ruta para registrar destete
+# Versión alternativa si hay problemas con el formato de fecha
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
     with get_db_connection() as conn:
@@ -507,43 +508,50 @@ def registrar_destete():
             cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores')
             galpones_pozas = cursor.fetchall()
 
-            # Obtener valores únicos de galpón
             cursor.execute('SELECT DISTINCT galpon FROM reproductores')
             galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
 
-            # Obtener valores únicos de poza
             cursor.execute('SELECT DISTINCT poza FROM reproductores')
             pozas_unicas = [row['poza'] for row in cursor.fetchall()]
 
-    if request.method == 'POST':
-        try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            destetados_hembras = int(request.form['destetados_hembras'])
-            destetados_machos = int(request.form['destetados_machos'])
+            # Calcular estadísticas de destetes
+            from datetime import datetime
+            
+            # Obtener todos los destetes para calcular manualmente
+            cursor.execute('SELECT destetados_hembras, destetados_machos, fecha_destete FROM destetes')
+            destetes = cursor.fetchall()
+            
+            destetados_hoy = 0
+            destetados_mes = 0
+            total_destetados = 0
+            hoy = datetime.now().date()
+            mes_actual = datetime.now().month
+            año_actual = datetime.now().year
+            
+            for destete in destetes:
+                total = destete['destetados_hembras'] + destete['destetados_machos']
+                total_destetados += total
+                
+                # Verificar si la fecha es de hoy
+                if destete['fecha_destete']:
+                    fecha_destete = destete['fecha_destete']
+                    if isinstance(fecha_destete, str):
+                        # Convertir string a fecha
+                        try:
+                            fecha_obj = datetime.strptime(fecha_destete, '%Y-%m-%d %H:%M:%S').date()
+                        except:
+                            fecha_obj = None
+                    else:
+                        fecha_obj = fecha_destete.date()
+                    
+                    if fecha_obj == hoy:
+                        destetados_hoy += total
+                    
+                    if fecha_obj and fecha_obj.month == mes_actual and fecha_obj.year == año_actual:
+                        destetados_mes += total
 
-            validate_positive_values(destetados_hembras=destetados_hembras, destetados_machos=destetados_machos)
-
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    cursor.execute('''
-                        INSERT INTO destetes (
-                            galpon, poza, destetados_hembras, destetados_machos, fecha_destete
-                        ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (galpon, poza, destetados_hembras, destetados_machos, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-
-                    conn.commit()
-                    flash('Destete registrado correctamente.', 'success')
-                    return redirect(url_for('index'))
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
-        except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-
-    return render_template('registrar_destete.html', galpones_pozas=galpones_pozas, galpones_unicos=galpones_unicos, pozas_unicas=pozas_unicas)
-
+    # El resto del código permanece igual...
+    
 # Ruta para registrar muertes de destetados
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():

@@ -237,57 +237,75 @@
                 {% endwith %}
 
                 <!-- Estadísticas rápidas -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card stats-card h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Destetados Hoy</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Estadísticas rápidas -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Destetados Hoy</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% if destetados_hoy is defined %}
+                                {{ destetados_hoy }}
+                            {% else %}
+                                0
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card stats-card h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Destetados Mes</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stats-card h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                            Total Destetados</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-child fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
                     </div>
                 </div>
-
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Destetados Mes</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% if destetados_mes is defined %}
+                                {{ destetados_mes }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Destetados</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% if total_destetados is defined %}
+                                {{ total_destetados }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-child fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                 <!-- Formulario -->
                 <div class="card">
                     <div class="card-header">
