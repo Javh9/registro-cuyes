@@ -525,7 +525,7 @@ def registrar_destete():
                 cursor.execute("""
                     SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
                     FROM destetes
-                    WHERE TO_DATE(SUBSTRING(fecha_destete FROM 1 FOR 10), 'YYYY-MM-DD') = CURRENT_DATE
+                    WHERE DATE(TO_TIMESTAMP(fecha_destete, 'YYYY-MM-DD HH24:MI:SS')) = CURRENT_DATE
                 """)
                 destetados_hoy = int(cursor.fetchone()['suma'] or 0)
 
