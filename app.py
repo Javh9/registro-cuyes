@@ -649,20 +649,30 @@ def registrar_muertes_destetados():
 # =========================
 # SECCIÓN: VENTAS
 # =========================
+# =========================
+# SECCIÓN: VENTAS
+# =========================
 
-# Ruta principal: muestra la página de ventas
-# --- REGISTRO DE VENTAS ---
+# Mostrar página de ventas con formularios e historial
 @app.route("/ventas", methods=["GET"])
 def registrar_ventas():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Ventas destetados
-    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_destetados ORDER BY fecha_venta DESC")
+    # Obtener ventas de destetados
+    cursor.execute("""
+        SELECT id, fecha_venta, cantidad, precio_unitario, total
+        FROM ventas_destetados
+        ORDER BY fecha_venta DESC
+    """)
     ventas_destetados = cursor.fetchall()
 
-    # Ventas descarte
-    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_descarte ORDER BY fecha_venta DESC")
+    # Obtener ventas de descarte
+    cursor.execute("""
+        SELECT id, fecha_venta, cantidad, precio_unitario, total
+        FROM ventas_descarte
+        ORDER BY fecha_venta DESC
+    """)
     ventas_descarte = cursor.fetchall()
 
     cursor.close()
@@ -673,6 +683,7 @@ def registrar_ventas():
                            ventas_descarte=ventas_descarte)
 
 
+# Registrar venta de destetados
 @app.route("/ventas/destetados", methods=["POST"])
 def registrar_ventas_destetados():
     cantidad = int(request.form["cantidad"])
@@ -693,6 +704,7 @@ def registrar_ventas_destetados():
     return redirect(url_for("registrar_ventas"))
 
 
+# Registrar venta de descarte
 @app.route("/ventas/descarte", methods=["POST"])
 def registrar_ventas_descarte():
     cantidad = int(request.form["cantidad"])

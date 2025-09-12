@@ -21,7 +21,7 @@
     <!-- Formularios -->
     <div class="row">
         <div class="col-md-6">
-            <div class="card p-3">
+            <div class="card p-3 shadow-sm">
                 <h5>Venta de destetados</h5>
                 <form method="POST" action="{{ url_for('registrar_ventas_destetados') }}">
                     <div class="mb-3">
@@ -38,7 +38,7 @@
         </div>
 
         <div class="col-md-6">
-            <div class="card p-3">
+            <div class="card p-3 shadow-sm">
                 <h5>Venta de descarte</h5>
                 <form method="POST" action="{{ url_for('registrar_ventas_descarte') }}">
                     <div class="mb-3">
@@ -55,8 +55,8 @@
         </div>
     </div>
 
-    <!-- Listado -->
-    <div class="card mt-4 p-3">
+    <!-- Historial -->
+    <div class="card mt-4 p-3 shadow-sm">
         <h5>Historial de ventas de destetados</h5>
         <table class="table table-sm table-striped">
             <thead>
