@@ -645,7 +645,7 @@ def registrar_muertes_destetados():
 
     return render_template('registrar_muertes_destetados.html')
 # Ruta para registrar ventas de destetados
-@app.route('/registrar_ventas_destetados', methods=['GET', 'POST'])
+@app.route('/registrar_ventas_destetados', methods=['POST'])
 def registrar_ventas_destetados():
     if request.method == 'POST':
         try:
@@ -653,36 +653,32 @@ def registrar_ventas_destetados():
             machos_vendidos = int(request.form['machos_vendidos'])
             costo_venta = float(request.form['costo_venta'])
 
-            # Validar que los valores sean positivos
-            validate_positive_values(
-                hembras_vendidas=hembras_vendidas,
-                machos_vendidos=machos_vendidos,
-                costo_venta=costo_venta
-            )
+            # Validar valores
+            if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta < 0:
+                flash('Los valores no pueden ser negativos.', 'danger')
+                return redirect(url_for('registrar_ventas'))
 
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    # Insertar datos en la base de datos
+            # Insertar en BD
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor() as cursor:
                     cursor.execute('''
-                        INSERT INTO ventas_destetados (
-                            galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ''', ('N/A', 'N/A', hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-
+                        INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha_venta)
+                        VALUES (%s, %s, %s, NOW())
+                    ''', (hembras_vendidas, machos_vendidos, costo_venta))
                     conn.commit()
-                    flash('Venta de destetados registrada correctamente.', 'success')
-                    return redirect(url_for('index'))
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
+                conn.close()
+                
+                flash('Venta de destetados registrada correctamente.', 'success')
+            else:
+                flash('Error de conexión a la base de datos.', 'danger')
+
         except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+            flash('Error al registrar la venta.', 'danger')
+        
+        return redirect(url_for('registrar_ventas'))
 
-    return render_template('registrar_ventas_destetados.html')
-
-# Ruta para registrar ventas de descarte
-@app.route('/registrar_ventas_descarte', methods=['GET', 'POST'])
+@app.route('/registrar_ventas_descarte', methods=['POST'])
 def registrar_ventas_descarte():
     if request.method == 'POST':
         try:
@@ -691,35 +687,34 @@ def registrar_ventas_descarte():
             cuyes_vendidos = int(request.form['cuyes_vendidos'])
             costo_venta = float(request.form['costo_venta'])
 
-            validate_positive_values(cuyes_vendidos=cuyes_vendidos, costo_venta=costo_venta)
+            # Validar valores
+            if cuyes_vendidos < 0 or costo_venta < 0:
+                flash('Los valores no pueden ser negativos.', 'danger')
+                return redirect(url_for('registrar_ventas'))
 
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            # Insertar en BD
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor() as cursor:
                     cursor.execute('''
-                        SELECT id FROM reproductores
-                        WHERE galpon = %s AND poza = %s
-                    ''', (galpon, poza))
-                    if not cursor.fetchone():
-                        flash('El galpón y la poza no están registrados.', 'danger')
-                        return redirect(url_for('registrar_ventas_descarte'))
-
-                    cursor.execute('''
-                        INSERT INTO ventas_descarte (
-                            galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (galpon, poza, cuyes_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-
+                        INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha_venta)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    ''', (galpon, poza, cuyes_vendidos, costo_venta))
                     conn.commit()
-                    flash('Ventas de descarte registradas correctamente.', 'success')
-                    return redirect(url_for('index'))
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
-        except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+                conn.close()
+                
+                flash('Venta de descarte registrada correctamente.', 'success')
+            else:
+                flash('Error de conexión a la base de datos.', 'danger')
 
-    return render_template('registrar_ventas_descarte.html')
+        except Exception as e:
+            flash('Error al registrar la venta.', 'danger')
+        
+        return redirect(url_for('registrar_ventas'))
+
+@app.route('/registrar_ventas')
+def registrar_ventas():
+    return render_template('registrar_ventas.html')
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
