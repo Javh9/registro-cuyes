@@ -654,65 +654,7 @@ def registrar_muertes_destetados():
 # =========================
 
 # Mostrar página de ventas con formularios e historial
-@app.route('/ventas', methods=['GET', 'POST'])
-def registrar_ventas():
-    if request.method == 'POST':
-        try:
-            # Determinar qué formulario se envió
-            if "hembras_vendidas" in request.form:
-                # Formulario de Destetados
-                hembras_vendidas = int(request.form['hembras_vendidas'])
-                machos_vendidos = int(request.form['machos_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
 
-                if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta < 0:
-                    flash("Los valores no pueden ser negativos.", "danger")
-                    return redirect(url_for('registrar_ventas'))
-
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, NOW())
-                    """, (hembras_vendidas, machos_vendidos, costo_venta))
-                    conn.commit()
-                conn.close()
-                flash("Venta de destetados registrada correctamente.", "success")
-            
-            elif "cuyes_vendidos" in request.form:
-                # Formulario de Descarte
-                galpon = request.form['galpon']
-                poza = request.form['poza']
-                cuyes_vendidos = int(request.form['cuyes_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
-
-                if cuyes_vendidos < 0 or costo_venta < 0:
-                    flash("Los valores no pueden ser negativos.", "danger")
-                    return redirect(url_for('registrar_ventas'))
-
-                conn = get_db_connection()
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, %s, NOW())
-                    """, (galpon, poza, cuyes_vendidos, costo_venta))
-                    conn.commit()
-                conn.close()
-                flash("Venta de descarte registrada correctamente.", "success")
-
-            else:
-                flash("Formulario inválido.", "danger")
-        
-        except ValueError:
-            flash("Ingrese valores numéricos válidos.", "danger")
-        except Exception as e:
-            print(f"Error al registrar venta: {str(e)}")
-            flash("Error al registrar la venta.", "danger")
-
-        return redirect(url_for('registrar_ventas'))
-
-    # GET -> mostrar la página
-    return render_template('ventas.html')
 
 
 
