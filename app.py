@@ -616,36 +616,34 @@ def registrar_muertes_destetados():
             muertos_hembras = int(request.form['muertos_hembras'])
             muertos_machos = int(request.form['muertos_machos'])
 
-            validate_positive_values(muertos_hembras=muertos_hembras, muertos_machos=muertos_machos)
+            # Validar valores positivos
+            if muertos_hembras < 0 or muertos_machos < 0:
+                flash('Los valores no pueden ser negativos.', 'danger')
+                return redirect(url_for('registrar_muertes_destetados'))
 
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            # Insertar en la base de datos
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor() as cursor:
                     cursor.execute('''
-                        SELECT id FROM reproductores
-                        WHERE galpon = %s AND poza = %s
-                    ''', (galpon, poza))
-                    if not cursor.fetchone():
-                        flash('El galpón y la poza no están registrados.', 'danger')
-                        return redirect(url_for('registrar_muertes_destetados'))
-
-                    cursor.execute('''
-                        INSERT INTO muertes_destetados (
-                            galpon, poza, muertos_hembras, muertos_machos, fecha_muerte
-                        ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (galpon, poza, muertos_hembras, muertos_machos, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-
+                        INSERT INTO muertes_destetados (galpon, poza, muertos_hembras, muertos_machos, fecha_muerte)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    ''', (galpon, poza, muertos_hembras, muertos_machos))
                     conn.commit()
-                    flash('Muertes de destetados registradas correctamente.', 'success')
-                    return redirect(url_for('index'))
-        except ValueError as e:
-            flash(f'Error en los datos ingresados: {str(e)}', 'danger')
-        except psycopg2.Error as e:
-            flash(f'Error en la base de datos: {str(e)}', 'danger')
+                conn.close()
+                
+                flash('Muertes registradas correctamente.', 'success')
+                return redirect(url_for('registrar_muertes_destetados'))
+            else:
+                flash('Error de conexión a la base de datos.', 'danger')
+
+        except ValueError:
+            flash('Por favor ingrese valores numéricos válidos.', 'danger')
         except Exception as e:
-            flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+            print(f"Error al registrar muertes: {str(e)}")
+            flash('Error al registrar las muertes. Intente nuevamente.', 'danger')
 
     return render_template('registrar_muertes_destetados.html')
-
 # Ruta para registrar ventas de destetados
 @app.route('/registrar_ventas_destetados', methods=['GET', 'POST'])
 def registrar_ventas_destetados():
