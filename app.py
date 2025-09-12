@@ -501,41 +501,78 @@ def editar_parto(id):
 # Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
-    try:
-        # Intentar obtener datos de la BD
-        try:
-            with get_db_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                    cursor.execute('SELECT DISTINCT galpon FROM reproductores')
-                    galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
-
-                    cursor.execute('SELECT DISTINCT poza FROM reproductores')
-                    pozas_unicas = [row['poza'] for row in cursor.fetchall()]
-        except Exception as db_error:
-            print(f"Error de BD, usando valores por defecto: {db_error}")
-            galpones_unicos = ['Galpón 1', 'Galpón 2']
-            pozas_unicas = ['Poza 1', 'Poza 2']
-
-        # Manejar POST request
-        if request.method == 'POST':
-            # ... (tu código POST aquí)
-
-        return render_template('registrar_destete.html', 
-                             galpones_unicos=galpones_unicos, 
-                             pozas_unicas=pozas_unicas,
-                             destetados_hoy=0,
-                             destetados_mes=0,
-                             total_destetados=0)
-
-    except Exception as e:
-        print(f"Error general: {str(e)}")
-        return render_template('registrar_destete.html', 
-                             galpones_unicos=[], 
-                             pozas_unicas=[],
-                             destetados_hoy=0,
-                             destetados_mes=0,
-                             total_destetados=0)
+    # Valores por defecto
+    galpones_unicos = []
+    pozas_unicas = []
     
+    # Intentar obtener datos de la base de datos
+    try:
+        conn = get_db_connection()
+        if conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Obtener galpones únicos
+                cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
+                galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
+                
+                # Obtener pozas únicas
+                cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
+                pozas_unicas = [row['poza'] for row in cursor.fetchall()]
+                
+            conn.close()
+    except Exception as e:
+        print(f"Error al obtener datos: {str(e)}")
+        # Si hay error, usar valores por defecto
+        galpones_unicos = ['Galpón 1', 'Galpón 2', 'Galpón 3']
+        pozas_unicas = ['Poza 1', 'Poza 2', 'Poza 3', 'Poza 4']
+
+    # Manejar envío del formulario
+    if request.method == 'POST':
+        try:
+            galpon = request.form['galpon']
+            poza = request.form['poza']
+            destetados_hembras = int(request.form['destetados_hembras'])
+            destetados_machos = int(request.form['destetados_machos'])
+
+            # Validar valores positivos
+            if destetados_hembras < 0 or destetados_machos < 0:
+                flash('Los valores no pueden ser negativos.', 'danger')
+                return render_template('registrar_destete.html',
+                                    galpones_unicos=galpones_unicos,
+                                    pozas_unicas=pozas_unicas,
+                                    destetados_hoy=0,
+                                    destetados_mes=0,
+                                    total_destetados=0)
+
+            # Insertar en la base de datos
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor() as cursor:
+                    cursor.execute('''
+                        INSERT INTO destetes (galpon, poza, destetados_hembras, destetados_machos, fecha_destete)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    ''', (galpon, poza, destetados_hembras, destetados_machos))
+                    conn.commit()
+                conn.close()
+                
+                flash('Destete registrado correctamente.', 'success')
+                return redirect(url_for('registrar_destete'))
+            else:
+                flash('Error de conexión a la base de datos.', 'danger')
+
+        except ValueError:
+            flash('Por favor ingrese valores numéricos válidos.', 'danger')
+        except Exception as e:
+            print(f"Error al registrar destete: {str(e)}")
+            flash('Error al registrar el destete. Intente nuevamente.', 'danger')
+
+    # Renderizar template con datos
+    return render_template('registrar_destete.html',
+                         galpones_unicos=galpones_unicos,
+                         pozas_unicas=pozas_unicas,
+                         destetados_hoy=0,
+                         destetados_mes=0,
+                         total_destetados=0)
+
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():
     if request.method == 'POST':
