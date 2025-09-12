@@ -499,19 +499,70 @@ def editar_parto(id):
     return render_template('editar_parto.html', parto=parto)
 
 # Ruta para registrar destete
-@app.route('/registrar_destete', methods=['GET'])
-def registrar_destete():
-    """Versión mínima para probar si funciona"""
+@app.route('/debug/db')
+def debug_db():
+    """Verificar conexión a base de datos"""
     try:
-        # Solo lo básico para probar
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT version()')
+                version = cur.fetchone()
+            return f"PostgreSQL version: {version[0]}"
+    except Exception as e:
+        return f"Error de conexión: {str(e)}", 500
+
+@app.route('/debug/tables')
+def debug_tables():
+    """Verificar tablas existentes"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public'
+                """)
+                tables = [row[0] for row in cur.fetchall()]
+            return f"Tablas: {', '.join(tables)}"
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+    @app.route('/registrar_destete', methods=['GET', 'POST'])
+def registrar_destete():
+    print("DEBUG: Entrando a registrar_destete")
+    
+    try:
+        print("DEBUG: Intentando conectar a BD...")
+        with get_db_connection() as conn:
+            print("DEBUG: Conexión exitosa")
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                print("DEBUG: Ejecutando consulta de galpones...")
+                cursor.execute('SELECT DISTINCT galpon FROM reproductores')
+                galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
+                print(f"DEBUG: Galpones encontrados: {galpones_unicos}")
+
+                cursor.execute('SELECT DISTINCT poza FROM reproductores')
+                pozas_unicas = [row['poza'] for row in cursor.fetchall()]
+                print(f"DEBUG: Pozas encontradas: {pozas_unicas}")
+
+        print("DEBUG: Renderizando template...")
         return render_template('registrar_destete.html', 
-                             galpones_unicos=['Galpon1', 'Galpon2'], 
-                             pozas_unicas=['Poza1', 'Poza2'],
+                             galpones_unicos=galpones_unicos, 
+                             pozas_unicas=pozas_unicas,
                              destetados_hoy=0,
                              destetados_mes=0,
                              total_destetados=0)
+
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        print(f"ERROR en registrar_destete: {str(e)}")
+        flash(f'Error al cargar la página: {str(e)}', 'danger')
+        # Fallback con datos vacíos
+        return render_template('registrar_destete.html', 
+                             galpones_unicos=[], 
+                             pozas_unicas=[],
+                             destetados_hoy=0,
+                             destetados_mes=0,
+                             total_destetados=0)
+    
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():
     if request.method == 'POST':
