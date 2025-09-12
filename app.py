@@ -500,6 +500,7 @@ def editar_parto(id):
 
 # Ruta para registrar destete
 # Ruta para registrar destete (versión robusta)
+# Ruta para registrar destete (versión robusta y con debug)
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
     galpones_unicos = []
@@ -513,49 +514,55 @@ def registrar_destete():
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 # Galpones y pozas
-                cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
+                cursor.execute("SELECT DISTINCT galpon FROM reproductores ORDER BY galpon")
                 galpones_unicos = [r['galpon'] for r in cursor.fetchall()]
 
-                cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
+                cursor.execute("SELECT DISTINCT poza FROM reproductores ORDER BY poza")
                 pozas_unicas = [r['poza'] for r in cursor.fetchall()]
 
-                # NOTA: usamos SUBSTRING(fecha_destete FROM 1 FOR 10) para extraer 'YYYY-MM-DD'
-                # esto funciona si fecha_destete está guardada como 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM:SS'
-                # 1) Destetados hoy
-                cursor.execute("""
-                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
-                    FROM destetes
-                    WHERE DATE(TO_TIMESTAMP(fecha_destete, 'YYYY-MM-DD')) = CURRENT_DATE
-                """)
-                destetados_hoy = int(cursor.fetchone()['suma'] or 0)
-
-                # 2) Destetados en el mes actual
-                cursor.execute("""
-                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
-                    FROM destetes
-                    WHERE DATE_TRUNC('month', TO_DATE(SUBSTRING(fecha_destete FROM 1 FOR 10), 'YYYY-MM-DD')) =
-                          DATE_TRUNC('month', CURRENT_DATE)
-                """)
-                destetados_mes = int(cursor.fetchone()['suma'] or 0)
-
-                # 3) Total destetados acumulado
+                # Total acumulado (simple)
                 cursor.execute("""
                     SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
                     FROM destetes
                 """)
                 total_destetados = int(cursor.fetchone()['suma'] or 0)
 
-        print(f"[debug] destetados_hoy={destetados_hoy}, destetados_mes={destetados_mes}, total={total_destetados}")
+                # --- Destetados HOY (robusto para distintos formatos) ---
+                cursor.execute("""
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
+                    FROM destetes
+                    WHERE (
+                        -- Formato ISO al inicio:  YYYY-MM-DD or YYYY-MM-DD HH:MM:SS[.fff]
+                        (substring(trim(fecha_destete) from '(\d{4}-\d{2}-\d{2})') IS NOT NULL
+                         AND substring(trim(fecha_destete) from '(\d{4}-\d{2}-\d{2})')::date = CURRENT_DATE)
+                        OR
+                        -- Formato con barras al inicio: DD/MM/YYYY or DD/MM/YYYY HH:MM:SS
+                        (substring(trim(fecha_destete) from '(\d{2}/\d{2}/\d{4})') IS NOT NULL
+                         AND to_date(substring(trim(fecha_destete) from '(\d{2}/\d{2}/\d{4})'),'DD/MM/YYYY') = CURRENT_DATE)
+                    )
+                """)
+                destetados_hoy = int(cursor.fetchone()['suma'] or 0)
+
+                # --- Destetados MES (mismo enfoque, por mes actual) ---
+                cursor.execute("""
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS suma
+                    FROM destetes
+                    WHERE (
+                        (substring(trim(fecha_destete) from '(\d{4}-\d{2}-\d{2})') IS NOT NULL
+                         AND date_trunc('month', substring(trim(fecha_destete) from '(\d{4}-\d{2}-\d{2})')::date) = date_trunc('month', CURRENT_DATE))
+                        OR
+                        (substring(trim(fecha_destete) from '(\d{2}/\d{2}/\d{4})') IS NOT NULL
+                         AND date_trunc('month', to_date(substring(trim(fecha_destete) from '(\d{2}/\d{2}/\d{4})'),'DD/MM/YYYY')) = date_trunc('month', CURRENT_DATE))
+                    )
+                """)
+                destetados_mes = int(cursor.fetchone()['suma'] or 0)
+
+        app.logger.debug(f"[destetes] hoy={destetados_hoy} mes={destetados_mes} total={total_destetados}")
 
     except Exception as e:
-        # Si algo falla, mostramos en consola y continuamos con valores por defecto
-        print(f"Error al obtener datos para destetes: {e}")
-        flash('Advertencia: error al calcular estadísticas (ver logs).', 'warning')
-        # Opcional: setear listas por defecto si la consulta falló
-        if not galpones_unicos:
-            galpones_unicos = ['Galpón 1', 'Galpón 2']
-        if not pozas_unicas:
-            pozas_unicas = ['Poza 1', 'Poza 2']
+        app.logger.error("Error al leer estadísticas de destetes", exc_info=e)
+        flash('Advertencia: error al calcular estadísticas (revisa logs).', 'warning')
+        # Si falla, las listas ya están inicializadas con valores vacíos
 
     # Manejo POST (inserción)
     if request.method == 'POST':
@@ -565,7 +572,6 @@ def registrar_destete():
             destetados_hembras = int(request.form['destetados_hembras'])
             destetados_machos = int(request.form['destetados_machos'])
 
-            # Validaciones
             if destetados_hembras < 0 or destetados_machos < 0:
                 flash('Los valores no pueden ser negativos.', 'danger')
                 return redirect(url_for('registrar_destete'))
@@ -574,11 +580,9 @@ def registrar_destete():
                 flash('Debe ingresar al menos un animal destetado.', 'danger')
                 return redirect(url_for('registrar_destete'))
 
+            fecha_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
             with get_db_connection() as conn:
                 with conn.cursor() as cursor:
-                    # Insertamos con formato ISO en texto (si la columna es TEXT),
-                    # o puedes usar NOW() si prefieres que Postgres ponga la hora.
-                    fecha_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     cursor.execute('''
                         INSERT INTO destetes (galpon, poza, destetados_hembras, destetados_machos, fecha_destete)
                         VALUES (%s, %s, %s, %s, %s)
@@ -586,17 +590,16 @@ def registrar_destete():
                 conn.commit()
 
             flash('Destete registrado correctamente.', 'success')
-            # Redirigir para evitar doble envío y para recalcular estadísticas en la nueva GET
             return redirect(url_for('registrar_destete'))
 
         except ValueError:
             flash('Por favor ingrese valores numéricos válidos.', 'danger')
         except Exception as e:
-            print(f"Error al registrar destete: {e}")
+            app.logger.error("Error al insertar destete", exc_info=e)
             flash('Error al registrar el destete. Revisa los logs.', 'danger')
             return redirect(url_for('registrar_destete'))
 
-    # Al final renderizamos la plantilla con las variables calculadas
+    # Renderizar template con las variables calculadas
     return render_template('registrar_destete.html',
                            galpones_unicos=galpones_unicos,
                            pozas_unicas=pozas_unicas,
