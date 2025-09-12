@@ -499,33 +499,57 @@ def editar_parto(id):
     return render_template('editar_parto.html', parto=parto)
 
 # Ruta para registrar destete
+# Ruta para registrar destete
 @app.route('/registrar_destete', methods=['GET', 'POST'])
 def registrar_destete():
-    # Valores por defecto
     galpones_unicos = []
     pozas_unicas = []
-    
-    # Intentar obtener datos de la base de datos
+    destetados_hoy = 0
+    destetados_mes = 0
+    total_destetados = 0
+
     try:
         conn = get_db_connection()
         if conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                # Obtener galpones únicos
+                # Galpones y pozas
                 cursor.execute('SELECT DISTINCT galpon FROM reproductores ORDER BY galpon')
                 galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
-                
-                # Obtener pozas únicas
+
                 cursor.execute('SELECT DISTINCT poza FROM reproductores ORDER BY poza')
                 pozas_unicas = [row['poza'] for row in cursor.fetchall()]
-                
+
+                # --- Estadísticas ---
+                # Hoy
+                cursor.execute("""
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) 
+                    FROM destetes
+                    WHERE DATE(fecha_destete) = CURRENT_DATE
+                """)
+                destetados_hoy = cursor.fetchone()[0]
+
+                # Mes actual
+                cursor.execute("""
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+                    FROM destetes
+                    WHERE DATE_TRUNC('month', fecha_destete) = DATE_TRUNC('month', CURRENT_DATE)
+                """)
+                destetados_mes = cursor.fetchone()[0]
+
+                # Totales
+                cursor.execute("""
+                    SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+                    FROM destetes
+                """)
+                total_destetados = cursor.fetchone()[0]
+
             conn.close()
     except Exception as e:
         print(f"Error al obtener datos: {str(e)}")
-        # Si hay error, usar valores por defecto
-        galpones_unicos = ['Galpón 1', 'Galpón 2', 'Galpón 3']
-        pozas_unicas = ['Poza 1', 'Poza 2', 'Poza 3', 'Poza 4']
+        galpones_unicos = ['Galpón 1', 'Galpón 2']
+        pozas_unicas = ['Poza 1', 'Poza 2']
 
-    # Manejar envío del formulario
+    # Manejo POST
     if request.method == 'POST':
         try:
             galpon = request.form['galpon']
@@ -533,17 +557,10 @@ def registrar_destete():
             destetados_hembras = int(request.form['destetados_hembras'])
             destetados_machos = int(request.form['destetados_machos'])
 
-            # Validar valores positivos
             if destetados_hembras < 0 or destetados_machos < 0:
                 flash('Los valores no pueden ser negativos.', 'danger')
-                return render_template('registrar_destete.html',
-                                    galpones_unicos=galpones_unicos,
-                                    pozas_unicas=pozas_unicas,
-                                    destetados_hoy=0,
-                                    destetados_mes=0,
-                                    total_destetados=0)
+                return redirect(url_for('registrar_destete'))
 
-            # Insertar en la base de datos
             conn = get_db_connection()
             if conn:
                 with conn.cursor() as cursor:
@@ -553,25 +570,18 @@ def registrar_destete():
                     ''', (galpon, poza, destetados_hembras, destetados_machos))
                     conn.commit()
                 conn.close()
-                
                 flash('Destete registrado correctamente.', 'success')
                 return redirect(url_for('registrar_destete'))
-            else:
-                flash('Error de conexión a la base de datos.', 'danger')
-
-        except ValueError:
-            flash('Por favor ingrese valores numéricos válidos.', 'danger')
         except Exception as e:
             print(f"Error al registrar destete: {str(e)}")
             flash('Error al registrar el destete. Intente nuevamente.', 'danger')
 
-    # Renderizar template con datos
     return render_template('registrar_destete.html',
-                         galpones_unicos=galpones_unicos,
-                         pozas_unicas=pozas_unicas,
-                         destetados_hoy=0,
-                         destetados_mes=0,
-                         total_destetados=0)
+                           galpones_unicos=galpones_unicos,
+                           pozas_unicas=pozas_unicas,
+                           destetados_hoy=destetados_hoy,
+                           destetados_mes=destetados_mes,
+                           total_destetados=total_destetados)
 
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():
