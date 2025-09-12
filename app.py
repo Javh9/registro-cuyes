@@ -499,45 +499,19 @@ def editar_parto(id):
     return render_template('editar_parto.html', parto=parto)
 
 # Ruta para registrar destete
-# Versión alternativa si hay problemas con el formato de fecha
-# Revisa tu consulta SQL - probablemente hay un error de sintaxis
-@app.route('/registrar_destete', methods=['GET', 'POST'])
+@app.route('/registrar_destete', methods=['GET'])
 def registrar_destete():
+    """Versión mínima para probar si funciona"""
     try:
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                # Obtener valores únicos de galpón y poza (versión simplificada)
-                cursor.execute('SELECT DISTINCT galpon FROM reproductores')
-                galpones_unicos = [row['galpon'] for row in cursor.fetchall()]
-
-                cursor.execute('SELECT DISTINCT poza FROM reproductores')
-                pozas_unicas = [row['poza'] for row in cursor.fetchall()]
-
-                # **SOLUCIÓN TEMPORAL: Remover las estadísticas complejas por ahora**
-                destetados_hoy = 0
-                destetados_mes = 0
-                total_destetados = 0
-
-        if request.method == 'POST':
-            # ... (código del POST permanece igual)
-
+        # Solo lo básico para probar
         return render_template('registrar_destete.html', 
-                             galpones_unicos=galpones_unicos, 
-                             pozas_unicas=pozas_unicas,
-                             destetados_hoy=destetados_hoy,
-                             destetados_mes=destetados_mes,
-                             total_destetados=total_destetados)
-
-    except Exception as e:
-        print(f"ERROR en registrar_destete: {str(e)}")
-        flash(f'Ocurrió un error: {str(e)}', 'danger')
-        return render_template('registrar_destete.html', 
-                             galpones_unicos=[], 
-                             pozas_unicas=[],
+                             galpones_unicos=['Galpon1', 'Galpon2'], 
+                             pozas_unicas=['Poza1', 'Poza2'],
                              destetados_hoy=0,
                              destetados_mes=0,
                              total_destetados=0)
-# Ruta para registrar muertes de destetados
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 @app.route('/registrar_muertes_destetados', methods=['GET', 'POST'])
 def registrar_muertes_destetados():
     if request.method == 'POST':
