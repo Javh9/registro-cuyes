@@ -23,14 +23,15 @@
         <div class="col-md-6">
             <div class="card p-3">
                 <h5>Venta de destetados</h5>
-                <form method="POST" action="{{ url_for('registrar_ventas_destetados') }}">
+                <form method="POST" action="{{ url_for('registrar_ventas') }}">
+                    <input type="hidden" name="tipo" value="destetados">
                     <div class="mb-3">
                         <label class="form-label">Cantidad</label>
-                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                        <input type="number" name="cantidad" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Precio unitario</label>
-                        <input type="number" name="precio_unitario" step="0.01" class="form-control" min="0.01" required>
+                        <input type="number" name="precio_unitario" step="0.01" class="form-control" required>
                     </div>
                     <button type="submit" class="btn btn-success">Registrar</button>
                 </form>
@@ -40,14 +41,15 @@
         <div class="col-md-6">
             <div class="card p-3">
                 <h5>Venta de descarte</h5>
-                <form method="POST" action="{{ url_for('registrar_ventas_descarte') }}">
+                <form method="POST" action="{{ url_for('registrar_ventas') }}">
+                    <input type="hidden" name="tipo" value="descarte">
                     <div class="mb-3">
                         <label class="form-label">Cantidad</label>
-                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                        <input type="number" name="cantidad" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Precio unitario</label>
-                        <input type="number" name="precio_unitario" step="0.01" class="form-control" min="0.01" required>
+                        <input type="number" name="precio_unitario" step="0.01" class="form-control" required>
                     </div>
                     <button type="submit" class="btn btn-success">Registrar</button>
                 </form>
@@ -65,10 +67,10 @@
             <tbody>
                 {% for v in ventas_destetados %}
                 <tr>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
-                    <td>{{ v[4] }}</td>
+                    <td>{{ v.fecha_venta }}</td>
+                    <td>{{ v.cantidad }}</td>
+                    <td>{{ v.precio_unitario }}</td>
+                    <td>{{ v.total }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="4" class="text-center">Sin registros</td></tr>
@@ -84,10 +86,10 @@
             <tbody>
                 {% for v in ventas_descarte %}
                 <tr>
-                    <td>{{ v[1] }}</td>
-                    <td>{{ v[2] }}</td>
-                    <td>{{ v[3] }}</td>
-                    <td>{{ v[4] }}</td>
+                    <td>{{ v.fecha_venta }}</td>
+                    <td>{{ v.cantidad }}</td>
+                    <td>{{ v.precio_unitario }}</td>
+                    <td>{{ v.total }}</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="4" class="text-center">Sin registros</td></tr>

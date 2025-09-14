@@ -648,16 +648,45 @@ def registrar_muertes_destetados():
 
 # Ruta para registrar ventas de destetados
 # --- REGISTRO DE VENTAS ---
-@app.route("/ventas", methods=["GET"])
-def registrar_ventas():
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    # Ventas destetados
+# --- REGISTRO DE VENTAS ---
+@app.route("/ventas", methods=["GET", "POST"])
+def registrar_ventas():
+    if request.method == "POST":
+        tipo = request.form.get("tipo")
+        cantidad = int(request.form["cantidad"])
+        precio_unitario = float(request.form["precio_unitario"])
+        total = cantidad * precio_unitario
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if tipo == "destetados":
+            cursor.execute("""
+                INSERT INTO ventas_destetados (fecha_venta, cantidad, precio_unitario, total)
+                VALUES (CURDATE(), %s, %s, %s)
+            """, (cantidad, precio_unitario, total))
+            flash("Venta de destetados registrada con éxito", "success")
+
+        elif tipo == "descarte":
+            cursor.execute("""
+                INSERT INTO ventas_descarte (fecha_venta, cantidad, precio_unitario, total)
+                VALUES (CURDATE(), %s, %s, %s)
+            """, (cantidad, precio_unitario, total))
+            flash("Venta de descarte registrada con éxito", "success")
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return redirect(url_for("registrar_ventas"))
+
+    # Si es GET, mostrar la página con los registros
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_destetados ORDER BY fecha_venta DESC")
     ventas_destetados = cursor.fetchall()
 
-    # Ventas descarte
     cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_descarte ORDER BY fecha_venta DESC")
     ventas_descarte = cursor.fetchall()
 
@@ -667,46 +696,6 @@ def registrar_ventas():
     return render_template("ventas.html",
                            ventas_destetados=ventas_destetados,
                            ventas_descarte=ventas_descarte)
-
-
-@app.route("/ventas/destetados", methods=["POST"])
-def registrar_ventas_destetados():
-    cantidad = int(request.form["cantidad"])
-    precio_unitario = float(request.form["precio_unitario"])
-    total = cantidad * precio_unitario
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO ventas_destetados (fecha_venta, cantidad, precio_unitario, total)
-        VALUES (CURDATE(), %s, %s, %s)
-    """, (cantidad, precio_unitario, total))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash("Venta de destetados registrada con éxito", "success")
-    return redirect(url_for("registrar_ventas"))
-
-
-@app.route("/ventas/descarte", methods=["POST"])
-def registrar_ventas_descarte():
-    cantidad = int(request.form["cantidad"])
-    precio_unitario = float(request.form["precio_unitario"])
-    total = cantidad * precio_unitario
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO ventas_descarte (fecha_venta, cantidad, precio_unitario, total)
-        VALUES (CURDATE(), %s, %s, %s)
-    """, (cantidad, precio_unitario, total))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash("Venta de descarte registrada con éxito", "success")
-    return redirect(url_for("registrar_ventas"))
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
