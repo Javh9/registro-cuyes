@@ -38,25 +38,41 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Botones para redirigir a las rutas específicas -->
+    <!-- Formularios -->
     <div class="row">
         <div class="col-md-6">
-            <div class="card p-4 text-center">
+            <div class="card p-4">
                 <h5 class="card-title">Venta de destetados</h5>
-                <p>Registrar venta de cuyes destetados</p>
-                <a href="{{ url_for('registrar_ventas_destetados') }}" class="btn btn-success w-100">
-                    Registrar Venta de Destetados
-                </a>
+                <form method="POST" action="{{ url_for('registrar_ventas_destetados') }}">
+                    <input type="hidden" name="tipo" value="destetados">
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio unitario (S/.)</label>
+                        <input type="number" name="precio_unitario" step="0.01" min="0.01" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Registrar Venta</button>
+                </form>
             </div>
         </div>
 
         <div class="col-md-6">
-            <div class="card p-4 text-center">
+            <div class="card p-4">
                 <h5 class="card-title">Venta de descarte</h5>
-                <p>Registrar venta de cuyes de descarte</p>
-                <a href="{{ url_for('registrar_ventas_descarte') }}" class="btn btn-success w-100">
-                    Registrar Venta de Descarte
-                </a>
+                <form method="POST" action="{{ url_for('registrar_ventas_descarte') }}">
+                    <input type="hidden" name="tipo" value="descarte">
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" class="form-control" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio unitario (S/.)</label>
+                        <input type="number" name="precio_unitario" step="0.01" min="0.01" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Registrar Venta</button>
+                </form>
             </div>
         </div>
     </div>
@@ -69,24 +85,22 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
-                        <th>Hembras Vendidas</th>
-                        <th>Machos Vendidos</th>
-                        <th>Total Vendidos</th>
-                        <th>Precio Total (S/.)</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario (S/.)</th>
+                        <th>Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in ventas_destetados %}
                     <tr>
-                        <td>{{ v.fecha_venta if v.fecha_venta else 'N/A' }}</td>
-                        <td>{{ v.hembras_vendidas }}</td>
-                        <td>{{ v.machos_vendidos }}</td>
-                        <td>{{ v.hembras_vendidas + v.machos_vendidos }}</td>
-                        <td>S/. {{ "%.2f"|format(v.costo_venta) }}</td>
+                        <td>{{ v[4] if v[4] else 'N/A' }}</td>
+                        <td>{{ v[1] }}</td>
+                        <td>S/. {{ "%.2f"|format(v[2]) }}</td>
+                        <td>S/. {{ "%.2f"|format(v[3]) }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de destetados</td>
+                        <td colspan="4" class="text-center text-muted py-3">No hay registros de ventas de destetados</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -99,34 +113,27 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
-                        <th>Galpón</th>
-                        <th>Poza</th>
-                        <th>Cantidad Vendida</th>
-                        <th>Precio Total (S/.)</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario (S/.)</th>
+                        <th>Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in ventas_descarte %}
                     <tr>
-                        <td>{{ v.fecha_venta if v.fecha_venta else 'N/A' }}</td>
-                        <td>{{ v.galpon }}</td>
-                        <td>{{ v.poza }}</td>
-                        <td>{{ v.cuyes_vendidos }}</td>
-                        <td>S/. {{ "%.2f"|format(v.costo_venta) }}</td>
+                        <td>{{ v[4] if v[4] else 'N/A' }}</td>
+                        <td>{{ v[1] }}</td>
+                        <td>S/. {{ "%.2f"|format(v[2]) }}</td>
+                        <td>S/. {{ "%.2f"|format(v[3]) }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de descarte</td>
+                        <td colspan="4" class="text-center text-muted py-3">No hay registros de ventas de descarte</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Botón para volver al inicio -->
-    <div class="text-center mt-4">
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al Inicio</a>
     </div>
 </div>
 
