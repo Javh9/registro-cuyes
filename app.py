@@ -650,48 +650,74 @@ def registrar_muertes_destetados():
 # --- REGISTRO DE VENTAS ---
 
 # --- REGISTRO DE VENTAS ---
-@app.route("/ventas", methods=["GET", "POST"])
-def registrar_ventas():
-    if request.method == "POST":
-        tipo = request.form.get("tipo")
-        cantidad = int(request.form["cantidad"])
-        precio_unitario = float(request.form["precio_unitario"])
-        total = cantidad * precio_unitario
+# --- SECCIÓN VENTAS CORREGIDA ---
 
+@app.route("/ventas", methods=["GET", "POST"])
+def ventas():
+    ventas_destetados = []
+    ventas_descarte = []
+    try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        if tipo == "destetados":
-            cursor.execute("""
-                INSERT INTO ventas_destetados (fecha_venta, cantidad, precio_unitario, total)
-                VALUES (CURDATE(), %s, %s, %s)
-            """, (cantidad, precio_unitario, total))
-            flash("Venta de destetados registrada con éxito", "success")
+        if request.method == "POST":
+            tipo = request.form.get("tipo")
+            # Validar que tipo exista
+            if tipo not in ("destetados", "descarte"):
+                flash("Tipo de venta no válido.", "danger")
+            else:
+                cantidad = int(request.form.get("cantidad", 0))
+                precio_unitario = float(request.form.get("precio_unitario", 0.0))
 
-        elif tipo == "descarte":
-            cursor.execute("""
-                INSERT INTO ventas_descarte (fecha_venta, cantidad, precio_unitario, total)
-                VALUES (CURDATE(), %s, %s, %s)
-            """, (cantidad, precio_unitario, total))
-            flash("Venta de descarte registrada con éxito", "success")
+                if cantidad < 0 or precio_unitario < 0:
+                    flash("Los valores no pueden ser negativos.", "danger")
+                else:
+                    if tipo == "destetados":
+                        # si también necesitas galpon y poza para destetados
+                        galpon = request.form.get("galpon", "N/A")
+                        poza = request.form.get("poza", "N/A")
+                        cursor.execute("""
+                            INSERT INTO ventas_destetados (galpon, poza, cantidad, precio_unitario, total, fecha_venta)
+                            VALUES (%s, %s, %s, %s, %s, NOW())
+                        """, (galpon, poza, cantidad, precio_unitario, cantidad * precio_unitario))
+                        flash("Venta de destetados registrada correctamente.", "success")
+                    else:  # descarte
+                        galpon = request.form.get("galpon", "N/A")
+                        poza = request.form.get("poza", "N/A")
+                        cursor.execute("""
+                            INSERT INTO ventas_descarte (galpon, poza, cantidad, precio_unitario, total, fecha_venta)
+                            VALUES (%s, %s, %s, %s, %s, NOW())
+                        """, (galpon, poza, cantidad, precio_unitario, cantidad * precio_unitario))
+                        flash("Venta de descarte registrada correctamente.", "success")
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for("registrar_ventas"))
+                    conn.commit()
 
-    # Si es GET, mostrar la página con los registros
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+            return redirect(url_for("ventas"))
 
-    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_destetados ORDER BY fecha_venta DESC")
-    ventas_destetados = cursor.fetchall()
+        # Si GET o tras POST redirigido, traer los históricos
+        cursor.execute("""
+            SELECT id, galpon, poza, cantidad, precio_unitario, total, fecha_venta
+            FROM ventas_destetados
+            ORDER BY fecha_venta DESC
+        """)
+        ventas_destetados = cursor.fetchall()
 
-    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_descarte ORDER BY fecha_venta DESC")
-    ventas_descarte = cursor.fetchall()
+        cursor.execute("""
+            SELECT id, galpon, poza, cantidad, precio_unitario, total, fecha_venta
+            FROM ventas_descarte
+            ORDER BY fecha_venta DESC
+        """)
+        ventas_descarte = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        print(f"Error en sección ventas: {e}")
+        flash("Error al cargar o registrar ventas. Revisa los logs.", "danger")
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
 
     return render_template("ventas.html",
                            ventas_destetados=ventas_destetados,
