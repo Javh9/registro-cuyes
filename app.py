@@ -645,27 +645,7 @@ def registrar_muertes_destetados():
 
     return render_template('registrar_muertes_destetados.html')
 
-# Ruta unificada para ventas
-@app.route('/ventas')
-def ventas():
-    try:
-        # Obtener datos para mostrar en el template
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute('SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC')
-                ventas_destetados = cursor.fetchall()
-                
-                cursor.execute('SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC')
-                ventas_descarte = cursor.fetchall()
-        
-        return render_template('ventas.html', 
-                             ventas_destetados=ventas_destetados,
-                             ventas_descarte=ventas_descarte)
-                             
-    except Exception as e:
-        flash(f'Ocurrió un error: {str(e)}', 'danger')
-        return redirect(url_for('index'))
-    
+
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
