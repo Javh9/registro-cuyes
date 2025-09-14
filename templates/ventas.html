@@ -38,41 +38,25 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Formularios -->
+    <!-- Botones para redirigir a las rutas específicas -->
     <div class="row">
         <div class="col-md-6">
-            <div class="card p-4">
+            <div class="card p-4 text-center">
                 <h5 class="card-title">Venta de destetados</h5>
-                <form method="POST" action="{{ url_for('registrar_ventas_destetados') }}">
-                    <input type="hidden" name="tipo" value="destetados">
-                    <div class="mb-3">
-                        <label class="form-label">Cantidad</label>
-                        <input type="number" name="cantidad" class="form-control" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Precio unitario (S/.)</label>
-                        <input type="number" name="precio_unitario" step="0.01" min="0.01" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Registrar Venta</button>
-                </form>
+                <p>Registrar venta de cuyes destetados</p>
+                <a href="{{ url_for('registrar_ventas_destetados') }}" class="btn btn-success w-100">
+                    Registrar Venta de Destetados
+                </a>
             </div>
         </div>
 
         <div class="col-md-6">
-            <div class="card p-4">
+            <div class="card p-4 text-center">
                 <h5 class="card-title">Venta de descarte</h5>
-                <form method="POST" action="{{ url_for('registrar_ventas_descarte') }}">
-                    <input type="hidden" name="tipo" value="descarte">
-                    <div class="mb-3">
-                        <label class="form-label">Cantidad</label>
-                        <input type="number" name="cantidad" class="form-control" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Precio unitario (S/.)</label>
-                        <input type="number" name="precio_unitario" step="0.01" min="0.01" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Registrar Venta</button>
-                </form>
+                <p>Registrar venta de cuyes de descarte</p>
+                <a href="{{ url_for('registrar_ventas_descarte') }}" class="btn btn-success w-100">
+                    Registrar Venta de Descarte
+                </a>
             </div>
         </div>
     </div>
@@ -85,22 +69,24 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario (S/.)</th>
-                        <th>Total (S/.)</th>
+                        <th>Hembras Vendidas</th>
+                        <th>Machos Vendidos</th>
+                        <th>Total Vendidos</th>
+                        <th>Precio Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in ventas_destetados %}
                     <tr>
-                        <td>{{ v[4] if v[4] else 'N/A' }}</td>
-                        <td>{{ v[1] }}</td>
-                        <td>S/. {{ "%.2f"|format(v[2]) }}</td>
-                        <td>S/. {{ "%.2f"|format(v[3]) }}</td>
+                        <td>{{ v[6] if v[6] else 'N/A' }}</td>  <!-- fecha_venta -->
+                        <td>{{ v[3] }}</td>  <!-- hembras_vendidas -->
+                        <td>{{ v[4] }}</td>  <!-- machos_vendidos -->
+                        <td>{{ v[3] + v[4] }}</td>  <!-- total -->
+                        <td>S/. {{ "%.2f"|format(v[5]) }}</td>  <!-- costo_venta -->
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-3">No hay registros de ventas de destetados</td>
+                        <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de destetados</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -113,27 +99,34 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario (S/.)</th>
-                        <th>Total (S/.)</th>
+                        <th>Galpón</th>
+                        <th>Poza</th>
+                        <th>Cantidad Vendida</th>
+                        <th>Precio Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for v in ventas_descarte %}
                     <tr>
-                        <td>{{ v[4] if v[4] else 'N/A' }}</td>
-                        <td>{{ v[1] }}</td>
-                        <td>S/. {{ "%.2f"|format(v[2]) }}</td>
-                        <td>S/. {{ "%.2f"|format(v[3]) }}</td>
+                        <td>{{ v[5] if v[5] else 'N/A' }}</td>  <!-- fecha_venta -->
+                        <td>{{ v[1] }}</td>  <!-- galpon -->
+                        <td>{{ v[2] }}</td>  <!-- poza -->
+                        <td>{{ v[3] }}</td>  <!-- cuyes_vendidos -->
+                        <td>S/. {{ "%.2f"|format(v[4]) }}</td>  <!-- costo_venta -->
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-3">No hay registros de ventas de descarte</td>
+                        <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de descarte</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <!-- Botón para volver al inicio -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al Inicio</a>
     </div>
 </div>
 
