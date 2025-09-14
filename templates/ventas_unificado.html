@@ -159,6 +159,10 @@
             font-size: 0.875rem;
         }
         
+        .hidden {
+            display: none;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
@@ -310,22 +314,43 @@
                                     <label class="form-label">
                                         <i class="fas fa-tag me-1"></i>Tipo de Venta
                                     </label>
-                                    <select class="form-select" name="tipo_venta" id="tipo_venta" required onchange="toggleCamposAdicionales()">
+                                    <select class="form-select" name="tipo_venta" id="tipo_venta" required onchange="toggleCamposEspecificos()">
                                         <option value="">Seleccionar...</option>
                                         <option value="destetados">Destetados</option>
                                         <option value="descarte">Descarte</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">
-                                        <i class="fas fa-list-ol me-1"></i>Cantidad de Cuyes
-                                    </label>
-                                    <input type="number" name="cantidad" class="form-control" min="1" required>
+                            </div>
+                            
+                            <!-- Campos para Destetados -->
+                            <div id="campos-destetados" class="hidden">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="fas fa-venus text-danger me-1"></i>Cantidad de Hembras
+                                        </label>
+                                        <input type="number" name="hembras" class="form-control" min="0" value="0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="fas fa-mars text-primary me-1"></i>Cantidad de Machos
+                                        </label>
+                                        <input type="number" name="machos" class="form-control" min="0" value="0">
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Campos adicionales para venta de descarte -->
+                            <!-- Campos para Descarte -->
                             <div id="campos-descarte" class="hidden">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="fas fa-list-ol me-1"></i>Cantidad de Cuyes
+                                        </label>
+                                        <input type="number" name="cantidad" class="form-control" min="1" value="0">
+                                    </div>
+                                </div>
+                                
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">
@@ -379,7 +404,7 @@
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button type="reset" class="btn btn-secondary me-md-2">
+                                <button type="reset" class="btn btn-secondary me-md-2" onclick="resetForm()">
                                     <i class="fas fa-eraser me-1"></i> Limpiar
                                 </button>
                                 <button type="submit" class="btn btn-success">
@@ -411,9 +436,9 @@
                         <div class="alert alert-warning">
                             <strong><i class="fas fa-exclamation-triangle me-2"></i>Nota:</strong>
                             <ul class="mb-0 mt-2">
+                                <li>Para ventas de destetados, especifique la cantidad de hembras y machos</li>
                                 <li>Para ventas de descarte, especifique el galpón y poza de origen</li>
-                                <li>Indique si el cuy estaba en engorde o fue venta directa</li>
-                                <li>El sistema pondrá automáticamente en cero la poza al registrar la venta</li>
+                                <li>El sistema pondrá automáticamente en cero la poza al registrar la venta de descarte</li>
                                 <li>Los registros de ventas no pueden modificarse después de guardarse</li>
                             </ul>
                         </div>
@@ -434,29 +459,50 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Función para mostrar/ocultar campos adicionales según el tipo de venta
-        function toggleCamposAdicionales() {
+        // Función para mostrar/ocultar campos específicos según el tipo de venta
+        function toggleCamposEspecificos() {
             const tipoVenta = document.getElementById('tipo_venta').value;
+            const camposDestetados = document.getElementById('campos-destetados');
             const camposDescarte = document.getElementById('campos-descarte');
             
-            if (tipoVenta === 'descarte') {
+            // Ocultar todos los campos primero
+            camposDestetados.classList.add('hidden');
+            camposDescarte.classList.add('hidden');
+            
+            // Quitar el requerimiento de todos los campos específicos
+            document.querySelectorAll('#campos-destetados input, #campos-descarte input, #campos-descarte select').forEach(input => {
+                input.removeAttribute('required');
+            });
+            
+            // Mostrar campos según el tipo de venta seleccionado
+            if (tipoVenta === 'destetados') {
+                camposDestetados.classList.remove('hidden');
+                // Hacer obligatorios los campos de destetados
+                document.querySelectorAll('#campos-destetados input').forEach(input => {
+                    input.setAttribute('required', 'true');
+                });
+            } else if (tipoVenta === 'descarte') {
                 camposDescarte.classList.remove('hidden');
                 // Hacer obligatorios los campos de descarte
-                document.querySelectorAll('#campos-descarte select').forEach(select => {
-                    select.setAttribute('required', 'true');
-                });
-            } else {
-                camposDescarte.classList.add('hidden');
-                // Quitar el requerimiento de los campos de descarte
-                document.querySelectorAll('#campos-descarte select').forEach(select => {
-                    select.removeAttribute('required');
+                document.querySelectorAll('#campos-descarte input, #campos-descarte select').forEach(input => {
+                    input.setAttribute('required', 'true');
                 });
             }
         }
         
+        // Función para resetear el formulario correctamente
+        function resetForm() {
+            // Ocultar todos los campos específicos
+            document.getElementById('campos-destetados').classList.add('hidden');
+            document.getElementById('campos-descarte').classList.add('hidden');
+            
+            // Resetear el selector de tipo de venta
+            document.getElementById('tipo_venta').value = "";
+        }
+        
         // Inicializar el estado de los campos al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
-            toggleCamposAdicionales();
+            toggleCamposEspecificos();
             
             // Validación de formularios
             const form = document.querySelector('form');
@@ -468,18 +514,40 @@
                     return false;
                 }
                 
-                const cantidad = form.querySelector('input[name="cantidad"]');
-                if (parseInt(cantidad.value) <= 0) {
-                    e.preventDefault();
-                    alert('La cantidad debe ser mayor a 0.');
-                    return false;
-                }
-                
                 const tipoVenta = form.querySelector('select[name="tipo_venta"]');
                 if (tipoVenta.value === "") {
                     e.preventDefault();
                     alert('Debe seleccionar un tipo de venta.');
                     return false;
+                }
+                
+                // Validación específica para destetados
+                if (tipoVenta.value === 'destetados') {
+                    const hembras = parseInt(form.querySelector('input[name="hembras"]').value);
+                    const machos = parseInt(form.querySelector('input[name="machos"]').value);
+                    
+                    if (hembras < 0 || machos < 0) {
+                        e.preventDefault();
+                        alert('Las cantidades de hembras y machos no pueden ser negativas.');
+                        return false;
+                    }
+                    
+                    if (hembras === 0 && machos === 0) {
+                        e.preventDefault();
+                        alert('Debe ingresar al menos una hembra o un macho.');
+                        return false;
+                    }
+                }
+                
+                // Validación específica para descarte
+                if (tipoVenta.value === 'descarte') {
+                    const cantidad = parseInt(form.querySelector('input[name="cantidad"]').value);
+                    
+                    if (cantidad <= 0) {
+                        e.preventDefault();
+                        alert('La cantidad debe ser mayor a 0.');
+                        return false;
+                    }
                 }
             });
         });
