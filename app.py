@@ -711,6 +711,8 @@ def registrar_ventas_descarte():
             flash(f'Error: {str(e)}', 'danger')
 
     return render_template('registrar_ventas_descarte.html')   
+
+
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
