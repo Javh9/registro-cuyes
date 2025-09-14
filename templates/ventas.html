@@ -43,7 +43,7 @@
         <div class="col-md-6">
             <div class="card p-4">
                 <h5 class="card-title">Venta de destetados</h5>
-                <form method="POST" action="{{ url_for('ventas') }}">
+                <form method="POST" action="{{ url_for('registrar_ventas_destetados') }}">
                     <input type="hidden" name="tipo" value="destetados">
                     <div class="mb-3">
                         <label class="form-label">Cantidad</label>
@@ -61,7 +61,7 @@
         <div class="col-md-6">
             <div class="card p-4">
                 <h5 class="card-title">Venta de descarte</h5>
-                <form method="POST" action="{{ url_for('ventas') }}">
+                <form method="POST" action="{{ url_for('registrar_ventas_descarte') }}">
                     <input type="hidden" name="tipo" value="descarte">
                     <div class="mb-3">
                         <label class="form-label">Cantidad</label>
