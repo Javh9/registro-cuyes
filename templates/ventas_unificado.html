@@ -184,7 +184,7 @@
                 <span class="fw-bold">Sistema de Registro de Cuyes</span>
             </a>
             <div class="d-flex">
-                <span class="navbar-text me-3">Usuario: Admin</span>
+                <span class="navbar-text me-3">Usuario: {{ session['usuario'] }}</span>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-home me-1"></i> Inicio
                 </a>
@@ -201,6 +201,16 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('index') }}">
                                 <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('ingresar_reproductores') }}">
+                                <i class="fas fa-egg"></i> Reproductores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('registrar_partos') }}">
+                                <i class="fas fa-baby"></i> Partos
                             </a>
                         </li>
                         <li class="nav-item">
@@ -221,6 +231,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('registrar_gastos') }}">
                                 <i class="fas fa-receipt"></i> Gastos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                             </a>
                         </li>
                     </ul>
@@ -308,7 +323,7 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <form method="POST">
+                        <form method="POST" action="{{ url_for('ventas') }}">
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">
@@ -316,38 +331,38 @@
                                     </label>
                                     <select class="form-select" name="tipo_venta" id="tipo_venta" required onchange="toggleCamposEspecificos()">
                                         <option value="">Seleccionar...</option>
-                                        <option value="destetados">Destetados</option>
-                                        <option value="descarte">Descarte</option>
+                                        <option value="destetados" {% if request.form.get('tipo_venta') == 'destetados' %}selected{% endif %}>Destetados</option>
+                                        <option value="descarte" {% if request.form.get('tipo_venta') == 'descarte' %}selected{% endif %}>Descarte</option>
                                     </select>
                                 </div>
                             </div>
                             
                             <!-- Campos para Destetados -->
-                            <div id="campos-destetados" class="hidden">
+                            <div id="campos-destetados" class="{% if request.form.get('tipo_venta') != 'descarte' %}hidden{% endif %}">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">
                                             <i class="fas fa-venus text-danger me-1"></i>Cantidad de Hembras
                                         </label>
-                                        <input type="number" name="hembras" class="form-control" min="0" value="0">
+                                        <input type="number" name="hembras" class="form-control" min="0" value="{{ request.form.get('hembras', '0') }}">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">
                                             <i class="fas fa-mars text-primary me-1"></i>Cantidad de Machos
                                         </label>
-                                        <input type="number" name="machos" class="form-control" min="0" value="0">
+                                        <input type="number" name="machos" class="form-control" min="0" value="{{ request.form.get('machos', '0') }}">
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Campos para Descarte -->
-                            <div id="campos-descarte" class="hidden">
+                            <div id="campos-descarte" class="{% if request.form.get('tipo_venta') != 'descarte' %}hidden{% endif %}">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">
                                             <i class="fas fa-list-ol me-1"></i>Cantidad de Cuyes
                                         </label>
-                                        <input type="number" name="cantidad" class="form-control" min="1" value="0">
+                                        <input type="number" name="cantidad" class="form-control" min="1" value="{{ request.form.get('cantidad', '0') }}">
                                     </div>
                                 </div>
                                 
@@ -359,7 +374,7 @@
                                         <select class="form-select" name="galpon">
                                             <option value="">Seleccionar galpón...</option>
                                             {% for galpon in galpones %}
-                                            <option value="{{ galpon.id }}">{{ galpon.nombre }}</option>
+                                            <option value="{{ galpon.id }}" {% if request.form.get('galpon') == galpon.id|string %}selected{% endif %}>{{ galpon.nombre }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -370,7 +385,7 @@
                                         <select class="form-select" name="poza">
                                             <option value="">Seleccionar poza...</option>
                                             {% for poza in pozas %}
-                                            <option value="{{ poza.id }}">{{ poza.nombre }}</option>
+                                            <option value="{{ poza.id }}" {% if request.form.get('poza') == poza.id|string %}selected{% endif %}>{{ poza.nombre }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -382,8 +397,8 @@
                                             <i class="fas fa-info-circle me-1"></i>Estado del Cuy
                                         </label>
                                         <select class="form-select" name="estado_cuy">
-                                            <option value="engorde">Engorde</option>
-                                            <option value="venta_directa">Venta Directa</option>
+                                            <option value="engorde" {% if request.form.get('estado_cuy') == 'engorde' %}selected{% endif %}>Engorde</option>
+                                            <option value="venta_directa" {% if request.form.get('estado_cuy') == 'venta_directa' %}selected{% endif %}>Venta Directa</option>
                                         </select>
                                         <div class="form-text">¿El cuy estaba en proceso de engorde o se vendió directamente?</div>
                                     </div>
@@ -400,7 +415,7 @@
                                 <label class="form-label">
                                     <i class="fas fa-money-bill-wave me-1"></i>Monto Total (S/.)
                                 </label>
-                                <input type="number" name="costo_venta" step="0.01" class="form-control" required>
+                                <input type="number" name="costo_venta" step="0.01" class="form-control" required value="{{ request.form.get('costo_venta', '') }}">
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -502,54 +517,11 @@
         
         // Inicializar el estado de los campos al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
-            toggleCamposEspecificos();
-            
-            // Validación de formularios
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                const costoVenta = form.querySelector('input[name="costo_venta"]');
-                if (parseFloat(costoVenta.value) <= 0) {
-                    e.preventDefault();
-                    alert('El monto de venta debe ser mayor a 0.');
-                    return false;
-                }
-                
-                const tipoVenta = form.querySelector('select[name="tipo_venta"]');
-                if (tipoVenta.value === "") {
-                    e.preventDefault();
-                    alert('Debe seleccionar un tipo de venta.');
-                    return false;
-                }
-                
-                // Validación específica para destetados
-                if (tipoVenta.value === 'destetados') {
-                    const hembras = parseInt(form.querySelector('input[name="hembras"]').value);
-                    const machos = parseInt(form.querySelector('input[name="machos"]').value);
-                    
-                    if (hembras < 0 || machos < 0) {
-                        e.preventDefault();
-                        alert('Las cantidades de hembras y machos no pueden ser negativas.');
-                        return false;
-                    }
-                    
-                    if (hembras === 0 && machos === 0) {
-                        e.preventDefault();
-                        alert('Debe ingresar al menos una hembra o un macho.');
-                        return false;
-                    }
-                }
-                
-                // Validación específica para descarte
-                if (tipoVenta.value === 'descarte') {
-                    const cantidad = parseInt(form.querySelector('input[name="cantidad"]').value);
-                    
-                    if (cantidad <= 0) {
-                        e.preventDefault();
-                        alert('La cantidad debe ser mayor a 0.');
-                        return false;
-                    }
-                }
-            });
+            // Mostrar los campos correspondientes según el tipo de venta seleccionado previamente
+            const tipoVenta = "{{ request.form.get('tipo_venta', '') }}";
+            if (tipoVenta) {
+                toggleCamposEspecificos();
+            }
         });
     </script>
 </body>
