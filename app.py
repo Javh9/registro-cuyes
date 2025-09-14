@@ -645,92 +645,91 @@ def registrar_muertes_destetados():
 
     return render_template('registrar_muertes_destetados.html')
 # Ruta unificada para ventas (REEMPLAZA las dos rutas anteriores)
-# Ruta para registrar ventas de destetados
-@app.route('/registrar_ventas_destetados', methods=['GET', 'POST'])
-def registrar_ventas_destetados():
-    if request.method == 'POST':
-        try:
-            hembras_vendidas = int(request.form['hembras_vendidas'])
-            machos_vendidos = int(request.form['machos_vendidos'])
-            costo_venta = float(request.form['costo_venta'])
-
-            validate_positive_values(
-                hembras_vendidas=hembras_vendidas,
-                machos_vendidos=machos_vendidos,
-                costo_venta=costo_venta
-            )
-
-            with get_db_connection() as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        INSERT INTO ventas_destetados (
-                            galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ''', ('N/A', 'N/A', hembras_vendidas, machos_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-                    conn.commit()
-                    
-            flash('Venta de destetados registrada correctamente.', 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            flash(f'Error: {str(e)}', 'danger')
-
-    return render_template('registrar_ventas_destetados.html')
-
-# Ruta para registrar ventas de descarte
-@app.route('/registrar_ventas_descarte', methods=['GET', 'POST'])
-def registrar_ventas_descarte():
-    if request.method == 'POST':
-        try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            cuyes_vendidos = int(request.form['cuyes_vendidos'])
-            costo_venta = float(request.form['costo_venta'])
-
-            validate_positive_values(cuyes_vendidos=cuyes_vendidos, costo_venta=costo_venta)
-
-            with get_db_connection() as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        SELECT id FROM reproductores
-                        WHERE galpon = %s AND poza = %s
-                    ''', (galpon, poza))
-                    if not cursor.fetchone():
-                        flash('El galpón y la poza no están registrados.', 'danger')
-                        return redirect(url_for('registrar_ventas_descarte'))
-
-                    cursor.execute('''
-                        INSERT INTO ventas_descarte (
-                            galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
-                        ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (galpon, poza, cuyes_vendidos, costo_venta, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
-                    conn.commit()
-                    
-            flash('Venta de descarte registrada correctamente.', 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            flash(f'Error: {str(e)}', 'danger')
-
-    return render_template('registrar_ventas_descarte.html')   
-# Ruta adicional para ver el estado de las ventas (solo lectura)
-@app.route('/ventas')
-def ver_ventas():
+# Ruta unificada para ventas (REEMPLAZA las dos rutas anteriores)
+@app.route('/ventas', methods=['GET', 'POST'])
+def ventas():
     try:
+        # Obtener galpones y pozas para el formulario de descarte
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute('SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC')
-                ventas_destetados = cursor.fetchall()
-                
-                cursor.execute('SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC')
-                ventas_descarte = cursor.fetchall()
+                cursor.execute('SELECT DISTINCT galpon, poza FROM reproductores ORDER BY galpon, poza')
+                galpones_pozas = cursor.fetchall()
         
-        return render_template('ver_ventas.html', 
-                             ventas_destetados=ventas_destetados,
-                             ventas_descarte=ventas_descarte)
-                             
-    except Exception as e:
-        flash(f'Ocurrió un error: {str(e)}', 'danger')
-        return redirect(url_for('index'))
+        if request.method == 'POST':
+            tipo_venta = request.form.get('tipo_venta')
+            
+            if tipo_venta == 'destetados':
+                try:
+                    hembras_vendidas = int(request.form['hembras_vendidas'])
+                    machos_vendidos = int(request.form['machos_vendidos'])
+                    costo_venta = float(request.form['costo_venta'])
 
+                    validate_positive_values(
+                        hembras_vendidas=hembras_vendidas,
+                        machos_vendidos=machos_vendidos,
+                        costo_venta=costo_venta
+                    )
+
+                    with get_db_connection() as conn:
+                        with conn.cursor() as cursor:
+                            cursor.execute('''
+                                INSERT INTO ventas_destetados (
+                                    galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
+                                ) VALUES (%s, %s, %s, %s, %s, %s)
+                            ''', ('N/A', 'N/A', hembras_vendidas, machos_vendidos, costo_venta, 
+                                 datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                            conn.commit()
+                    
+                    flash('Venta de destetados registrada correctamente.', 'success')
+                    return redirect(url_for('ventas'))
+                    
+                except Exception as e:
+                    flash(f'Error en venta de destetados: {str(e)}', 'danger')
+                    return render_template('ventas_unificado.html', galpones_pozas=galpones_pozas)
+            
+            elif tipo_venta == 'descarte':
+                try:
+                    galpon = request.form['galpon']
+                    poza = request.form['poza']
+                    cuyes_vendidos = int(request.form['cuyes_vendidos'])
+                    costo_venta = float(request.form['costo_venta'])
+
+                    validate_positive_values(
+                        cuyes_vendidos=cuyes_vendidos,
+                        costo_venta=costo_venta
+                    )
+
+                    with get_db_connection() as conn:
+                        with conn.cursor() as cursor:
+                            # Verificar que el galpón y poza existen
+                            cursor.execute('''
+                                SELECT id FROM reproductores
+                                WHERE galpon = %s AND poza = %s
+                            ''', (galpon, poza))
+                            if not cursor.fetchone():
+                                flash('El galpón y la poza no están registrados.', 'danger')
+                                return render_template('ventas_unificado.html', galpones_pozas=galpones_pozas)
+
+                            cursor.execute('''
+                                INSERT INTO ventas_descarte (
+                                    galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
+                                ) VALUES (%s, %s, %s, %s, %s)
+                            ''', (galpon, poza, cuyes_vendidos, costo_venta, 
+                                 datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                            conn.commit()
+                    
+                    flash('Venta de descarte registrada correctamente.', 'success')
+                    return redirect(url_for('ventas'))
+                    
+                except Exception as e:
+                    flash(f'Error en venta de descarte: {str(e)}', 'danger')
+                    return render_template('ventas_unificado.html', galpones_pozas=galpones_pozas)
+        
+        return render_template('ventas_unificado.html', galpones_pozas=galpones_pozas)
+        
+    except Exception as e:
+        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
