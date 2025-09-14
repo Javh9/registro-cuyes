@@ -711,7 +711,25 @@ def registrar_ventas_descarte():
             flash(f'Error: {str(e)}', 'danger')
 
     return render_template('registrar_ventas_descarte.html')   
-
+# Ruta adicional para ver el estado de las ventas (solo lectura)
+@app.route('/ventas')
+def ver_ventas():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                cursor.execute('SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC')
+                ventas_destetados = cursor.fetchall()
+                
+                cursor.execute('SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC')
+                ventas_descarte = cursor.fetchall()
+        
+        return render_template('ver_ventas.html', 
+                             ventas_destetados=ventas_destetados,
+                             ventas_descarte=ventas_descarte)
+                             
+    except Exception as e:
+        flash(f'Ocurrió un error: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
