@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -49,21 +49,19 @@
         <!-- Selector de tipo de venta -->
         <div class="row mb-4">
             <div class="col-6">
-                <div class="form-toggle text-center {% if request.method != 'POST' or request.form.get('tipo_venta') == 'destetados' %}active{% endif %}" 
-                     onclick="showForm('destetados')">
+                <div class="form-toggle text-center active" onclick="showForm('destetados')">
                     <h5>Venta de Destetados</h5>
                 </div>
             </div>
             <div class="col-6">
-                <div class="form-toggle text-center {% if request.method == 'POST' and request.form.get('tipo_venta') == 'descarte' %}active{% endif %}" 
-                     onclick="showForm('descarte')">
+                <div class="form-toggle text-center" onclick="showForm('descarte')">
                     <h5>Venta de Descarte</h5>
                 </div>
             </div>
         </div>
 
         <!-- Formulario de Destetados -->
-        <div id="form-destetados" class="form-section {% if request.method != 'POST' or request.form.get('tipo_venta') == 'destetados' %}{% else %}hidden{% endif %}">
+        <div id="form-destetados" class="form-section">
             <h3>Venta de Cuyes Destetados</h3>
             <form method="POST">
                 <input type="hidden" name="tipo_venta" value="destetados">
@@ -80,8 +78,8 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label for="costo_venta_destetados" class="form-label">Costo total de venta (S/.):</label>
-                    <input type="number" step="0.01" class="form-control" id="costo_venta_destetados" name="costo_venta" required min="0.01">
+                    <label for="costo_venta" class="form-label">Costo total de venta (S/.):</label>
+                    <input type="number" step="0.01" class="form-control" id="costo_venta" name="costo_venta" required min="0.01">
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Registrar Venta de Destetados</button>
@@ -89,7 +87,7 @@
         </div>
 
         <!-- Formulario de Descarte -->
-        <div id="form-descarte" class="form-section {% if request.method == 'POST' and request.form.get('tipo_venta') == 'descarte' %}{% else %}hidden{% endif %}">
+        <div id="form-descarte" class="form-section hidden">
             <h3>Venta de Cuyes de Descarte</h3>
             <form method="POST">
                 <input type="hidden" name="tipo_venta" value="descarte">
@@ -148,7 +146,7 @@
             document.querySelectorAll('.form-toggle').forEach(toggle => {
                 toggle.classList.remove('active');
             });
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
         }
     </script>
 </body>
