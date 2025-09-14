@@ -647,76 +647,66 @@ def registrar_muertes_destetados():
 
 
 # Ruta para registrar ventas de destetados
-@app.route('/registrar_ventas_destetados', methods=['POST'])
-def registrar_ventas_destetados():
-    if request.method == 'POST':
-        try:
-            hembras_vendidas = int(request.form['hembras_vendidas'])
-            machos_vendidos = int(request.form['machos_vendidos'])
-            costo_venta = float(request.form['costo_venta'])
-
-            # Validar valores
-            if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta < 0:
-                flash('Los valores no pueden ser negativos.', 'danger')
-                return redirect(url_for('registrar_ventas'))
-
-            # Insertar en BD
-            conn = get_db_connection()
-            if conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, NOW())
-                    ''', (hembras_vendidas, machos_vendidos, costo_venta))
-                    conn.commit()
-                conn.close()
-                
-                flash('Venta de destetados registrada correctamente.', 'success')
-            else:
-                flash('Error de conexión a la base de datos.', 'danger')
-
-        except Exception as e:
-            flash('Error al registrar la venta.', 'danger')
-        
-        return redirect(url_for('registrar_ventas'))
-
-@app.route('/registrar_ventas_descarte', methods=['POST'])
-def registrar_ventas_descarte():
-    if request.method == 'POST':
-        try:
-            galpon = request.form['galpon']
-            poza = request.form['poza']
-            cuyes_vendidos = int(request.form['cuyes_vendidos'])
-            costo_venta = float(request.form['costo_venta'])
-
-            # Validar valores
-            if cuyes_vendidos < 0 or costo_venta < 0:
-                flash('Los valores no pueden ser negativos.', 'danger')
-                return redirect(url_for('registrar_ventas'))
-
-            # Insertar en BD
-            conn = get_db_connection()
-            if conn:
-                with conn.cursor() as cursor:
-                    cursor.execute('''
-                        INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, %s, NOW())
-                    ''', (galpon, poza, cuyes_vendidos, costo_venta))
-                    conn.commit()
-                conn.close()
-                
-                flash('Venta de descarte registrada correctamente.', 'success')
-            else:
-                flash('Error de conexión a la base de datos.', 'danger')
-
-        except Exception as e:
-            flash('Error al registrar la venta.', 'danger')
-        
-        return redirect(url_for('registrar_ventas'))
-
-@app.route('/registrar_ventas')
+# --- REGISTRO DE VENTAS ---
+@app.route("/ventas", methods=["GET"])
 def registrar_ventas():
-    return render_template('registrar_ventas.html',ventas_destetados=ventas_destetados, ventas_descarte=ventas_descarte)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Ventas destetados
+    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_destetados ORDER BY fecha_venta DESC")
+    ventas_destetados = cursor.fetchall()
+
+    # Ventas descarte
+    cursor.execute("SELECT id, fecha_venta, cantidad, precio_unitario, total FROM ventas_descarte ORDER BY fecha_venta DESC")
+    ventas_descarte = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("ventas.html",
+                           ventas_destetados=ventas_destetados,
+                           ventas_descarte=ventas_descarte)
+
+
+@app.route("/ventas/destetados", methods=["POST"])
+def registrar_ventas_destetados():
+    cantidad = int(request.form["cantidad"])
+    precio_unitario = float(request.form["precio_unitario"])
+    total = cantidad * precio_unitario
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO ventas_destetados (fecha_venta, cantidad, precio_unitario, total)
+        VALUES (CURDATE(), %s, %s, %s)
+    """, (cantidad, precio_unitario, total))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash("Venta de destetados registrada con éxito", "success")
+    return redirect(url_for("registrar_ventas"))
+
+
+@app.route("/ventas/descarte", methods=["POST"])
+def registrar_ventas_descarte():
+    cantidad = int(request.form["cantidad"])
+    precio_unitario = float(request.form["precio_unitario"])
+    total = cantidad * precio_unitario
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO ventas_descarte (fecha_venta, cantidad, precio_unitario, total)
+        VALUES (CURDATE(), %s, %s, %s)
+    """, (cantidad, precio_unitario, total))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash("Venta de descarte registrada con éxito", "success")
+    return redirect(url_for("registrar_ventas"))
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
