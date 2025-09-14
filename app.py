@@ -648,51 +648,75 @@ def registrar_muertes_destetados():
 
 # Ruta para registrar ventas de destetados
 # --- REGISTRO DE VENTAS ---
+# Ruta principal de ventas
 @app.route('/ventas', methods=['GET', 'POST'])
 def ventas():
     if request.method == 'POST':
-        # Procesar el formulario
-        tipo = request.form['tipo']
-        cantidad = int(request.form['cantidad'])
-        precio_unitario = float(request.form['precio_unitario'])
-        total = cantidad * precio_unitario
+        # Procesar el formulario de venta
+        tipo = request.form.get('tipo')
+        cantidad = request.form.get('cantidad')
+        precio_unitario = request.form.get('precio_unitario')
+        
+        # Validaciones
+        if not all([tipo, cantidad, precio_unitario]):
+            flash('Todos los campos son obligatorios', 'danger')
+            return redirect(url_for('ventas'))
         
         try:
+            cantidad = int(cantidad)
+            precio_unitario = float(precio_unitario)
+            total = cantidad * precio_unitario
+            
             conn = sqlite3.connect(DATABASE)
             cursor = conn.cursor()
             
-            # Insertar en la tabla correspondiente
             if tipo == 'destetados':
-                cursor.execute('INSERT INTO ventas_destetados (cantidad, precio_unitario, total) VALUES (?, ?, ?)',
-                             (cantidad, precio_unitario, total))
+                cursor.execute(
+                    'INSERT INTO ventas_destetados (cantidad, precio_unitario, total) VALUES (?, ?, ?)',
+                    (cantidad, precio_unitario, total)
+                )
             elif tipo == 'descarte':
-                cursor.execute('INSERT INTO ventas_descarte (cantidad, precio_unitario, total) VALUES (?, ?, ?)',
-                             (cantidad, precio_unitario, total))
+                cursor.execute(
+                    'INSERT INTO ventas_descarte (cantidad, precio_unitario, total) VALUES (?, ?, ?)',
+                    (cantidad, precio_unitario, total)
+                )
+            else:
+                flash('Tipo de venta no válido', 'danger')
+                return redirect(url_for('ventas'))
             
             conn.commit()
             flash('Venta registrada exitosamente', 'success')
             
+        except ValueError:
+            flash('Cantidad y precio deben ser valores numéricos válidos', 'danger')
         except Exception as e:
             conn.rollback()
             flash(f'Error al registrar venta: {str(e)}', 'danger')
         finally:
-            conn.close()
+            if 'conn' in locals():
+                conn.close()
         
         return redirect(url_for('ventas'))
     
     # Método GET - Mostrar el formulario y el historial
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    
-    # Obtener ventas de destetados
-    cursor.execute('SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC')
-    ventas_destetados = cursor.fetchall()
-    
-    # Obtener ventas de descarte
-    cursor.execute('SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC')
-    ventas_descarte = cursor.fetchall()
-    
-    conn.close()
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        
+        # Obtener ventas de destetados
+        cursor.execute('SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC')
+        ventas_destetados = cursor.fetchall()
+        
+        # Obtener ventas de descarte
+        cursor.execute('SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC')
+        ventas_descarte = cursor.fetchall()
+        
+    except Exception as e:
+        flash(f'Error al cargar historial: {str(e)}', 'danger')
+        ventas_destetados = []
+        ventas_descarte = []
+    finally:
+        conn.close()
     
     return render_template('ventas.html', 
                          ventas_destetados=ventas_destetados,
