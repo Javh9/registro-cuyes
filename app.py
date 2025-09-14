@@ -644,6 +644,8 @@ def registrar_muertes_destetados():
             flash('Error al registrar las muertes. Intente nuevamente.', 'danger')
 
     return render_template('registrar_muertes_destetados.html')
+
+
 # Ruta para registrar ventas de destetados
 @app.route('/registrar_ventas_destetados', methods=['POST'])
 def registrar_ventas_destetados():
@@ -714,7 +716,7 @@ def registrar_ventas_descarte():
 
 @app.route('/registrar_ventas')
 def registrar_ventas():
-    return render_template('registrar_ventas.html')
+    return render_template('registrar_ventas.html',ventas_destetados=ventas_destetados, ventas_descarte=ventas_descarte)
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
