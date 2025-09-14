@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <!-- Listado de ventas -->
+    <!-- Listado de ventas - VERSIÓN SEGURA -->
     <div class="card mt-4 p-4">
         <h5 class="mb-3">Historial de ventas de destetados</h5>
         <div class="table-responsive">
@@ -69,26 +69,34 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Fecha</th>
-                        <th>Hembras Vendidas</th>
-                        <th>Machos Vendidos</th>
-                        <th>Total Vendidos</th>
+                        <th>Hembras</th>
+                        <th>Machos</th>
+                        <th>Total</th>
                         <th>Precio Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for v in ventas_destetados %}
-                    <tr>
-                        <td>{{ v[6] if v[6] else 'N/A' }}</td>  <!-- fecha_venta -->
-                        <td>{{ v[3] }}</td>  <!-- hembras_vendidas -->
-                        <td>{{ v[4] }}</td>  <!-- machos_vendidos -->
-                        <td>{{ v[3] + v[4] }}</td>  <!-- total -->
-                        <td>S/. {{ "%.2f"|format(v[5]) }}</td>  <!-- costo_venta -->
-                    </tr>
+                    {% if ventas_destetados %}
+                        {% for v in ventas_destetados %}
+                        <tr>
+                            <td>{{ v.fecha_venta if v is mapping and v.fecha_venta else (v[6] if v|length > 6 else 'N/A') }}</td>
+                            <td>{{ v.hembras_vendidas if v is mapping and v.hembras_vendidas else (v[3] if v|length > 3 else 0) }}</td>
+                            <td>{{ v.machos_vendidos if v is mapping and v.machos_vendidos else (v[4] if v|length > 4 else 0) }}</td>
+                            <td>
+                                {% if v is mapping %}
+                                    {{ v.hembras_vendidas + v.machos_vendidos }}
+                                {% else %}
+                                    {{ (v[3] if v|length > 3 else 0) + (v[4] if v|length > 4 else 0) }}
+                                {% endif %}
+                            </td>
+                            <td>S/. {{ "%.2f"|format(v.costo_venta if v is mapping and v.costo_venta else (v[5] if v|length > 5 else 0)) }}</td>
+                        </tr>
+                        {% endfor %}
                     {% else %}
                     <tr>
                         <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de destetados</td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -101,24 +109,26 @@
                         <th>Fecha</th>
                         <th>Galpón</th>
                         <th>Poza</th>
-                        <th>Cantidad Vendida</th>
+                        <th>Cantidad</th>
                         <th>Precio Total (S/.)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for v in ventas_descarte %}
-                    <tr>
-                        <td>{{ v[5] if v[5] else 'N/A' }}</td>  <!-- fecha_venta -->
-                        <td>{{ v[1] }}</td>  <!-- galpon -->
-                        <td>{{ v[2] }}</td>  <!-- poza -->
-                        <td>{{ v[3] }}</td>  <!-- cuyes_vendidos -->
-                        <td>S/. {{ "%.2f"|format(v[4]) }}</td>  <!-- costo_venta -->
-                    </tr>
+                    {% if ventas_descarte %}
+                        {% for v in ventas_descarte %}
+                        <tr>
+                            <td>{{ v.fecha_venta if v is mapping and v.fecha_venta else (v[5] if v|length > 5 else 'N/A') }}</td>
+                            <td>{{ v.galpon if v is mapping and v.galpon else (v[1] if v|length > 1 else 'N/A') }}</td>
+                            <td>{{ v.poza if v is mapping and v.poza else (v[2] if v|length > 2 else 'N/A') }}</td>
+                            <td>{{ v.cuyes_vendidos if v is mapping and v.cuyes_vendidos else (v[3] if v|length > 3 else 0) }}</td>
+                            <td>S/. {{ "%.2f"|format(v.costo_venta if v is mapping and v.costo_venta else (v[4] if v|length > 4 else 0)) }}</td>
+                        </tr>
+                        {% endfor %}
                     {% else %}
                     <tr>
                         <td colspan="5" class="text-center text-muted py-3">No hay registros de ventas de descarte</td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
