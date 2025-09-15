@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Ventas - Sistema de Cuyes</title>
+    <title>Registro de Ventas - Sistema de Cuyes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -18,160 +18,47 @@
             --light: #f8f9fc;
             --dark: #5a5c69;
         }
-        
         body {
             background-color: #f8f9fc;
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding-top: 0;
+            font-family: 'Nunito', sans-serif;
         }
-        
         .navbar-custom {
             background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         }
-        
         .sidebar {
             min-height: calc(100vh - 70px);
             background: white;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 70px;
         }
-        
-        .sidebar .nav-item {
-            margin-bottom: 0.25rem;
-        }
-        
         .sidebar .nav-link {
             color: var(--dark);
             padding: 1rem;
             border-left: 4px solid transparent;
         }
-        
-        .sidebar .nav-link:hover {
-            color: var(--primary);
-            background-color: rgba(78, 115, 223, 0.1);
-            border-left-color: var(--primary);
-        }
-        
         .sidebar .nav-link.active {
             font-weight: bold;
             color: var(--primary);
             background-color: rgba(78, 115, 223, 0.15);
             border-left-color: var(--primary);
         }
-        
-        .sidebar .nav-link i {
-            margin-right: 0.5rem;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .topbar {
-            height: 70px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            background-color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
         .card {
             border: none;
             border-radius: 0.5rem;
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
             margin-bottom: 1.5rem;
         }
-        
         .card-header {
             background-color: #f8f9fc;
             border-bottom: 1px solid #e3e6f0;
             font-weight: bold;
-            color: var(--dark);
-            padding: 1rem 1.5rem;
         }
-        
         .btn-primary {
             background-color: var(--primary);
             border-color: var(--primary);
-            border-radius: 0.35rem;
-            padding: 0.5rem 1rem;
-            font-weight: 600;
         }
-        
-        .btn-primary:hover {
-            background-color: #2e59d9;
-            border-color: #2e59d9;
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-            border-color: var(--success);
-        }
-        
-        .btn-success:hover {
-            background-color: #17a673;
-            border-color: #17a673;
-        }
-        
-        .form-control {
-            border-radius: 0.35rem;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d3e2;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-select {
-            border-radius: 0.35rem;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d3e2;
-        }
-        
-        .page-title {
-            color: var(--dark);
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-        
-        .main-content {
-            padding: 2rem 0;
-        }
-        
-        .stats-card {
-            border-left: 4px solid var(--success);
-        }
-        
-        .info-badge {
-            background-color: var(--info);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.35rem;
-            font-size: 0.875rem;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                min-height: auto;
-                position: static;
-            }
-            
-            .topbar {
-                position: static;
-            }
+        .form-section {
+            margin-bottom: 2rem;
         }
     </style>
 </head>
@@ -180,11 +67,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-paw me-2"></i>
-                <span class="fw-bold">Sistema de Registro de Cuyes</span>
+                <i class="fas fa-paw me-2"></i> Registro de Cuyes
             </a>
             <div class="d-flex">
-                <span class="navbar-text me-3">Usuario: {{ session['usuario'] }}</span>
+                <span class="navbar-text me-3">Usuario: Admin</span>
                 <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-home me-1"></i> Inicio
                 </a>
@@ -195,61 +81,49 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-none d-md-block">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">
-                                <i class="fas fa-home"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('ingresar_reproductores') }}">
-                                <i class="fas fa-egg"></i> Reproductores
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('registrar_partos') }}">
-                                <i class="fas fa-baby"></i> Partos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('registrar_destete') }}">
-                                <i class="fas fa-child"></i> Destetes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('registrar_muertes_destetados') }}">
-                                <i class="fas fa-skull"></i> Mortalidad
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{{ url_for('ventas') }}">
-                                <i class="fas fa-money-bill-wave"></i> Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('registrar_gastos') }}">
-                                <i class="fas fa-receipt"></i> Gastos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+            <div class="col-md-3 col-lg-2 sidebar d-none d-md-block pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ingresar_reproductores') }}">
+                            <i class="fas fa-egg"></i> Reproductores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registrar_partos') }}">
+                            <i class="fas fa-baby"></i> Partos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registrar_destete') }}">
+                            <i class="fas fa-child"></i> Destetes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registrar_muertes_destetados') }}">
+                            <i class="fas fa-skull"></i> Mortalidad
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('ventas') }}">
+                            <i class="fas fa-money-bill-wave"></i> Ventas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registrar_gastos') }}">
+                            <i class="fas fa-receipt"></i> Gastos
+                        </a>
+                    </li>
+                </ul>
             </div>
 
             <!-- Main Content -->
-            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-                    <h1 class="h2 page-title">Registrar Ventas</h1>
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Volver al Inicio
-                    </a>
-                </div>
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
+                <h1 class="h2 mb-4">Registrar Ventas Unificadas</h1>
 
                 <!-- Mensajes Flash -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -263,265 +137,196 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- Estadísticas -->
+                <!-- Estadísticas si las pasas -->
                 <div class="row mb-4">
                     <div class="col-md-4">
-                        <div class="card stats-card h-100">
+                        <div class="card text-center">
                             <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Ventas Hoy</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_hoy }}</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
+                                <h6 class="text-uppercase text-muted">Ventas Hoy</h6>
+                                <h3>{{ ventas_hoy or 0 }}</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card stats-card h-100">
+                        <div class="card text-center">
                             <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Ventas Mes</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_mes }}</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
+                                <h6 class="text-uppercase text-muted">Ventas Mes</h6>
+                                <h3>{{ ventas_mes or 0 }}</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card stats-card h-100">
+                        <div class="card text-center">
                             <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                            Ingresos Totales</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">S/. {{ total_ingresos }}</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
+                                <h6 class="text-uppercase text-muted">Total Ingresos</h6>
+                                <h3>S/. {{ total_ingresos or 0 }}</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Formulario -->
+                <!-- Formulario de venta unificado -->
                 <div class="card">
-                    <div class="card-header">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-plus me-2"></i> Nueva Venta
-                        </h6>
-                    </div>
+                    <div class="card-header"><i class="fas fa-plus me-2"></i> Nueva Venta</div>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('ventas') }}">
+                            <!-- Campo oculto para indicar tipo de venta -->
+                            <input type="hidden" name="tipo_venta" value="">
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">
-                                        <i class="fas fa-tag me-1"></i>Tipo de Venta
-                                    </label>
-                                    <select class="form-select" name="tipo_venta" id="tipo_venta" required onchange="toggleCamposEspecificos()">
+                                    <label class="form-label">Tipo de Venta</label>
+                                    <select class="form-select" name="tipo_venta" required onchange="toggleCamposVenta()">
                                         <option value="">Seleccionar...</option>
-                                        <option value="destetados" {% if request.form.get('tipo_venta') == 'destetados' %}selected{% endif %}>Destetados</option>
-                                        <option value="descarte" {% if request.form.get('tipo_venta') == 'descarte' %}selected{% endif %}>Descarte</option>
+                                        <option value="destetados" {% if request.form.tipo_venta == 'destetados' %}selected{% endif %}>Destetados</option>
+                                        <option value="descarte" {% if request.form.tipo_venta == 'descarte' %}selected{% endif %}>Descarte</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Galpón</label>
+                                    <select class="form-select" name="galpon" required>
+                                        <option value="">Seleccionar Galpón</option>
+                                        {% for gp in galpones_pozas %}
+                                            <option value="{{ gp.galpon }}" {% if request.form.tipo_venta == 'descarte' and request.form.galpon == gp.galpon %}selected{% endif %}>
+                                                {{ gp.galpon }}
+                                            </option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
-                            
-                            <!-- Campos para Destetados -->
-                            <div id="campos-destetados" class="{% if request.form.get('tipo_venta') != 'descarte' %}hidden{% endif %}">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-venus text-danger me-1"></i>Cantidad de Hembras
-                                        </label>
-                                        <input type="number" name="hembras" class="form-control" min="0" value="{{ request.form.get('hembras', '0') }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-mars text-primary me-1"></i>Cantidad de Machos
-                                        </label>
-                                        <input type="number" name="machos" class="form-control" min="0" value="{{ request.form.get('machos', '0') }}">
-                                    </div>
+
+                            <div class="row mb-3" id="campos-destetados" style="display: none;">
+                                <div class="col-md-6">
+                                    <label class="form-label">Cuyes Hembras Vendidos</label>
+                                    <input type="number" class="form-control" name="hembras_vendidas" min="0" value="{{ request.form.hembras_vendidas if request.form.tipo_venta == 'destetados' else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Cuyes Machos Vendidos</label>
+                                    <input type="number" class="form-control" name="machos_vendidos" min="0" value="{{ request.form.machos_vendidos if request.form.tipo_venta == 'destetados' else '' }}">
                                 </div>
                             </div>
-                            
-                            <!-- Campos para Descarte -->
-                            <div id="campos-descarte" class="{% if request.form.get('tipo_venta') != 'descarte' %}hidden{% endif %}">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-list-ol me-1"></i>Cantidad de Cuyes
-                                        </label>
-                                        <input type="number" name="cantidad" class="form-control" min="1" value="{{ request.form.get('cantidad', '0') }}">
-                                    </div>
+
+                            <div class="row mb-3" id="campo-descarte" style="display: none;">
+                                <div class="col-md-6">
+                                    <label class="form-label">Cantidad de Cuyes de Descarte</label>
+                                    <input type="number" class="form-control" name="cuyes_vendidos" min="0" value="{{ request.form.cuyes_vendidos if request.form.tipo_venta == 'descarte' else '' }}">
                                 </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-house me-1"></i>Galpón de Origen
-                                        </label>
-                                        <select class="form-select" name="galpon">
-                                            <option value="">Seleccionar galpón...</option>
-                                            {% for galpon in galpones %}
-                                            <option value="{{ galpon.id }}" {% if request.form.get('galpon') == galpon.id|string %}selected{% endif %}>{{ galpon.nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-border-all me-1"></i>Poza de Origen
-                                        </label>
-                                        <select class="form-select" name="poza">
-                                            <option value="">Seleccionar poza...</option>
-                                            {% for poza in pozas %}
-                                            <option value="{{ poza.id }}" {% if request.form.get('poza') == poza.id|string %}selected{% endif %}>{{ poza.nombre }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            <i class="fas fa-info-circle me-1"></i>Estado del Cuy
-                                        </label>
-                                        <select class="form-select" name="estado_cuy">
-                                            <option value="engorde" {% if request.form.get('estado_cuy') == 'engorde' %}selected{% endif %}>Engorde</option>
-                                            <option value="venta_directa" {% if request.form.get('estado_cuy') == 'venta_directa' %}selected{% endif %}>Venta Directa</option>
-                                        </select>
-                                        <div class="form-text">¿El cuy estaba en proceso de engorde o se vendió directamente?</div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="info-badge mt-4">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            Al registrar venta de descarte, la poza se pondrá automáticamente en cero para nuevos ingresos
-                                        </div>
-                                    </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Destino Descarte (Galpón / Poza)</label>
+                                    <!-- Aquí podrías reutilizar same selects galpón/poza o tener otro input -->
+                                    <!-- Ejemplo de seleccionar poza: -->
+                                    <select class="form-select" name="poza">
+                                        <option value="">Seleccionar Poza</option>
+                                        {% for gp in galpones_pozas %}
+                                            <option value="{{ gp.poza }}" {% if request.form.tipo_venta == 'descarte' and request.form.poza == gp.poza %}selected{% endif %}>
+                                                {{ gp.poza }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
-                            
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <i class="fas fa-money-bill-wave me-1"></i>Monto Total (S/.)
-                                </label>
-                                <input type="number" name="costo_venta" step="0.01" class="form-control" required value="{{ request.form.get('costo_venta', '') }}">
+
+                            <div class="mb-3">
+                                <label class="form-label">Costo de Venta (S/.)</label>
+                                <input type="number" step="0.01" class="form-control" name="costo_venta" min="0.01" required value="{{ request.form.costo_venta if request.form.tipo_venta else '' }}">
                             </div>
-                            
+
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button type="reset" class="btn btn-secondary me-md-2" onclick="resetForm()">
-                                    <i class="fas fa-eraser me-1"></i> Limpiar
-                                </button>
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-check me-1"></i> Registrar Venta
-                                </button>
+                                <button type="reset" class="btn btn-secondary"><i class="fas fa-eraser me-1"></i> Limpiar</button>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Registrar Venta</button>
                             </div>
+
                         </form>
                     </div>
                 </div>
 
-                <!-- Información importante -->
+                <!-- Listados de historial -->
                 <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-info-circle me-2"></i>Información Importante
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <strong><i class="fas fa-lightbulb me-2"></i>Recomendaciones:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Registre las ventas inmediatamente después de realizarlas</li>
-                                <li>Mantenga un registro preciso para el control de ingresos</li>
-                                <li>Verifique que los datos ingresados sean correctos antes de guardar</li>
-                                <li>Revise regularmente sus reportes de ventas para análisis</li>
-                            </ul>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Nota:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Para ventas de destetados, especifique la cantidad de hembras y machos</li>
-                                <li>Para ventas de descarte, especifique el galpón y poza de origen</li>
-                                <li>El sistema pondrá automáticamente en cero la poza al registrar la venta de descarte</li>
-                                <li>Los registros de ventas no pueden modificarse después de guardarse</li>
-                            </ul>
-                        </div>
+                    <div class="card-header">Historial de Ventas Destetados</div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th><th>Galpón</th><th>Poza</th><th>Hembras</th><th>Machos</th><th>Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in ventas_destetados %}
+                                <tr>
+                                    <td>{{ v.fecha_venta }}</td>
+                                    <td>{{ v.galpon or 'N/A' }}</td>
+                                    <td>{{ v.poza or 'N/A' }}</td>
+                                    <td>{{ v.hembras_vendidas }}</td>
+                                    <td>{{ v.machos_vendidos }}</td>
+                                    <td>{{ v.costo_venta }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="6" class="text-center">Sin registros</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">Historial de Ventas Descarte</div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th><th>Galpón</th><th>Poza</th><th>Cantidad</th><th>Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in ventas_descarte %}
+                                <tr>
+                                    <td>{{ v.fecha_venta }}</td>
+                                    <td>{{ v.galpon or 'N/A' }}</td>
+                                    <td>{{ v.poza or 'N/A' }}</td>
+                                    <td>{{ v.cuyes_vendidos }}</td>
+                                    <td>{{ v.costo_venta }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center">Sin registros</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
 
-    <footer class="footer mt-5 py-3 bg-light">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
-                <span>Sistema de Registro de Cuyes &copy; 2023</span>
-                <span>v1.2.0</span>
-            </div>
+    <footer class="footer mt-5 py-3 bg-white">
+        <div class="container-fluid text-center">
+            <span>Sistema de Registro de Cuyes &copy; 2023</span>
+            <span class="ms-3">v1.2.0</span>
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Función para mostrar/ocultar campos específicos según el tipo de venta
-        function toggleCamposEspecificos() {
-            const tipoVenta = document.getElementById('tipo_venta').value;
-            const camposDestetados = document.getElementById('campos-destetados');
-            const camposDescarte = document.getElementById('campos-descarte');
-            
-            // Ocultar todos los campos primero
-            camposDestetados.classList.add('hidden');
-            camposDescarte.classList.add('hidden');
-            
-            // Quitar el requerimiento de todos los campos específicos
-            document.querySelectorAll('#campos-destetados input, #campos-descarte input, #campos-descarte select').forEach(input => {
-                input.removeAttribute('required');
-            });
-            
-            // Mostrar campos según el tipo de venta seleccionado
-            if (tipoVenta === 'destetados') {
-                camposDestetados.classList.remove('hidden');
-                // Hacer obligatorios los campos de destetados
-                document.querySelectorAll('#campos-destetados input').forEach(input => {
-                    input.setAttribute('required', 'true');
-                });
-            } else if (tipoVenta === 'descarte') {
-                camposDescarte.classList.remove('hidden');
-                // Hacer obligatorios los campos de descarte
-                document.querySelectorAll('#campos-descarte input, #campos-descarte select').forEach(input => {
-                    input.setAttribute('required', 'true');
-                });
+        function toggleCamposVenta() {
+            const tipo = document.querySelector('select[name="tipo_venta"]').value;
+            const dest = document.getElementById('campos-destetados');
+            const desc = document.getElementById('campo-descarte');
+
+            if (tipo === 'destetados') {
+                dest.style.display = 'flex';
+                desc.style.display = 'none';
+            } else if (tipo === 'descarte') {
+                dest.style.display = 'none';
+                desc.style.display = 'flex';
+            } else {
+                dest.style.display = 'none';
+                desc.style.display = 'none';
             }
         }
-        
-        // Función para resetear el formulario correctamente
-        function resetForm() {
-            // Ocultar todos los campos específicos
-            document.getElementById('campos-destetados').classList.add('hidden');
-            document.getElementById('campos-descarte').classList.add('hidden');
-            
-            // Resetear el selector de tipo de venta
-            document.getElementById('tipo_venta').value = "";
-        }
-        
-        // Inicializar el estado de los campos al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mostrar los campos correspondientes según el tipo de venta seleccionado previamente
-            const tipoVenta = "{{ request.form.get('tipo_venta', '') }}";
-            if (tipoVenta) {
-                toggleCamposEspecificos();
-            }
+        // Ejecutar una vez al cargar para mostrar lo que corresponda si hay errores previos
+        window.addEventListener('DOMContentLoaded', function() {
+            toggleCamposVenta();
         });
     </script>
 </body>
