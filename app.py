@@ -662,7 +662,7 @@ def ventas():
 
                 cur.execute("""
                     INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha)
-                    VALUES (?, ?, ?, DATE('now'))
+                    VALUES (%s, %s, %s, CURRENT_DATE)
                 """, (hembras_vendidas, machos_vendidos, costo_venta))
 
             elif tipo_venta == 'descarte':
@@ -673,7 +673,7 @@ def ventas():
 
                 cur.execute("""
                     INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha)
-                    VALUES (?, ?, ?, ?, DATE('now'))
+                    VALUES (%s, %s, %s, %s, CURRENT_DATE)
                 """, (galpon, poza, cuyes_vendidos, costo_venta))
 
             conn.commit()
@@ -684,13 +684,17 @@ def ventas():
             flash(f'❌ Error al registrar la venta: {str(e)}', 'danger')
 
         finally:
+            cur.close()
             conn.close()
 
         return redirect(url_for('ventas'))
 
     # Si es GET, obtenemos los galpones/pozas
     conn = get_db_connection()
-    galpones_pozas = conn.execute("SELECT galpon, poza FROM galpones").fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT galpon, poza FROM galpones")
+    galpones_pozas = cur.fetchall()
+    cur.close()
     conn.close()
 
     return render_template("ventas_unificado.html", galpones_pozas=galpones_pozas)
