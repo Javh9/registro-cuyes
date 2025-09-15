@@ -647,136 +647,86 @@ def registrar_muertes_destetados():
 # Ruta unificada para ventas (REEMPLAZA las dos rutas anteriores)
 # Asegúrate de tener estos imports
 
-# Ruta para ventas (mostrar y procesar)
+# app.py (fragmento de la ruta ventas)
+
 @app.route('/ventas', methods=['GET', 'POST'])
 def ventas():
-    # Variables que el template necesita
-    galpones_pozas = []  # si usas para llenar selects de galpon/poza
-    ventas_destetados = []
-    ventas_descarte = []
-    # Puedes calcular totales si los usas en template
-    ventas_hoy = 0
-    ventas_mes = 0
-    total_ingresos = 0.0
+    from datetime import date
+    cur = mysql.connection.cursor()
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if request.method == 'POST':
+        tipo_venta = request.form.get('tipo_venta')
+        galpon = request.form.get('galpon')
+        poza = request.form.get('poza')
+        costo_venta = request.form.get('costo_venta')
 
-        # Cargar lista de galpones/pozas si las usas
-        cursor.execute("SELECT DISTINCT galpon, poza FROM reproductores ORDER BY galpon, poza")
-        galpones_pozas = cursor.fetchall()
+        try:
+            if tipo_venta == "destetados":
+                hembras_vendidas = int(request.form.get('hembras_vendidas', 0) or 0)
+                machos_vendidos = int(request.form.get('machos_vendidos', 0) or 0)
 
-        if request.method == 'POST':
-            tipo = request.form.get('tipo_venta')
-            costo_venta = float(request.form.get('costo_venta', 0))
-            cantidad = int(request.form.get('cantidad', 0))
+                cur.execute("""
+                    INSERT INTO ventas_destetados (fecha_venta, galpon, poza, hembras_vendidas, machos_vendidos, costo_venta)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (date.today(), galpon, poza, hembras_vendidas, machos_vendidos, costo_venta))
 
-            if tipo == 'destetados':
-                # valores específicos
-                hembras_vendidas = int(request.form.get('hembras_vendidas', 0))
-                machos_vendidos = int(request.form.get('machos_vendidos', 0))
-                if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta < 0:
-                    flash('Los valores no pueden ser negativos.', 'danger')
-                else:
-                    # Inserción: asegúrate que tu tabla ventas_destetados tenga columnas correctas
-                    cursor.execute("""
-                        INSERT INTO ventas_destetados (galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, %s, %s, NOW())
-                    """, (
-                        request.form.get('galpon', 'N/A'),
-                        request.form.get('poza', 'N/A'),
-                        hembras_vendidas,
-                        machos_vendidos,
-                        costo_venta
-                    ))
-                    conn.commit()
-                    flash('Venta de destetados registrada correctamente.', 'success')
+                flash("Venta de destetados registrada exitosamente", "success")
 
-            elif tipo == 'descarte':
-                cuyes_vendidos = int(request.form.get('cuyes_vendidos', 0))
-                if cuyes_vendidos < 0 or costo_venta < 0:
-                    flash('Los valores no pueden ser negativos.', 'danger')
-                else:
-                    cursor.execute("""
-                        INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha_venta)
-                        VALUES (%s, %s, %s, %s, NOW())
-                    """, (
-                        request.form.get('galpon', 'N/A'),
-                        request.form.get('poza', 'N/A'),
-                        cuyes_vendidos,
-                        costo_venta
-                    ))
-                    conn.commit()
-                    flash('Venta de descarte registrada correctamente.', 'success')
+            elif tipo_venta == "descarte":
+                cuyes_vendidos = int(request.form.get('cuyes_vendidos', 0) or 0)
+
+                cur.execute("""
+                    INSERT INTO ventas_descarte (fecha_venta, galpon, poza, cuyes_vendidos, costo_venta)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (date.today(), galpon, poza, cuyes_vendidos, costo_venta))
+
+                flash("Venta de descarte registrada exitosamente", "success")
+
             else:
-                flash('Tipo de venta no válido.', 'danger')
+                flash("Tipo de venta no válido", "error")
 
-            return redirect(url_for('ventas'))
+            mysql.connection.commit()
 
-        # Si GET o luego del POST, cargar los historiales
-        cursor.execute("""
-            SELECT id, galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta
-            FROM ventas_destetados
-            ORDER BY fecha_venta DESC
-        """)
-        ventas_destetados = cursor.fetchall()
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"Error al registrar venta: {str(e)}", "error")
 
-        cursor.execute("""
-            SELECT id, galpon, poza, cuyes_vendidos, costo_venta, fecha_venta
-            FROM ventas_descarte
-            ORDER BY fecha_venta DESC
-        """)
-        ventas_descarte = cursor.fetchall()
+    # Consultar galpones/pozas disponibles
+    cur.execute("SELECT DISTINCT galpon, poza FROM pozas ORDER BY galpon, poza")
+    galpones_pozas = cur.fetchall()
 
-        # Opcional: calcular totales
-        cursor.execute("""
-            SELECT COALESCE(SUM(costo_venta),0) AS ingresos
-            FROM (
-                SELECT costo_venta FROM ventas_destetados
-                UNION ALL
-                SELECT costo_venta FROM ventas_descarte
-            ) AS todas
-        """)
-        total_ingresos = cursor.fetchone()['ingresos'] or 0
+    # Historial de ventas destetados
+    cur.execute("SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC")
+    ventas_destetados = cur.fetchall()
 
-        # (Para hoy, mes): ejemplos básicos, adaptar dependiendo del tipo de tu columna fecha_venta
-        cursor.execute("""
-            SELECT COALESCE(SUM(costo_venta),0) AS hoy
-            FROM (
-                SELECT costo_venta, fecha_venta FROM ventas_destetados
-                UNION ALL
-                SELECT costo_venta, fecha_venta FROM ventas_descarte
-            ) AS todas
-            WHERE DATE(fecha_venta) = CURRENT_DATE
-        """)
-        ventas_hoy = cursor.fetchone()['hoy'] or 0
+    # Historial de ventas descarte
+    cur.execute("SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC")
+    ventas_descarte = cur.fetchall()
 
-        cursor.execute("""
-            SELECT COALESCE(SUM(costo_venta),0) AS mes
-            FROM (
-                SELECT costo_venta, fecha_venta FROM ventas_destetados
-                UNION ALL
-                SELECT costo_venta, fecha_venta FROM ventas_descarte
-            ) AS todas
-            WHERE DATE_TRUNC('month', fecha_venta) = DATE_TRUNC('month', CURRENT_DATE)
-        """)
-        ventas_mes = cursor.fetchone()['mes'] or 0
+    # Estadísticas básicas
+    cur.execute("SELECT COUNT(*) FROM ventas_destetados WHERE fecha_venta = CURDATE()")
+    ventas_hoy = cur.fetchone()[0]
 
-    except Exception as e:
-        flash(f"Error con ventas: {str(e)}", 'danger')
-    finally:
-        cursor.close()
-        conn.close()
+    cur.execute("SELECT COUNT(*) FROM ventas_destetados WHERE MONTH(fecha_venta) = MONTH(CURDATE())")
+    ventas_mes = cur.fetchone()[0]
 
-    return render_template('ventas.html',
+    cur.execute("SELECT COALESCE(SUM(costo_venta), 0) FROM ventas_destetados")
+    total_destetados = cur.fetchone()[0] or 0
+
+    cur.execute("SELECT COALESCE(SUM(costo_venta), 0) FROM ventas_descarte")
+    total_descarte = cur.fetchone()[0] or 0
+
+    total_ingresos = total_destetados + total_descarte
+
+    cur.close()
+
+    return render_template("ventas_unificado.html",
                            galpones_pozas=galpones_pozas,
                            ventas_destetados=ventas_destetados,
                            ventas_descarte=ventas_descarte,
-                           total_ingresos=total_ingresos,
                            ventas_hoy=ventas_hoy,
-                           ventas_mes=ventas_mes)
-
+                           ventas_mes=ventas_mes,
+                           total_ingresos=total_ingresos)
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
