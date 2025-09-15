@@ -2,332 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Ventas - Sistema de Cuyes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #4e73df;
-            --success: #1cc88a;
-            --info: #36b9cc;
-            --warning: #f6c23e;
-            --danger: #e74a3b;
-            --secondary: #858796;
-            --light: #f8f9fc;
-            --dark: #5a5c69;
-        }
-        body {
-            background-color: #f8f9fc;
-            font-family: 'Nunito', sans-serif;
-        }
-        .navbar-custom {
-            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        }
-        .sidebar {
-            min-height: calc(100vh - 70px);
-            background: white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
-        .sidebar .nav-link {
-            color: var(--dark);
-            padding: 1rem;
-            border-left: 4px solid transparent;
-        }
-        .sidebar .nav-link.active {
-            font-weight: bold;
-            color: var(--primary);
-            background-color: rgba(78, 115, 223, 0.15);
-            border-left-color: var(--primary);
-        }
-        .card {
-            border: none;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            margin-bottom: 1.5rem;
-        }
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            font-weight: bold;
-        }
-        .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-        .form-section {
-            margin-bottom: 2rem;
-        }
-    </style>
+    <title>Registro de Ventas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-paw me-2"></i> Registro de Cuyes
-            </a>
-            <div class="d-flex">
-                <span class="navbar-text me-3">Usuario: Admin</span>
-                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-home me-1"></i> Inicio
-                </a>
-            </div>
-        </div>
-    </nav>
+<div class="container mt-4">
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-none d-md-block pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
-                            <i class="fas fa-home"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('ingresar_reproductores') }}">
-                            <i class="fas fa-egg"></i> Reproductores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('registrar_partos') }}">
-                            <i class="fas fa-baby"></i> Partos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('registrar_destete') }}">
-                            <i class="fas fa-child"></i> Destetes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('registrar_muertes_destetados') }}">
-                            <i class="fas fa-skull"></i> Mortalidad
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('ventas') }}">
-                            <i class="fas fa-money-bill-wave"></i> Ventas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('registrar_gastos') }}">
-                            <i class="fas fa-receipt"></i> Gastos
-                        </a>
-                    </li>
-                </ul>
-            </div>
+    <h1>Registro de Ventas</h1>
 
-            <!-- Main Content -->
-            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
-                <h1 class="h2 mb-4">Registrar Ventas Unificadas</h1>
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-                <!-- Mensajes Flash -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <!-- Estadísticas si las pasas -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Ventas Hoy</h6>
-                                <h3>{{ ventas_hoy or 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Ventas Mes</h6>
-                                <h3>{{ ventas_mes or 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h6 class="text-uppercase text-muted">Total Ingresos</h6>
-                                <h3>S/. {{ total_ingresos or 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Formulario de venta unificado -->
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-plus me-2"></i> Nueva Venta</div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ url_for('ventas') }}">
-                            <!-- Campo oculto para indicar tipo de venta -->
-                            <input type="hidden" name="tipo_venta" value="">
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Tipo de Venta</label>
-                                    <select class="form-select" name="tipo_venta" required onchange="toggleCamposVenta()">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="destetados" {% if request.form.tipo_venta == 'destetados' %}selected{% endif %}>Destetados</option>
-                                        <option value="descarte" {% if request.form.tipo_venta == 'descarte' %}selected{% endif %}>Descarte</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Galpón</label>
-                                    <select class="form-select" name="galpon" required>
-                                        <option value="">Seleccionar Galpón</option>
-                                        {% for gp in galpones_pozas %}
-                                            <option value="{{ gp.galpon }}" {% if request.form.tipo_venta == 'descarte' and request.form.galpon == gp.galpon %}selected{% endif %}>
-                                                {{ gp.galpon }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3" id="campos-destetados" style="display: none;">
-                                <div class="col-md-6">
-                                    <label class="form-label">Cuyes Hembras Vendidos</label>
-                                    <input type="number" class="form-control" name="hembras_vendidas" min="0" value="{{ request.form.hembras_vendidas if request.form.tipo_venta == 'destetados' else '' }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Cuyes Machos Vendidos</label>
-                                    <input type="number" class="form-control" name="machos_vendidos" min="0" value="{{ request.form.machos_vendidos if request.form.tipo_venta == 'destetados' else '' }}">
-                                </div>
-                            </div>
-
-                            <div class="row mb-3" id="campo-descarte" style="display: none;">
-                                <div class="col-md-6">
-                                    <label class="form-label">Cantidad de Cuyes de Descarte</label>
-                                    <input type="number" class="form-control" name="cuyes_vendidos" min="0" value="{{ request.form.cuyes_vendidos if request.form.tipo_venta == 'descarte' else '' }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Destino Descarte (Galpón / Poza)</label>
-                                    <!-- Aquí podrías reutilizar same selects galpón/poza o tener otro input -->
-                                    <!-- Ejemplo de seleccionar poza: -->
-                                    <select class="form-select" name="poza">
-                                        <option value="">Seleccionar Poza</option>
-                                        {% for gp in galpones_pozas %}
-                                            <option value="{{ gp.poza }}" {% if request.form.tipo_venta == 'descarte' and request.form.poza == gp.poza %}selected{% endif %}>
-                                                {{ gp.poza }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Costo de Venta (S/.)</label>
-                                <input type="number" step="0.01" class="form-control" name="costo_venta" min="0.01" required value="{{ request.form.costo_venta if request.form.tipo_venta else '' }}">
-                            </div>
-
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button type="reset" class="btn btn-secondary"><i class="fas fa-eraser me-1"></i> Limpiar</button>
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Registrar Venta</button>
-                            </div>
-
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Listados de historial -->
-                <div class="card mt-4">
-                    <div class="card-header">Historial de Ventas Destetados</div>
-                    <div class="card-body p-0">
-                        <table class="table table-sm table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th><th>Galpón</th><th>Poza</th><th>Hembras</th><th>Machos</th><th>Costo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for v in ventas_destetados %}
-                                <tr>
-                                    <td>{{ v.fecha_venta }}</td>
-                                    <td>{{ v.galpon or 'N/A' }}</td>
-                                    <td>{{ v.poza or 'N/A' }}</td>
-                                    <td>{{ v.hembras_vendidas }}</td>
-                                    <td>{{ v.machos_vendidos }}</td>
-                                    <td>{{ v.costo_venta }}</td>
-                                </tr>
-                                {% else %}
-                                <tr><td colspan="6" class="text-center">Sin registros</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card mt-4">
-                    <div class="card-header">Historial de Ventas Descarte</div>
-                    <div class="card-body p-0">
-                        <table class="table table-sm table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th><th>Galpón</th><th>Poza</th><th>Cantidad</th><th>Costo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for v in ventas_descarte %}
-                                <tr>
-                                    <td>{{ v.fecha_venta }}</td>
-                                    <td>{{ v.galpon or 'N/A' }}</td>
-                                    <td>{{ v.poza or 'N/A' }}</td>
-                                    <td>{{ v.cuyes_vendidos }}</td>
-                                    <td>{{ v.costo_venta }}</td>
-                                </tr>
-                                {% else %}
-                                <tr><td colspan="5" class="text-center">Sin registros</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </main>
-        </div>
+    <!-- Estadísticas -->
+    <div class="mb-4">
+        <h4>Estadísticas de ventas de destetados</h4>
+        <ul>
+            <li>Hoy: {{ ventas_destetados_hoy }}</li>
+            <li>Este mes: {{ ventas_destetados_mes }}</li>
+            <li>Total: {{ total_ventas_destetados }}</li>
+        </ul>
     </div>
 
-    <footer class="footer mt-5 py-3 bg-white">
-        <div class="container-fluid text-center">
-            <span>Sistema de Registro de Cuyes &copy; 2023</span>
-            <span class="ms-3">v1.2.0</span>
+    <!-- Formulario de venta -->
+    <form method="POST" action="{{ url_for('ventas') }}">
+        <div class="mb-3">
+            <label for="tipo_venta" class="form-label">Tipo de venta:</label>
+            <select id="tipo_venta" name="tipo_venta" class="form-select" required onchange="toggleFields()">
+                <option value="">Seleccione...</option>
+                <option value="destetados">Destetados</option>
+                <option value="descarte">Descarte</option>
+            </select>
         </div>
-    </footer>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleCamposVenta() {
-            const tipo = document.querySelector('select[name="tipo_venta"]').value;
-            const dest = document.getElementById('campos-destetados');
-            const desc = document.getElementById('campo-descarte');
+        <div class="mb-3">
+            <label for="galpon" class="form-label">Galpón:</label>
+            <select id="galpon" name="galpon" class="form-select" required>
+                <option value="">Seleccione galpón</option>
+                {% for r in galpones_pozas %}
+                    <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            if (tipo === 'destetados') {
-                dest.style.display = 'flex';
-                desc.style.display = 'none';
-            } else if (tipo === 'descarte') {
-                dest.style.display = 'none';
-                desc.style.display = 'flex';
-            } else {
-                dest.style.display = 'none';
-                desc.style.display = 'none';
-            }
-        }
-        // Ejecutar una vez al cargar para mostrar lo que corresponda si hay errores previos
-        window.addEventListener('DOMContentLoaded', function() {
-            toggleCamposVenta();
-        });
-    </script>
+        <div class="mb-3">
+            <label for="poza" class="form-label">Poza:</label>
+            <select id="poza" name="poza" class="form-select" required>
+                <option value="">Seleccione poza</option>
+                {% for r in galpones_pozas %}
+                    <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Destetados -->
+        <div id="destetados_fields" style="display:none;">
+            <div class="mb-3">
+                <label for="hembras_vendidas" class="form-label">Hembras vendidas:</label>
+                <input type="number" id="hembras_vendidas" name="hembras_vendidas" class="form-control" min="0" value="0">
+            </div>
+            <div class="mb-3">
+                <label for="machos_vendidos" class="form-label">Machos vendidos:</label>
+                <input type="number" id="machos_vendidos" name="machos_vendidos" class="form-control" min="0" value="0">
+            </div>
+        </div>
+
+        <!-- Descarte -->
+        <div id="descarte_fields" style="display:none;">
+            <div class="mb-3">
+                <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
+                <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="costo_venta" class="form-label">Costo total:</label>
+            <input type="number" step="0.01" min="0" id="costo_venta" name="costo_venta" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Registrar venta</button>
+    </form>
+</div>
+
+<script>
+function toggleFields() {
+    const tipo = document.getElementById('tipo_venta').value;
+    document.getElementById('destetados_fields').style.display = tipo === 'destetados' ? 'block' : 'none';
+    document.getElementById('descarte_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
+}
+</script>
+
 </body>
 </html>
