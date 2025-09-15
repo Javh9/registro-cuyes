@@ -8,11 +8,19 @@ from urllib.parse import urlparse
 import io
 from sklearn.linear_model import LinearRegression
 import numpy as np
-
+from flask_mysqldb import MySQL
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
+# Configuración de conexión a la base de datos
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'tu_usuario'
+app.config['MYSQL_PASSWORD'] = 'tu_password'
+app.config['MYSQL_DB'] = 'registro_cuyes'
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'  # opcional, para que fetchall devuelva diccionarios
 
+mysql = MySQL(app)
+cur = mysql.connection.cursor()
 print("=== INICIANDO APLICACIÓN ===")
 print(f"Python version: {os.sys.version}")
 print(f"Variables de entorno: {list(os.environ.keys())}")
