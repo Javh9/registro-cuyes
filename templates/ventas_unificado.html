@@ -3,318 +3,504 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Ventas - Cuyes</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <title>Registrar Ventas - Sistema de Cuyes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4e73df;
-            --secondary-color: #1cc88a;
-            --light-color: #f8f9fc;
-            --dark-color: #5a5c69;
-            --danger-color: #e74a3b;
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --secondary: #858796;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
         }
         
         body {
             background-color: #f8f9fc;
-            font-family: 'Nunito', sans-serif;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-top: 0;
         }
         
         .navbar-custom {
-            background: linear-gradient(90deg, var(--primary-color) 0%, #2a3e9d 100%);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-custom {
-            border-radius: 10px;
+            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            margin-bottom: 1.5rem;
-            border: none;
         }
         
-        .card-header-custom {
-            background: linear-gradient(90deg, var(--primary-color) 0%, #2a3e9d 100%);
-            color: white;
-            border-radius: 10px 10px 0 0 !important;
-            padding: 1rem 1.35rem;
+        .sidebar {
+            min-height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 70px;
+        }
+        
+        .sidebar .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 1rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.15);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .topbar {
+            height: 70px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: var(--dark);
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.35rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+        }
+        
+        .form-control {
+            border-radius: 0.35rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d3e2;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-select {
+            border-radius: 0.35rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d3e2;
+        }
+        
+        .page-title {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .main-content {
+            padding: 2rem 0;
         }
         
         .stats-card {
             border-left: 4px solid;
-            border-radius: 5px;
         }
         
         .stats-card.destetados {
-            border-left-color: var(--primary-color);
+            border-left-color: var(--primary);
         }
         
         .stats-card.descarte {
-            border-left-color: var(--secondary-color);
+            border-left-color: var(--success);
         }
         
         .stats-card.total {
-            border-left-color: var(--dark-color);
+            border-left-color: var(--dark);
         }
         
-        .stats-icon {
-            font-size: 2rem;
-            opacity: 0.3;
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(90deg, var(--primary-color) 0%, #2a3e9d 100%);
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            font-weight: 600;
-        }
-        
-        .btn-primary-custom:hover {
-            background: linear-gradient(90deg, #2a3e9d 0%, var(--primary-color) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-        
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-        
-        .alert-custom {
-            border-radius: 8px;
-            border: none;
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: static;
+            }
+            
+            .topbar {
+                position: static;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-paw me-2"></i>
-                <strong>Sistema de Gestión de Cuyes</strong>
+                <span class="fw-bold">Registro de Cuyes</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#"><i class="fas fa-shopping-cart me-1"></i> Ventas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-list me-1"></i> Inventario</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-chart-line me-1"></i> Reportes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-cog me-1"></i> Configuración</a>
-                    </li>
-                </ul>
+            <div class="d-flex">
+                <span class="navbar-text me-3">Usuario: Admin</span>
+                <a href="#" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-shopping-cart text-primary me-2"></i> Registro de Ventas</h1>
-            <button class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-history me-1"></i> Ver Historial
-            </button>
-        </div>
-
-        <!-- Mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-custom alert-dismissible fade show" role="alert">
-                  <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
-                  {{ message }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <!-- Estadísticas -->
-        <div class="row mb-4">
-            <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card card-custom h-100 stats-card destetados">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Ventas Hoy (Destetados)</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_destetados_hoy }}</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar-day stats-icon text-primary"></i>
-                            </div>
-                        </div>
-                    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar d-none d-md-block">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-egg"></i> Reproductores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-baby"></i> Partos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-child"></i> Destetes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-skull"></i> Mortalidad
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="fas fa-money-bill-wave"></i> Ventas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-receipt"></i> Gastos
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card card-custom h-100 stats-card descarte">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Ventas Este Mes (Destetados)</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_destetados_mes }}</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-calendar stats-icon text-success"></i>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Main Content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <h1 class="h2 page-title">Registro de Ventas</h1>
+                    <a href="#" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Volver al Inicio
+                    </a>
                 </div>
-            </div>
 
-            <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card card-custom h-100 stats-card total">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-gray-800 text-uppercase mb-1">Total Ventas (Destetados)</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_ventas_destetados }}</div>
+                <!-- Mensajes Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
-                            <div class="col-auto">
-                                <i class="fas fa-dollar-sign stats-icon text-gray-800"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-        <!-- Formulario de venta -->
-        <div class="card card-custom">
-            <div class="card-header card-header-custom">
-                <h5 class="card-title mb-0"><i class="fas fa-plus-circle me-2"></i>Nueva Venta</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('ventas') }}">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="tipo_venta" class="form-label">Tipo de venta:</label>
-                            <select id="tipo_venta" name="tipo_venta" class="form-select" required onchange="toggleFields()">
-                                <option value="">Seleccione...</option>
-                                <option value="destetados">Destetados</option>
-                                <option value="descarte">Descarte</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="galpon" class="form-label">Galpón:</label>
-                            <select id="galpon" name="galpon" class="form-select" required>
-                                <option value="">Seleccione galpón</option>
-                                {% for r in galpones_pozas %}
-                                    <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="poza" class="form-label">Poza:</label>
-                            <select id="poza" name="poza" class="form-select" required>
-                                <option value="">Seleccione poza</option>
-                                {% for r in galpones_pozas %}
-                                    <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="costo_venta" class="form-label">Costo total (S/):</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" step="0.01" min="0" id="costo_venta" name="costo_venta" class="form-control" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Destetados -->
-                    <div id="destetados_fields" style="display:none;">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="hembras_vendidas" class="form-label">Hembras vendidas:</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-venus"></i></span>
-                                    <input type="number" id="hembras_vendidas" name="hembras_vendidas" class="form-control" min="0" value="0">
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="machos_vendidos" class="form-label">Machos vendidos:</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-mars"></i></span>
-                                    <input type="number" id="machos_vendidos" name="machos_vendidos" class="form-control" min="0" value="0">
+                <!-- Estadísticas rápidas -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card stats-card destetados h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Ventas Hoy (Destetados)</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_destetados_hoy }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Descarte -->
-                    <div id="descarte_fields" style="display:none;">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-paw"></i></span>
-                                    <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0">
+                    <div class="col-md-4">
+                        <div class="card stats-card descarte h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Ventas Mes (Destetados)</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_destetados_mes }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <button type="reset" class="btn btn-secondary me-md-2"><i class="fas fa-eraser me-1"></i> Limpiar</button>
-                        <button type="submit" class="btn btn-primary-custom"><i class="fas fa-save me-1"></i> Registrar Venta</button>
+                    <div class="col-md-4">
+                        <div class="card stats-card total h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                                            Total Ventas (Destetados)</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_ventas_destetados }}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Formulario -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold text-primary">Datos de la Venta</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('ventas') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="tipo_venta" class="form-label">Tipo de venta:</label>
+                                    <select id="tipo_venta" name="tipo_venta" class="form-select" required onchange="toggleFields()">
+                                        <option value="">Seleccione...</option>
+                                        <option value="destetados">Destetados</option>
+                                        <option value="descarte">Descarte</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="costo_venta" class="form-label">Costo total (S/):</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                        <input type="number" step="0.01" min="0" id="costo_venta" name="costo_venta" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="galpon" class="form-label">Galpón:</label>
+                                    <select id="galpon" name="galpon" class="form-select" required>
+                                        <option value="">Seleccione galpón</option>
+                                        {% for r in galpones_pozas %}
+                                            <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="poza" class="form-label">Poza:</label>
+                                    <select id="poza" name="poza" class="form-select" required>
+                                        <option value="">Seleccione poza</option>
+                                        {% for r in galpones_pozas %}
+                                            <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Destetados -->
+                            <div id="destetados_fields" style="display:none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="hembras_vendidas" class="form-label">Hembras vendidas:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-venus"></i></span>
+                                            <input type="number" id="hembras_vendidas" name="hembras_vendidas" class="form-control" min="0" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="machos_vendidos" class="form-label">Machos vendidos:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-mars"></i></span>
+                                            <input type="number" id="machos_vendidos" name="machos_vendidos" class="form-control" min="0" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Descarte -->
+                            <div id="descarte_fields" style="display:none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-paw"></i></span>
+                                            <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="reset" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-eraser me-1"></i> Limpiar
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Registrar Venta
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Información adicional -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold text-primary">Información importante</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Tipos de venta:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>Destetados:</strong> Cuyes jóvenes que ya han sido destetados. Se registran por separado hembras y machos.</li>
+                                <li><strong>Descarte:</strong> Cuyes que se venden por diferentes motivos (edad, productividad, etc.). Se registra el total de cuyes vendidos.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Consideraciones importantes:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Verifique que los datos ingresados sean correctos antes de registrar la venta</li>
+                                <li>El sistema actualizará automáticamente el inventario al registrar una venta</li>
+                                <li>Mantenga un registro preciso de las ventas para un mejor control financiero</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
-    <footer class="text-center text-muted mt-5 mb-4">
-        <div class="container">
-            <hr>
-            <p>Sistema de Gestión de Cuyes © 2023 - Desarrollado por Javh9</p>
+    <footer class="footer mt-5">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Sistema de Registro de Cuyes &copy; 2023</span>
+                <span>v1.2.0</span>
+            </div>
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    function toggleFields() {
-        const tipo = document.getElementById('tipo_venta').value;
-        document.getElementById('destetados_fields').style.display = tipo === 'destetados' ? 'block' : 'none';
-        document.getElementById('descarte_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
-        
-        // Reset campos cuando se cambia el tipo
-        if (tipo !== 'destetados') {
-            document.getElementById('hembras_vendidas').value = "0";
-            document.getElementById('machos_vendidos').value = "0";
+        function toggleFields() {
+            const tipo = document.getElementById('tipo_venta').value;
+            document.getElementById('destetados_fields').style.display = tipo === 'destetados' ? 'block' : 'none';
+            document.getElementById('descarte_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
+            
+            // Reset campos cuando se cambia el tipo
+            if (tipo !== 'destetados') {
+                document.getElementById('hembras_vendidas').value = "0";
+                document.getElementById('machos_vendidos').value = "0";
+            }
+            
+            if (tipo !== 'descarte') {
+                document.getElementById('cuyes_vendidos').value = "0";
+            }
         }
         
-        if (tipo !== 'descarte') {
-            document.getElementById('cuyes_vendidos').value = "0";
-        }
-    }
-    
-    // Mejorar la experiencia de usuario con los selects
-    document.addEventListener('DOMContentLoaded', function() {
-        const galponSelect = document.getElementById('galpon');
-        const pozaSelect = document.getElementById('poza');
-        
-        // Si se necesita alguna funcionalidad adicional para los selects
-    });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validación del formulario
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const tipoVenta = document.getElementById('tipo_venta').value;
+                const costo = parseFloat(document.getElementById('costo_venta').value);
+                
+                if (!tipoVenta) {
+                    e.preventDefault();
+                    alert('Debe seleccionar un tipo de venta.');
+                    return false;
+                }
+                
+                if (costo <= 0) {
+                    e.preventDefault();
+                    alert('El costo de venta debe ser mayor a cero.');
+                    return false;
+                }
+                
+                if (tipoVenta === 'destetados') {
+                    const hembras = parseInt(document.getElementById('hembras_vendidas').value);
+                    const machos = parseInt(document.getElementById('machos_vendidos').value);
+                    
+                    if (hembras < 0 || machos < 0) {
+                        e.preventDefault();
+                        alert('El número de animales no puede ser negativo.');
+                        return false;
+                    }
+                    
+                    if (hembras === 0 && machos === 0) {
+                        e.preventDefault();
+                        alert('Debe ingresar al menos un animal vendido.');
+                        return false;
+                    }
+                }
+                
+                if (tipoVenta === 'descarte') {
+                    const cuyes = parseInt(document.getElementById('cuyes_vendidos').value);
+                    
+                    if (cuyes <= 0) {
+                        e.preventDefault();
+                        alert('Debe ingresar al menos un cuy vendido.');
+                        return false;
+                    }
+                }
+            });
+
+            // Focus en el primer campo al cargar la página
+            const tipoVentaSelect = document.getElementById('tipo_venta');
+            if (tipoVentaSelect) {
+                tipoVentaSelect.focus();
+            }
+        });
     </script>
 </body>
 </html>
