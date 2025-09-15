@@ -325,24 +325,27 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="galpon" class="form-label">Galpón:</label>
-                                    <select id="galpon" name="galpon" class="form-select" required>
-                                        <option value="">Seleccione galpón</option>
-                                        {% for r in galpones_pozas %}
-                                            <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="poza" class="form-label">Poza:</label>
-                                    <select id="poza" name="poza" class="form-select" required>
-                                        <option value="">Seleccione poza</option>
-                                        {% for r in galpones_pozas %}
-                                            <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
-                                        {% endfor %}
-                                    </select>
+                            <!-- Campos para descarte (galpón y poza) -->
+                            <div id="descarte_fields" style="display:none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="galpon" class="form-label">Galpón:</label>
+                                        <select id="galpon" name="galpon" class="form-select">
+                                            <option value="">Seleccione galpón</option>
+                                            {% for r in galpones_pozas %}
+                                                <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="poza" class="form-label">Poza:</label>
+                                        <select id="poza" name="poza" class="form-select">
+                                            <option value="">Seleccione poza</option>
+                                            {% for r in galpones_pozas %}
+                                                <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -366,8 +369,8 @@
                                 </div>
                             </div>
 
-                            <!-- Descarte -->
-                            <div id="descarte_fields" style="display:none;">
+                            <!-- Descarte - cantidad de cuyes -->
+                            <div id="descarte_cantidad_fields" style="display:none;">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
@@ -401,8 +404,8 @@
                             <i class="fas fa-info-circle me-2"></i>
                             <strong>Tipos de venta:</strong>
                             <ul class="mb-0 mt-2">
-                                <li><strong>Destetados:</strong> Cuyes jóvenes que ya han sido destetados. Se registran por separado hembras y machos.</li>
-                                <li><strong>Descarte:</strong> Cuyes que se venden por diferentes motivos (edad, productividad, etc.). Se registra el total de cuyes vendidos.</li>
+                                <li><strong>Destetados:</strong> Cuyes jóvenes que ya han sido destetados. Se registran por separado hembras y machos. No es necesario especificar galpón/poza ya que esta información ya está registrada en el sistema.</li>
+                                <li><strong>Descarte:</strong> Cuyes que se venden por diferentes motivos (edad, productividad, etc.). Se registra el total de cuyes vendidos y es necesario especificar el galpón y poza de origen.</li>
                             </ul>
                         </div>
                         
@@ -434,8 +437,15 @@
     <script>
         function toggleFields() {
             const tipo = document.getElementById('tipo_venta').value;
+            
+            // Mostrar/ocultar campos para destetados
             document.getElementById('destetados_fields').style.display = tipo === 'destetados' ? 'block' : 'none';
+            
+            // Mostrar/ocultar campos para descarte (galpón y poza)
             document.getElementById('descarte_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
+            
+            // Mostrar/ocultar campo de cantidad para descarte
+            document.getElementById('descarte_cantidad_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
             
             // Reset campos cuando se cambia el tipo
             if (tipo !== 'destetados') {
@@ -445,6 +455,8 @@
             
             if (tipo !== 'descarte') {
                 document.getElementById('cuyes_vendidos').value = "0";
+                document.getElementById('galpon').value = "";
+                document.getElementById('poza').value = "";
             }
         }
         
@@ -486,10 +498,24 @@
                 
                 if (tipoVenta === 'descarte') {
                     const cuyes = parseInt(document.getElementById('cuyes_vendidos').value);
+                    const galpon = document.getElementById('galpon').value;
+                    const poza = document.getElementById('poza').value;
                     
                     if (cuyes <= 0) {
                         e.preventDefault();
                         alert('Debe ingresar al menos un cuy vendido.');
+                        return false;
+                    }
+                    
+                    if (!galpon) {
+                        e.preventDefault();
+                        alert('Debe seleccionar un galpón para la venta de descarte.');
+                        return false;
+                    }
+                    
+                    if (!poza) {
+                        e.preventDefault();
+                        alert('Debe seleccionar una poza para la venta de descarte.');
                         return false;
                     }
                 }
