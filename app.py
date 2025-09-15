@@ -8,19 +8,11 @@ from urllib.parse import urlparse
 import io
 from sklearn.linear_model import LinearRegression
 import numpy as np
-from flask_mysqldb import MySQL
+
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
-# Configuración de conexión a la base de datos
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'tu_usuario'
-app.config['MYSQL_PASSWORD'] = 'tu_password'
-app.config['MYSQL_DB'] = 'registro_cuyes'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'  # opcional, para que fetchall devuelva diccionarios
 
-mysql = MySQL(app)
-cur = mysql.connection.cursor()
 print("=== INICIANDO APLICACIÓN ===")
 print(f"Python version: {os.sys.version}")
 print(f"Variables de entorno: {list(os.environ.keys())}")
@@ -654,87 +646,54 @@ def registrar_muertes_destetados():
     return render_template('registrar_muertes_destetados.html')
 # Ruta unificada para ventas (REEMPLAZA las dos rutas anteriores)
 # Asegúrate de tener estos imports
-
-# app.py (fragmento de la ruta ventas)
-
 @app.route('/ventas', methods=['GET', 'POST'])
 def ventas():
-    from datetime import date
-    cur = mysql.connection.cursor()
-
     if request.method == 'POST':
         tipo_venta = request.form.get('tipo_venta')
-        galpon = request.form.get('galpon')
-        poza = request.form.get('poza')
-        costo_venta = request.form.get('costo_venta')
+
+        conn = get_db_connection()
+        cur = conn.cursor()
 
         try:
-            if tipo_venta == "destetados":
-                hembras_vendidas = int(request.form.get('hembras_vendidas', 0) or 0)
-                machos_vendidos = int(request.form.get('machos_vendidos', 0) or 0)
+            if tipo_venta == 'destetados':
+                hembras_vendidas = int(request.form['hembras_vendidas'])
+                machos_vendidos = int(request.form['machos_vendidos'])
+                costo_venta = float(request.form['costo_venta'])
 
                 cur.execute("""
-                    INSERT INTO ventas_destetados (fecha_venta, galpon, poza, hembras_vendidas, machos_vendidos, costo_venta)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (date.today(), galpon, poza, hembras_vendidas, machos_vendidos, costo_venta))
+                    INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha)
+                    VALUES (?, ?, ?, DATE('now'))
+                """, (hembras_vendidas, machos_vendidos, costo_venta))
 
-                flash("Venta de destetados registrada exitosamente", "success")
-
-            elif tipo_venta == "descarte":
-                cuyes_vendidos = int(request.form.get('cuyes_vendidos', 0) or 0)
+            elif tipo_venta == 'descarte':
+                galpon = request.form['galpon']
+                poza = request.form['poza']
+                cuyes_vendidos = int(request.form['cuyes_vendidos'])
+                costo_venta = float(request.form['costo_venta'])
 
                 cur.execute("""
-                    INSERT INTO ventas_descarte (fecha_venta, galpon, poza, cuyes_vendidos, costo_venta)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (date.today(), galpon, poza, cuyes_vendidos, costo_venta))
+                    INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha)
+                    VALUES (?, ?, ?, ?, DATE('now'))
+                """, (galpon, poza, cuyes_vendidos, costo_venta))
 
-                flash("Venta de descarte registrada exitosamente", "success")
-
-            else:
-                flash("Tipo de venta no válido", "error")
-
-            mysql.connection.commit()
+            conn.commit()
+            flash('✅ Venta registrada correctamente', 'success')
 
         except Exception as e:
-            mysql.connection.rollback()
-            flash(f"Error al registrar venta: {str(e)}", "error")
+            conn.rollback()
+            flash(f'❌ Error al registrar la venta: {str(e)}', 'danger')
 
-    # Consultar galpones/pozas disponibles
-    cur.execute("SELECT DISTINCT galpon, poza FROM pozas ORDER BY galpon, poza")
-    galpones_pozas = cur.fetchall()
+        finally:
+            conn.close()
 
-    # Historial de ventas destetados
-    cur.execute("SELECT * FROM ventas_destetados ORDER BY fecha_venta DESC")
-    ventas_destetados = cur.fetchall()
+        return redirect(url_for('ventas'))
 
-    # Historial de ventas descarte
-    cur.execute("SELECT * FROM ventas_descarte ORDER BY fecha_venta DESC")
-    ventas_descarte = cur.fetchall()
+    # Si es GET, obtenemos los galpones/pozas
+    conn = get_db_connection()
+    galpones_pozas = conn.execute("SELECT galpon, poza FROM galpones").fetchall()
+    conn.close()
 
-    # Estadísticas básicas
-    cur.execute("SELECT COUNT(*) FROM ventas_destetados WHERE fecha_venta = CURDATE()")
-    ventas_hoy = cur.fetchone()[0]
-
-    cur.execute("SELECT COUNT(*) FROM ventas_destetados WHERE MONTH(fecha_venta) = MONTH(CURDATE())")
-    ventas_mes = cur.fetchone()[0]
-
-    cur.execute("SELECT COALESCE(SUM(costo_venta), 0) FROM ventas_destetados")
-    total_destetados = cur.fetchone()[0] or 0
-
-    cur.execute("SELECT COALESCE(SUM(costo_venta), 0) FROM ventas_descarte")
-    total_descarte = cur.fetchone()[0] or 0
-
-    total_ingresos = total_destetados + total_descarte
-
-    cur.close()
-
-    return render_template("ventas_unificado.html",
-                           galpones_pozas=galpones_pozas,
-                           ventas_destetados=ventas_destetados,
-                           ventas_descarte=ventas_descarte,
-                           ventas_hoy=ventas_hoy,
-                           ventas_mes=ventas_mes,
-                           total_ingresos=total_ingresos)
+    return render_template("ventas_unificado.html", galpones_pozas=galpones_pozas)
 
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
