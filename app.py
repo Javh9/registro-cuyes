@@ -646,59 +646,80 @@ def registrar_muertes_destetados():
     return render_template('registrar_muertes_destetados.html')
 # Ruta unificada para ventas (REEMPLAZA las dos rutas anteriores)
 # Asegúrate de tener estos imports
-@app.route('/ventas', methods=['GET', 'POST'])
+@app.route("/ventas", methods=["GET", "POST"])
 def ventas():
-    if request.method == 'POST':
-        tipo_venta = request.form.get('tipo_venta')
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        try:
-            if tipo_venta == 'destetados':
-                hembras_vendidas = int(request.form['hembras_vendidas'])
-                machos_vendidos = int(request.form['machos_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
-
-                cur.execute("""
-                    INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha)
-                    VALUES (%s, %s, %s, CURRENT_DATE)
-                """, (hembras_vendidas, machos_vendidos, costo_venta))
-
-            elif tipo_venta == 'descarte':
-                galpon = request.form['galpon']
-                poza = request.form['poza']
-                cuyes_vendidos = int(request.form['cuyes_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
-
-                cur.execute("""
-                    INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha)
-                    VALUES (%s, %s, %s, %s, CURRENT_DATE)
-                """, (galpon, poza, cuyes_vendidos, costo_venta))
-
-            conn.commit()
-            flash('✅ Venta registrada correctamente', 'success')
-
-        except Exception as e:
-            conn.rollback()
-            flash(f'❌ Error al registrar la venta: {str(e)}', 'danger')
-
-        finally:
-            cur.close()
-            conn.close()
-
-        return redirect(url_for('ventas'))
-
-    # Si es GET, obtenemos los galpones/pozas
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT galpon, poza FROM galpones")
-    galpones_pozas = cur.fetchall()
+
+    # Obtener lista de galpones y pozas
+    cur.execute("SELECT galpon, poza FROM galpones ORDER BY galpon, poza")
+    galpones_pozas = cur.fetchall()  # [(galpon, poza), ...]
+
+    # Si es POST, registrar la venta
+    if request.method == "POST":
+        tipo_venta = request.form.get("tipo_venta")
+
+        if tipo_venta == "destetados":
+            hembras_vendidas = int(request.form.get("hembras_vendidas", 0))
+            machos_vendidos = int(request.form.get("machos_vendidos", 0))
+            costo_venta = float(request.form.get("costo_venta", 0))
+
+            cur.execute("""
+                INSERT INTO ventas_destetados (hembras_vendidas, machos_vendidos, costo_venta, fecha)
+                VALUES (%s, %s, %s, CURRENT_DATE)
+            """, (hembras_vendidas, machos_vendidos, costo_venta))
+
+            flash("Venta de destetados registrada con éxito", "success")
+
+        elif tipo_venta == "descarte":
+            galpon = request.form.get("galpon")
+            poza = request.form.get("poza")
+            cuyes_vendidos = int(request.form.get("cuyes_vendidos", 0))
+            costo_venta = float(request.form.get("costo_venta", 0))
+
+            cur.execute("""
+                INSERT INTO ventas_descarte (galpon, poza, cuyes_vendidos, costo_venta, fecha)
+                VALUES (%s, %s, %s, %s, CURRENT_DATE)
+            """, (galpon, poza, cuyes_vendidos, costo_venta))
+
+            flash("Venta de descarte registrada con éxito", "success")
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for("ventas"))
+
+    # Si es GET, mostrar historial de ventas
+    cur.execute("SELECT id, hembras_vendidas, machos_vendidos, costo_venta, fecha FROM ventas_destetados ORDER BY fecha DESC")
+    ventas_destetados = cur.fetchall()
+
+    cur.execute("SELECT id, galpon, poza, cuyes_vendidos, costo_venta, fecha FROM ventas_descarte ORDER BY fecha DESC")
+    ventas_descarte = cur.fetchall()
+
     cur.close()
     conn.close()
 
-    return render_template("ventas_unificado.html", galpones_pozas=galpones_pozas)
+    # Convertir resultados a lista de dicts para usar en template
+    ventas_destetados_list = [
+        {"id": v[0], "hembras_vendidas": v[1], "machos_vendidos": v[2], "costo_venta": v[3], "fecha": v[4]}
+        for v in ventas_destetados
+    ]
 
+    ventas_descarte_list = [
+        {"id": v[0], "galpon": v[1], "poza": v[2], "cuyes_vendidos": v[3], "costo_venta": v[4], "fecha": v[5]}
+        for v in ventas_descarte
+    ]
+
+    galpones_pozas_list = [
+        {"galpon": gp[0], "poza": gp[1]} for gp in galpones_pozas
+    ]
+
+    return render_template(
+        "ventas_unificado.html",
+        galpones_pozas=galpones_pozas_list,
+        ventas_destetados=ventas_destetados_list,
+        ventas_descarte=ventas_descarte_list
+    )
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
