@@ -12,34 +12,6 @@ import numpy as np
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
-def init_ventas_table():
-    """Crear la tabla ventas si no existe"""
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS ventas (
-                        id SERIAL PRIMARY KEY,
-                        tipo_venta VARCHAR(20) NOT NULL CHECK (tipo_venta IN ('destetados', 'descarte')),
-                        galpon VARCHAR(50),
-                        poza VARCHAR(50),
-                        hembras_vendidas INTEGER DEFAULT 0,
-                        machos_vendidos INTEGER DEFAULT 0,
-                        costo_total DECIMAL(10, 2) NOT NULL,
-                        fecha_venta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        mover_engorde BOOLEAN DEFAULT FALSE,
-                        engorde_galpon VARCHAR(50),
-                        engorde_poza VARCHAR(50),
-                        fecha_movimiento DATE,
-                        dias_engorde INTEGER,
-                        observaciones TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                conn.commit()
-                app.logger.info("Tabla ventas verificada/creada correctamente")
-    except Exception as e:
-        app.logger.error("Error al crear tabla ventas", exc_info=e)
 
 # Inicializar la tabla al iniciar la aplicación
 init_ventas_table()
@@ -137,6 +109,34 @@ def get_db_connection():
         port=url.port
     )
     return conn
+def init_ventas_table():
+    """Crear la tabla ventas si no existe"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS ventas (
+                        id SERIAL PRIMARY KEY,
+                        tipo_venta VARCHAR(20) NOT NULL CHECK (tipo_venta IN ('destetados', 'descarte')),
+                        galpon VARCHAR(50),
+                        poza VARCHAR(50),
+                        hembras_vendidas INTEGER DEFAULT 0,
+                        machos_vendidos INTEGER DEFAULT 0,
+                        costo_total DECIMAL(10, 2) NOT NULL,
+                        fecha_venta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        mover_engorde BOOLEAN DEFAULT FALSE,
+                        engorde_galpon VARCHAR(50),
+                        engorde_poza VARCHAR(50),
+                        fecha_movimiento DATE,
+                        dias_engorde INTEGER,
+                        observaciones TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                conn.commit()
+                app.logger.info("Tabla ventas verificada/creada correctamente")
+    except Exception as e:
+        app.logger.error("Error al crear tabla ventas", exc_info=e)
 
 # Función para validar valores positivos
 def validate_positive_values(**kwargs):
