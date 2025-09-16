@@ -693,47 +693,56 @@ def ventas():
                 cur.execute("SELECT DISTINCT galpon, poza FROM reproductores ORDER BY galpon, poza")
                 galpones_pozas = cur.fetchall()
 
-                # Total acumulado de ventas de destetados
+                # Verificar si hay datos en la tabla ventas
                 cur.execute("""
-                    SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                    FROM ventas
-                    WHERE tipo_venta='destetados'
+                    SELECT EXISTS (
+                        SELECT 1 FROM ventas LIMIT 1
+                    );
                 """)
-                total_ventas_destetados = int(cur.fetchone()['total'] or 0)
-
-                # Ventas de destetados hoy
-                cur.execute("""
-                    SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                    FROM ventas
-                    WHERE tipo_venta='destetados'
-                    AND fecha_venta::date = CURRENT_DATE
-                """)
-                ventas_destetados_hoy = int(cur.fetchone()['total'] or 0)
-
-                # Ventas de destetados este mes
-                cur.execute("""
-                    SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                    FROM ventas
-                    WHERE tipo_venta='destetados'
-                    AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
-                """)
-                ventas_destetados_mes = int(cur.fetchone()['total'] or 0)
+                hay_datos = cur.fetchone()[0]
                 
-                # Ventas de descarte este mes
-                cur.execute("""
-                    SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                    FROM ventas
-                    WHERE tipo_venta='descarte'
-                    AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
-                """)
-                ventas_descarte_mes = int(cur.fetchone()['total'] or 0)
-                
-                # Ingresos totales (suma de todas las ventas)
-                cur.execute("""
-                    SELECT COALESCE(SUM(costo_total),0) AS total
-                    FROM ventas
-                """)
-                ingresos_totales = float(cur.fetchone()['total'] or 0)
+                if hay_datos:
+                    # Total acumulado de ventas de destetados
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='destetados'
+                    """)
+                    total_ventas_destetados = int(cur.fetchone()['total'] or 0)
+
+                    # Ventas de destetados hoy
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='destetados'
+                        AND fecha_venta::date = CURRENT_DATE
+                    """)
+                    ventas_destetados_hoy = int(cur.fetchone()['total'] or 0)
+
+                    # Ventas de destetados este mes
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='destetados'
+                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
+                    """)
+                    ventas_destetados_mes = int(cur.fetchone()['total'] or 0)
+                    
+                    # Ventas de descarte este mes
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='descarte'
+                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
+                    """)
+                    ventas_descarte_mes = int(cur.fetchone()['total'] or 0)
+                    
+                    # Ingresos totales (suma de todas las ventas)
+                    cur.execute("""
+                        SELECT COALESCE(SUM(costo_total),0) AS total
+                        FROM ventas
+                    """)
+                    ingresos_totales = float(cur.fetchone()['total'] or 0)
 
         app.logger.debug(f"[ventas] hoy={ventas_destetados_hoy} mes={ventas_destetados_mes} total={total_ventas_destetados}")
 
