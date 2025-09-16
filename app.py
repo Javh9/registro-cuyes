@@ -279,7 +279,7 @@ def index():
                 # ========================
                 cur.execute("""
                     SELECT poza, 
-                           SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total
+                           SUM(COALESCE(destetados_hembras, 0) + COALESCE(destetados_machos, 0)) as total
                     FROM destetes 
                     GROUP BY poza 
                     ORDER BY poza
@@ -287,7 +287,7 @@ def index():
                 destetados_por_poza = cur.fetchall()
                 
                 cur.execute("""
-                    SELECT SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total 
+                    SELECT SUM(COALESCE(destetados_hembras, 0) + COALESCE(destetados_machos, 0)) as total 
                     FROM destetes
                 """)
                 total_destetados = cur.fetchone()['total'] or 0
