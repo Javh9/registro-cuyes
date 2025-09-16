@@ -858,6 +858,7 @@ def ventas():
                            total_ventas_destetados=total_ventas_destetados,
                            ventas_descarte_mes=ventas_descarte_mes,
                            ingresos_totales=ingresos_totales)
+
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():
