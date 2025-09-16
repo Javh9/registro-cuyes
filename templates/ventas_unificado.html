@@ -174,13 +174,13 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-paw me-2"></i>
                 <span class="fw-bold">Registro de Cuyes</span>
             </a>
             <div class="d-flex">
                 <span class="navbar-text me-3">Usuario: Admin</span>
-                <a href="#" class="btn btn-outline-light btn-sm">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
                     <i class="fas fa-home me-1"></i> Inicio
                 </a>
             </div>
@@ -194,37 +194,37 @@
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('index') }}">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('ingresar_reproductores') }}">
                                 <i class="fas fa-egg"></i> Reproductores
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('registrar_partos') }}">
                                 <i class="fas fa-baby"></i> Partos
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('registrar_destete') }}">
                                 <i class="fas fa-child"></i> Destetes
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('registrar_muertes_destetados') }}">
                                 <i class="fas fa-skull"></i> Mortalidad
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
+                            <a class="nav-link active" href="{{ url_for('ventas') }}">
                                 <i class="fas fa-money-bill-wave"></i> Ventas
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ url_for('registrar_gastos') }}">
                                 <i class="fas fa-receipt"></i> Gastos
                             </a>
                         </li>
@@ -236,7 +236,7 @@
             <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
                     <h1 class="h2 page-title">Registro de Ventas</h1>
-                    <a href="#" class="btn btn-secondary">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Volver al Inicio
                     </a>
                 </div>
@@ -355,7 +355,7 @@
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="origen_galpon" class="form-label">Galpón de origen:</label>
-                                        <select id="origen_galpon" name="origen_galpon" class="form-select">
+                                        <select id="origen_galpon" name="origen_galpon" class="form-select" required>
                                             <option value="">Seleccione galpón</option>
                                             {% for r in galpones_pozas %}
                                                 <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
@@ -364,7 +364,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label for="origen_poza" class="form-label">Poza de origen:</label>
-                                        <select id="origen_poza" name="origen_poza" class="form-select">
+                                        <select id="origen_poza" name="origen_poza" class="form-select" required>
                                             <option value="">Seleccione poza</option>
                                             {% for r in galpones_pozas %}
                                                 <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
@@ -421,7 +421,7 @@
                                         <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fas fa-paw"></i></span>
-                                            <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0">
+                                            <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -514,10 +514,6 @@
                 document.getElementById('mover_engorde').checked = false;
                 toggleEngordeFields();
             }
-            
-            // Establecer fecha actual por defecto
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha_venta').value = today;
         }
         
         function toggleEngordeFields() {
@@ -558,7 +554,15 @@
             document.getElementById('fecha_venta').value = today;
         }
         
+        // Inicializar cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar campos
+            toggleFields();
+            
+            // Establecer fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_venta').value = today;
+
             // Validación del formulario
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {
@@ -643,10 +647,6 @@
                     }
                 }
             });
-
-            // Establecer fecha actual por defecto
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha_venta').value = today;
 
             // Focus en el primer campo al cargar la página
             const tipoVentaSelect = document.getElementById('tipo_venta');
