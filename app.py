@@ -245,522 +245,99 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Registro de Cuyes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #4e73df;
-            --success: #1cc88a;
-            --info: #36b9cc;
-            --warning: #f6c23e;
-            --danger: #e74a3b;
-            --secondary: #858796;
-            --light: #f8f9fc;
-            --dark: #5a5c69;
-        }
-        
-        body {
-            background-color: #f8f9fc;
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding-top: 0;
-        }
-        
-        .navbar-custom {
-            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        }
-        
-        .sidebar {
-            min-height: calc(100vh - 70px);
-            background: white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 70px;
-        }
-        
-        .sidebar .nav-item {
-            margin-bottom: 0.25rem;
-        }
-        
-        .sidebar .nav-link {
-            color: var(--dark);
-            padding: 1rem;
-            border-left: 4px solid transparent;
-        }
-        
-        .sidebar .nav-link:hover {
-            color: var(--primary);
-            background-color: rgba(78, 115, 223, 0.1);
-            border-left-color: var(--primary);
-        }
-        
-        .sidebar .nav-link.active {
-            font-weight: bold;
-            color: var(--primary);
-            background-color: rgba(78, 115, 223, 0.15);
-            border-left-color: var(--primary);
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 0.5rem;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .topbar {
-            height: 70px;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-            background-color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 0.5rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-            margin-bottom: 1.5rem;
-            transition: transform 0.2s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            font-weight: bold;
-            color: var(--dark);
-            padding: 1rem 1.5rem;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-            border-radius: 0.35rem;
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-        }
-        
-        .btn-primary:hover {
-            background-color: #2e59d9;
-            border-color: #2e59d9;
-            transform: translateY(-2px);
-            box-shadow: 0 0.15rem 0.75rem 0 rgba(58, 59, 69, 0.2);
-        }
-        
-        .stat-card {
-            border-left: 4px solid;
-            transition: transform 0.2s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card.primary { border-left-color: var(--primary); }
-        .stat-card.success { border-left-color: var(--success); }
-        .stat-card.info { border-left-color: var(--info); }
-        .stat-card.warning { border-left-color: var(--warning); }
-        
-        .page-title {
-            color: var(--dark);
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            color: var(--dark);
-            background-color: #f8f9fc;
-        }
-        
-        .badge-status {
-            padding: 0.5em 0.8em;
-            border-radius: 0.35rem;
-            font-weight: 600;
-        }
-        
-        .galpon-card {
-            transition: all 0.3s ease;
-        }
-        
-        .galpon-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-        
-        .poza-item {
-            border-left: 3px solid var(--primary);
-            padding-left: 10px;
-            margin-bottom: 10px;
-            transition: all 0.2s ease;
-        }
-        
-        .poza-item:hover {
-            background-color: rgba(78, 115, 223, 0.05);
-        }
-        
-        .dashboard-stats {
-            margin-bottom: 2rem;
-        }
-        
-        .main-content {
-            padding: 2rem 0;
-        }
-        
-        .footer {
-            background-color: white;
-            padding: 1.5rem;
-            margin-top: 2rem;
-            border-top: 1px solid #e3e6f0;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                min-height: auto;
-                position: static;
-            }
-            
-            .topbar {
-                position: static;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-paw me-2"></i>
-                <span class="fw-bold">Registro de Cuyes</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> Administrador
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+@app.route('/')
+def index():
+    conn = get_db_connection()
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-md-block">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#">
-                                <i class="fas fa-home"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ingresar_reproductores">
-                                <i class="fas fa-egg"></i> Reproductores
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/registrar_partos">
-                                <i class="fas fa-baby"></i> Partos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/registrar_destete">
-                                <i class="fas fa-child"></i> Destetes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/registrar_muertes_destetados">
-                                <i class="fas fa-skull"></i> Mortalidad
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ventas">
-                                <i class="fas fa-money-bill-wave"></i> Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/registrar_gastos">
-                                <i class="fas fa-receipt"></i> Gastos
-                            </a>
-                        </li><a href="/ventas">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/analisis_datos">
-                                <i class="fas fa-chart-bar"></i> Análisis
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/balance">
-                                <i class="fas fa-calculator"></i> Balance
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/resultados">
-                                <i class="fas fa-chart-line"></i> Resultados
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/predicciones">
-                                <i class="fas fa-crystal-ball"></i> Predicciones
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+    # Diccionarios para acumular datos
+    datos_galpones = {}
+    total_reproductores_por_galpon = {}
+    total_nacidos_por_galpon = {}
+    total_muertos_por_galpon = {}
 
-            <!-- Main Content -->
-            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-                    <h1 class="h2 page-title">Dashboard - Resumen General</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <a href="/exportar_excel" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-download me-1"></i> Exportar
-                            </a>
-                        </div>
-                    </div>
-                </div>
+    # Reproductores
+    reproductores = conn.execute(
+        "SELECT galpon, poza, COUNT(*) as total FROM reproductores GROUP BY galpon, poza"
+    ).fetchall()
+    for r in reproductores:
+        g, p = r['galpon'], r['poza']
+        if g not in datos_galpones:
+            datos_galpones[g] = {}
+            total_reproductores_por_galpon[g] = 0
+            total_nacidos_por_galpon[g] = 0
+            total_muertos_por_galpon[g] = 0
+        datos_galpones[g][p] = {
+            "reproductores": r['total'],
+            "nacidos": 0,
+            "destetados": 0,
+            "muertos": 0
+        }
+        total_reproductores_por_galpon[g] += r['total']
 
-                <!-- Stats Cards -->
-                <div class="row mb-4 dashboard-stats">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card primary h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                            Total Reproductores</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_reproductores = [] %}
-                                            {% for galpon in datos_galpones %}
-                                                {% for poza in datos_galpones[galpon] %}
-                                                    {% set _ = total_reproductores.append(datos_galpones[galpon][poza]['reproductores']) %}
-                                                {% endfor %}
-                                            {% endfor %}
-                                            {{ total_reproductores|sum }}
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-egg fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    # Nacidos y muertes de partos
+    partos = conn.execute(
+        "SELECT galpon, poza, SUM(nacidos) as nacidos, SUM(muertos_bebes) as muertos_bebes, SUM(muertos_reproductores) as muertos_reproductores FROM partos GROUP BY galpon, poza"
+    ).fetchall()
+    for p in partos:
+        g, po = p['galpon'], p['poza']
+        if g not in datos_galpones:
+            datos_galpones[g] = {}
+            total_reproductores_por_galpon[g] = 0
+            total_nacidos_por_galpon[g] = 0
+            total_muertos_por_galpon[g] = 0
+        if po not in datos_galpones[g]:
+            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
 
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card success h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Nacidos Netos</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_nacidos = [] %}
-                                            {% for galpon in total_nacidos_por_galpon %}
-                                                {% set _ = total_nacidos.append(total_nacidos_por_galpon[galpon]) %}
-                                            {% endfor %}
-                                            {{ total_nacidos|sum }}
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-baby fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        datos_galpones[g][po]["nacidos"] += p['nacidos'] or 0
+        datos_galpones[g][po]["muertos"] += (p['muertos_bebes'] or 0) + (p['muertos_reproductores'] or 0)
 
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card warning h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Destetados</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_destetados = [] %}
-                                            {% for galpon in datos_galpones %}
-                                                {% for poza in datos_galpones[galpon] %}
-                                                    {% set _ = total_destetados.append(datos_galpones[galpon][poza]['destetados']) %}
-                                                {% endfor %}
-                                            {% endfor %}
-                                            {{ total_destetados|sum }}
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-child fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        total_nacidos_por_galpon[g] += p['nacidos'] or 0
+        total_muertos_por_galpon[g] += (p['muertos_bebes'] or 0) + (p['muertos_reproductores'] or 0)
 
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card info h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Mortalidad</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_muertos = [] %}
-                                            {% for galpon in total_muertos_por_galpon %}
-                                                {% set _ = total_muertos.append(total_muertos_por_galpon[galpon]) %}
-                                            {% endfor %}
-                                            {{ total_muertos|sum }}
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-skull fa-2x text-gray-300"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    # Destetados
+    destetados = conn.execute(
+        "SELECT galpon, poza, SUM(destetados_hembras) as hembras, SUM(destetados_machos) as machos FROM destetes GROUP BY galpon, poza"
+    ).fetchall()
+    for d in destetados:
+        g, po = d['galpon'], d['poza']
+        if g not in datos_galpones:
+            datos_galpones[g] = {}
+            total_reproductores_por_galpon[g] = 0
+            total_nacidos_por_galpon[g] = 0
+            total_muertos_por_galpon[g] = 0
+        if po not in datos_galpones[g]:
+            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
 
-                <!-- Resumen por Galpones -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold text-primary">Resumen por Galpones y Pozas</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    {% for galpon in datos_galpones %}
-                                    <div class="col-md-6 col-lg-4 mb-4">
-                                        <div class="card galpon-card h-100">
-                                            <div class="card-header bg-primary text-white">
-                                                <h6 class="m-0">Galpón {{ galpon }}</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between mb-3">
-                                                    <span class="fw-bold">Reproductores:</span>
-                                                    <span class="badge bg-primary">{{ total_reproductores_por_galpon[galpon] }}</span>
-                                                </div>
-                                                
-                                                {% for poza in datos_galpones[galpon] %}
-                                                <div class="poza-item mb-2">
-                                                    <div class="d-flex justify-content-between">
-                                                        <span class="fw-medium">Poza {{ poza }}:</span>
-                                                    </div>
-                                                    <div class="ms-3">
-                                                        <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza]['reproductores'] }}</small><br>
-                                                        <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza]['nacidos'] }}</small><br>
-                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza]['destetados'] }}</small><br>
-                                                        <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza]['muertos'] }}</small>
-                                                    </div>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        total_destetados = (d['hembras'] or 0) + (d['machos'] or 0)
+        datos_galpones[g][po]["destetados"] += total_destetados
 
-                <!-- Acciones Rápidas -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Acciones Rápidas</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3 col-6 mb-3">
-                                        <a href="/ingresar_reproductores" class="btn btn-primary w-100">
-                                            <i class="fas fa-plus-circle me-1"></i> Nuevos Reproductores
-                                        </a>
-                                    </div>
-                                    <div class="col-md-3 col-6 mb-3">
-                                        <a href="/registrar_partos" class="btn btn-success w-100">
-                                            <i class="fas fa-baby me-1"></i> Registrar Parto
-                                        </a>
-                                    </div>
-                                    <div class="col-md-3 col-6 mb-3">
-                                        <a href="/registrar_destete" class="btn btn-info w-100">
-                                            <i class="fas fa-child me-1"></i> Registrar Destete
-                                        </a>
-                                    </div>
-                                    <div class="col-md-3 col-6 mb-3">
-                                        <a href="/registrar_gastos" class="btn btn-warning w-100">
-                                            <i class="fas fa-receipt me-1"></i> Registrar Gasto
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
+    # Muertes de destetados
+    muertes = conn.execute(
+        "SELECT galpon, poza, SUM(muertos_hembras) as hembras, SUM(muertos_machos) as machos FROM muertes_destetados GROUP BY galpon, poza"
+    ).fetchall()
+    for m in muertes:
+        g, po = m['galpon'], m['poza']
+        if g not in datos_galpones:
+            datos_galpones[g] = {}
+            total_reproductores_por_galpon[g] = 0
+            total_nacidos_por_galpon[g] = 0
+            total_muertos_por_galpon[g] = 0
+        if po not in datos_galpones[g]:
+            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
 
-    <footer class="footer">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
-                <span>Sistema de Registro de Cuyes &copy; 2023</span>
-                <span>v1.2.0</span>
-            </div>
-        </div>
-    </footer>
+        muertos_total = (m['hembras'] or 0) + (m['machos'] or 0)
+        datos_galpones[g][po]["muertos"] += muertos_total
+        total_muertos_por_galpon[g] += muertos_total
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Sistema de registro de cuyes cargado');
-            
-            // Activar tooltips de Bootstrap
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-            
-            // Animación para las tarjetas de estadísticas
-            const statCards = document.querySelectorAll('.stat-card');
-            statCards.forEach(card => {
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'translateY(-5px)';
-                });
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'translateY(0)';
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+    conn.close()
+    return render_template(
+        'index.html',
+        datos_galpones=datos_galpones,
+        total_reproductores_por_galpon=total_reproductores_por_galpon,
+        total_nacidos_por_galpon=total_nacidos_por_galpon,
+        total_muertos_por_galpon=total_muertos_por_galpon
+    )
+
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
