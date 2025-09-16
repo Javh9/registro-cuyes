@@ -245,116 +245,60 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-@app.route('/')
-def index():
-    reproductores_por_poza = []
-    destetados_por_poza = []
-    muertes_por_poza = []
-    total_reproductores = 0
-    total_destetados = 0
-    total_muertes = 0
-    ventas_destetados_mes = 0
-    ventas_descarte_mes = 0
-    ingresos_totales = 0
+@app.route("/")
+def dashboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                # REPRODUCTORES POR POZA - CORREGIDO
-                cur.execute("""
-                    SELECT poza, COUNT(*) as total 
-                    FROM reproductores 
-                    GROUP BY poza 
-                    ORDER BY poza
-                """)
-                reproductores_por_poza = cur.fetchall()
-                
-                # Total de reproductores
-                cur.execute("SELECT COUNT(*) as total FROM reproductores")
-                total_reproductores = cur.fetchone()['total'] or 0
+    # Reproductores por galpón y poza
+    cur.execute("""
+        SELECT galpon, poza, SUM(cantidad) as total
+        FROM reproductores
+        GROUP BY galpon, poza
+        ORDER BY galpon, poza
+    """)
+    reproductores = cur.fetchall()
 
-                # DESTETADOS POR POZA - CORREGIDO
-                cur.execute("""
-                    SELECT poza, 
-                           SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total
-                    FROM destetes 
-                    GROUP BY poza 
-                    ORDER BY poza
-                """)
-                destetados_por_poza = cur.fetchall()
-                
-                # Total de destetados
-                cur.execute("""
-                    SELECT SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total 
-                    FROM destetes
-                """)
-                total_destetados = cur.fetchone()['total'] or 0
+    # Convertir a diccionario
+    datos_galpones = {}
+    total_reproductores_por_galpon = {}
 
-                # MUERTES POR POZA - CORREGIDO
-                cur.execute("""
-                    SELECT poza, COUNT(*) as total 
-                    FROM muertes 
-                    GROUP BY poza 
-                    ORDER BY poza
-                """)
-                muertes_por_poza = cur.fetchall()
-                
-                # Total de muertes
-                cur.execute("SELECT COUNT(*) as total FROM muertes")
-                total_muertes = cur.fetchone()['total'] or 0
+    for galpon, poza, total in reproductores:
+        if galpon not in datos_galpones:
+            datos_galpones[galpon] = {}
+            total_reproductores_por_galpon[galpon] = 0
+        datos_galpones[galpon][poza] = {
+            'reproductores': total,
+            'nacidos': 0,
+            'destetados': 0,
+            'muertos': 0
+        }
+        total_reproductores_por_galpon[galpon] += total
 
-                # VENTAS DEL MES - CORREGIDO (solo si la tabla ventas existe)
-                try:
-                    # Ventas de destetados este mes
-                    cur.execute("""
-                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                        FROM ventas
-                        WHERE tipo_venta='destetados'
-                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
-                    """)
-                    ventas_destetados_mes = int(cur.fetchone()['total'] or 0)
-                    
-                    # Ventas de descarte este mes
-                    cur.execute("""
-                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
-                        FROM ventas
-                        WHERE tipo_venta='descarte'
-                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
-                    """)
-                    ventas_descarte_mes = int(cur.fetchone()['total'] or 0)
-                    
-                    # Ingresos totales (suma de todas las ventas)
-                    cur.execute("""
-                        SELECT COALESCE(SUM(costo_total),0) AS total
-                        FROM ventas
-                    """)
-                    ingresos_totales = float(cur.fetchone()['total'] or 0)
-                except:
-                    # Si la tabla ventas no existe o hay error, continuar con valores 0
-                    ventas_destetados_mes = 0
-                    ventas_descarte_mes = 0
-                    ingresos_totales = 0
+    # Nacidos netos
+    cur.execute("SELECT galpon, SUM(cantidad) FROM partos GROUP BY galpon")
+    total_nacidos_por_galpon = dict(cur.fetchall())
 
-        # Debug logging
-        app.logger.debug(f"Reproductores por poza: {reproductores_por_poza}")
-        app.logger.debug(f"Total reproductores: {total_reproductores}")
-        app.logger.debug(f"Destetados por poza: {destetados_por_poza}")
-        app.logger.debug(f"Total destetados: {total_destetados}")
+    # Destetados
+    cur.execute("SELECT galpon, SUM(cantidad) FROM destetes GROUP BY galpon")
+    total_destetados_por_galpon = dict(cur.fetchall())
 
-    except Exception as e:
-        app.logger.error("Error al cargar datos del dashboard", exc_info=e)
-        flash('Error al cargar los datos del dashboard. Revisa los logs.', 'danger')
+    # Mortalidad
+    cur.execute("SELECT galpon, SUM(cantidad) FROM muertes GROUP BY galpon")
+    total_muertos_por_galpon = dict(cur.fetchall())
 
-    return render_template('index.html',
-                           reproductores_por_poza=reproductores_por_poza,
-                           destetados_por_poza=destetados_por_poza,
-                           muertes_por_poza=muertes_por_poza,
-                           total_reproductores=total_reproductores,
-                           total_destetados=total_destetados,
-                           total_muertes=total_muertes,
-                           ventas_destetados_mes=ventas_destetados_mes,
-                           ventas_descarte_mes=ventas_descarte_mes,
-                           ingresos_totales=ingresos_totales)
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "index.html",
+        datos_galpones=datos_galpones,
+        total_reproductores_por_galpon=total_reproductores_por_galpon,
+        total_nacidos_por_galpon=total_nacidos_por_galpon,
+        total_destetados_por_galpon=total_destetados_por_galpon,
+        total_muertos_por_galpon=total_muertos_por_galpon
+    )
+
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
