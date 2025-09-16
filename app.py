@@ -652,6 +652,8 @@ def ventas():
     ventas_destetados_hoy = 0
     ventas_destetados_mes = 0
     total_ventas_destetados = 0
+    ventas_descarte_mes = 0
+    ingresos_totales = 0
 
     # --- GET: Obtener galpones/pozas y estadísticas ---
     try:
@@ -686,6 +688,22 @@ def ventas():
                     AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
                 """)
                 ventas_destetados_mes = int(cur.fetchone()['total'] or 0)
+                
+                # Ventas de descarte este mes
+                cur.execute("""
+                    SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                    FROM ventas
+                    WHERE tipo_venta='descarte'
+                    AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
+                """)
+                ventas_descarte_mes = int(cur.fetchone()['total'] or 0)
+                
+                # Ingresos totales (suma de todas las ventas)
+                cur.execute("""
+                    SELECT COALESCE(SUM(costo_total),0) AS total
+                    FROM ventas
+                """)
+                ingresos_totales = float(cur.fetchone()['total'] or 0)
 
         app.logger.debug(f"[ventas] hoy={ventas_destetados_hoy} mes={ventas_destetados_mes} total={total_ventas_destetados}")
 
@@ -697,13 +715,12 @@ def ventas():
     if request.method == 'POST':
         try:
             tipo_venta = request.form['tipo_venta']
+            costo_venta = float(request.form['costo_venta'])
+            fecha_venta = request.form.get('fecha_venta', datetime.utcnow().date())
 
             if tipo_venta == 'destetados':
                 hembras_vendidas = int(request.form['hembras_vendidas'])
                 machos_vendidos = int(request.form['machos_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
-                galpon = request.form.get('galpon', None)
-                poza = request.form.get('poza', None)
 
                 if hembras_vendidas < 0 or machos_vendidos < 0 or costo_venta <= 0:
                     flash('Valores de venta no válidos.', 'danger')
@@ -713,35 +730,61 @@ def ventas():
                     flash('Debe registrar al menos un cuy vendido.', 'danger')
                     return redirect(url_for('ventas'))
 
-                fecha_venta = datetime.utcnow()
                 with get_db_connection() as conn:
                     with conn.cursor() as cur:
                         cur.execute("""
-                            INSERT INTO ventas (tipo_venta, galpon, poza, hembras_vendidas, machos_vendidos, costo_total, fecha_venta)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """, (tipo_venta, galpon, poza, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta))
+                            INSERT INTO ventas (tipo_venta, hembras_vendidas, machos_vendidos, costo_total, fecha_venta)
+                            VALUES (%s, %s, %s, %s, %s)
+                        """, (tipo_venta, hembras_vendidas, machos_vendidos, costo_venta, fecha_venta))
                     conn.commit()
 
                 flash('Venta de destetados registrada correctamente.', 'success')
 
             elif tipo_venta == 'descarte':
-                # Similar al de destetados, adaptando campos
-                galpon = request.form['galpon']
-                poza = request.form['poza']
+                origen_galpon = request.form['origen_galpon']
+                origen_poza = request.form['origen_poza']
                 cuyes_vendidos = int(request.form['cuyes_vendidos'])
-                costo_venta = float(request.form['costo_venta'])
+                mover_engorde = 'mover_engorde' in request.form
+                
+                # Campos opcionales para engorde
+                engorde_galpon = request.form.get('engorde_galpon', '')
+                engorde_poza = request.form.get('engorde_poza', '')
+                fecha_movimiento = request.form.get('fecha_movimiento', None)
+                dias_engorde = request.form.get('dias_engorde', 0)
+                observaciones = request.form.get('observaciones', '')
 
                 if cuyes_vendidos <= 0 or costo_venta <= 0:
                     flash('Valores de venta no válidos.', 'danger')
                     return redirect(url_for('ventas'))
 
-                fecha_venta = datetime.utcnow()
+                if not origen_galpon or not origen_poza:
+                    flash('Debe especificar el galpón y poza de origen.', 'danger')
+                    return redirect(url_for('ventas'))
+                
+                # Validar campos de engorde si se seleccionó esa opción
+                if mover_engorde:
+                    if not engorde_galpon or not engorde_poza:
+                        flash('Debe especificar el galpón y poza de engorde.', 'danger')
+                        return redirect(url_for('ventas'))
+                    if not fecha_movimiento:
+                        flash('Debe especificar la fecha de movimiento a engorde.', 'danger')
+                        return redirect(url_for('ventas'))
+
                 with get_db_connection() as conn:
                     with conn.cursor() as cur:
+                        # Insertar la venta con los nuevos campos
                         cur.execute("""
-                            INSERT INTO ventas (tipo_venta, galpon, poza, hembras_vendidas, machos_vendidos, costo_total, fecha_venta)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """, (tipo_venta, galpon, poza, 0, cuyes_vendidos, costo_venta, fecha_venta))
+                            INSERT INTO ventas (
+                                tipo_venta, galpon, poza, hembras_vendidas, machos_vendidos, 
+                                costo_total, fecha_venta, mover_engorde, engorde_galpon, 
+                                engorde_poza, fecha_movimiento, dias_engorde, observaciones
+                            )
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """, (
+                            tipo_venta, origen_galpon, origen_poza, 0, cuyes_vendidos, 
+                            costo_venta, fecha_venta, mover_engorde, engorde_galpon, 
+                            engorde_poza, fecha_movimiento, dias_engorde, observaciones
+                        ))
                     conn.commit()
 
                 flash('Venta de descarte registrada correctamente.', 'success')
@@ -762,8 +805,9 @@ def ventas():
                            galpones_pozas=galpones_pozas,
                            ventas_destetados_hoy=ventas_destetados_hoy,
                            ventas_destetados_mes=ventas_destetados_mes,
-                           total_ventas_destetados=total_ventas_destetados)
-
+                           total_ventas_destetados=total_ventas_destetados,
+                           ventas_descarte_mes=ventas_descarte_mes,
+                           ingresos_totales=ingresos_totales)
 # Ruta para registrar gastos
 @app.route('/registrar_gastos', methods=['GET', 'POST'])
 def registrar_gastos():

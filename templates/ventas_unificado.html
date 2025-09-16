@@ -153,6 +153,11 @@
             border-left-color: var(--dark);
         }
         
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
@@ -272,8 +277,8 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Ventas Mes (Destetados)</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_destetados_mes }}</div>
+                                            Ventas Mes (Descarte)</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ventas_descarte_mes }}</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
@@ -288,8 +293,8 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
-                                            Total Ventas (Destetados)</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_ventas_destetados }}</div>
+                                            Ingresos Totales</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">S/ {{ ingresos_totales }}</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -325,31 +330,7 @@
                                 </div>
                             </div>
 
-                            <!-- Campos para descarte (galpón y poza) -->
-                            <div id="descarte_fields" style="display:none;">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="galpon" class="form-label">Galpón:</label>
-                                        <select id="galpon" name="galpon" class="form-select">
-                                            <option value="">Seleccione galpón</option>
-                                            {% for r in galpones_pozas %}
-                                                <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="poza" class="form-label">Poza:</label>
-                                        <select id="poza" name="poza" class="form-select">
-                                            <option value="">Seleccione poza</option>
-                                            {% for r in galpones_pozas %}
-                                                <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Destetados -->
+                            <!-- Campos para destetados -->
                             <div id="destetados_fields" style="display:none;">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
@@ -369,8 +350,72 @@
                                 </div>
                             </div>
 
-                            <!-- Descarte - cantidad de cuyes -->
-                            <div id="descarte_cantidad_fields" style="display:none;">
+                            <!-- Campos para descarte -->
+                            <div id="descarte_fields" style="display:none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="origen_galpon" class="form-label">Galpón de origen:</label>
+                                        <select id="origen_galpon" name="origen_galpon" class="form-select">
+                                            <option value="">Seleccione galpón</option>
+                                            {% for r in galpones_pozas %}
+                                                <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="origen_poza" class="form-label">Poza de origen:</label>
+                                        <select id="origen_poza" name="origen_poza" class="form-select">
+                                            <option value="">Seleccione poza</option>
+                                            {% for r in galpones_pozas %}
+                                                <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="mover_engorde" name="mover_engorde" onchange="toggleEngordeFields()">
+                                            <label class="form-check-label" for="mover_engorde">¿Mover a engorde antes de vender?</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Campos para engorde (solo visibles si se selecciona mover a engorde) -->
+                                <div id="engorde_fields" style="display:none;">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="engorde_galpon" class="form-label">Galpón de engorde:</label>
+                                            <select id="engorde_galpon" name="engorde_galpon" class="form-select">
+                                                <option value="">Seleccione galpón</option>
+                                                {% for r in galpones_pozas %}
+                                                    <option value="{{ r['galpon'] }}">{{ r['galpon'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="engorde_poza" class="form-label">Poza de engorde:</label>
+                                            <select id="engorde_poza" name="engorde_poza" class="form-select">
+                                                <option value="">Seleccione poza</option>
+                                                {% for r in galpones_pozas %}
+                                                    <option value="{{ r['poza'] }}">{{ r['poza'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="fecha_movimiento" class="form-label">Fecha de movimiento a engorde:</label>
+                                            <input type="date" id="fecha_movimiento" name="fecha_movimiento" class="form-control">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="dias_engorde" class="form-label">Días en engorde:</label>
+                                            <input type="number" id="dias_engorde" name="dias_engorde" class="form-control" min="0" placeholder="Días">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="cuyes_vendidos" class="form-label">Cuyes vendidos:</label>
@@ -379,11 +424,22 @@
                                             <input type="number" id="cuyes_vendidos" name="cuyes_vendidos" class="form-control" min="0" value="0">
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <label for="fecha_venta" class="form-label">Fecha de venta:</label>
+                                        <input type="date" id="fecha_venta" name="fecha_venta" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <label for="observaciones" class="form-label">Observaciones:</label>
+                                        <textarea id="observaciones" name="observaciones" class="form-control" rows="2" placeholder="Detalles adicionales sobre la venta"></textarea>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button type="reset" class="btn btn-secondary me-md-2">
+                                <button type="reset" class="btn btn-secondary me-md-2" onclick="resetForm()">
                                     <i class="fas fa-eraser me-1"></i> Limpiar
                                 </button>
                                 <button type="submit" class="btn btn-primary">
@@ -405,7 +461,7 @@
                             <strong>Tipos de venta:</strong>
                             <ul class="mb-0 mt-2">
                                 <li><strong>Destetados:</strong> Cuyes jóvenes que ya han sido destetados. Se registran por separado hembras y machos. No es necesario especificar galpón/poza ya que esta información ya está registrada en el sistema.</li>
-                                <li><strong>Descarte:</strong> Cuyes que se venden por diferentes motivos (edad, productividad, etc.). Se registra el total de cuyes vendidos y es necesario especificar el galpón y poza de origen.</li>
+                                <li><strong>Descarte:</strong> Cuyes que se venden por diferentes motivos (edad, productividad, etc.). Se registra el total de cuyes vendidos y su origen. Puede especificar si fueron movidos a engorde antes de la venta.</li>
                             </ul>
                         </div>
                         
@@ -413,7 +469,8 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <strong>Consideraciones importantes:</strong>
                             <ul class="mb-0 mt-2">
-                                <li>Verifique que los datos ingresados sean correctos antes de registrar la venta</li>
+                                <li>Para descartes: Seleccione "Mover a engorde" solo si los cuyes fueron trasladados a otra poza para engordar antes de su venta</li>
+                                <li>Si los cuyes se venden directamente desde su poza de origen, no active la opción de engorde</li>
                                 <li>El sistema actualizará automáticamente el inventario al registrar una venta</li>
                                 <li>Mantenga un registro preciso de las ventas para un mejor control financiero</li>
                             </ul>
@@ -441,11 +498,8 @@
             // Mostrar/ocultar campos para destetados
             document.getElementById('destetados_fields').style.display = tipo === 'destetados' ? 'block' : 'none';
             
-            // Mostrar/ocultar campos para descarte (galpón y poza)
+            // Mostrar/ocultar campos para descarte
             document.getElementById('descarte_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
-            
-            // Mostrar/ocultar campo de cantidad para descarte
-            document.getElementById('descarte_cantidad_fields').style.display = tipo === 'descarte' ? 'block' : 'none';
             
             // Reset campos cuando se cambia el tipo
             if (tipo !== 'destetados') {
@@ -455,9 +509,53 @@
             
             if (tipo !== 'descarte') {
                 document.getElementById('cuyes_vendidos').value = "0";
-                document.getElementById('galpon').value = "";
-                document.getElementById('poza').value = "";
+                document.getElementById('origen_galpon').value = "";
+                document.getElementById('origen_poza').value = "";
+                document.getElementById('mover_engorde').checked = false;
+                toggleEngordeFields();
             }
+            
+            // Establecer fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_venta').value = today;
+        }
+        
+        function toggleEngordeFields() {
+            const moverEngorde = document.getElementById('mover_engorde').checked;
+            document.getElementById('engorde_fields').style.display = moverEngorde ? 'block' : 'none';
+            
+            if (!moverEngorde) {
+                document.getElementById('engorde_galpon').value = "";
+                document.getElementById('engorde_poza').value = "";
+                document.getElementById('fecha_movimiento').value = "";
+                document.getElementById('dias_engorde').value = "";
+            }
+        }
+        
+        function resetForm() {
+            // Reset todos los campos
+            document.getElementById('tipo_venta').value = "";
+            document.getElementById('costo_venta').value = "";
+            document.getElementById('hembras_vendidas').value = "0";
+            document.getElementById('machos_vendidos').value = "0";
+            document.getElementById('cuyes_vendidos').value = "0";
+            document.getElementById('origen_galpon').value = "";
+            document.getElementById('origen_poza').value = "";
+            document.getElementById('mover_engorde').checked = false;
+            document.getElementById('engorde_galpon').value = "";
+            document.getElementById('engorde_poza').value = "";
+            document.getElementById('fecha_movimiento').value = "";
+            document.getElementById('dias_engorde').value = "";
+            document.getElementById('observaciones').value = "";
+            
+            // Ocultar todos los campos condicionales
+            document.getElementById('destetados_fields').style.display = 'none';
+            document.getElementById('descarte_fields').style.display = 'none';
+            document.getElementById('engorde_fields').style.display = 'none';
+            
+            // Establecer fecha actual
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_venta').value = today;
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -473,7 +571,7 @@
                     return false;
                 }
                 
-                if (costo <= 0) {
+                if (costo <= 0 || isNaN(costo)) {
                     e.preventDefault();
                     alert('El costo de venta debe ser mayor a cero.');
                     return false;
@@ -498,8 +596,9 @@
                 
                 if (tipoVenta === 'descarte') {
                     const cuyes = parseInt(document.getElementById('cuyes_vendidos').value);
-                    const galpon = document.getElementById('galpon').value;
-                    const poza = document.getElementById('poza').value;
+                    const origenGalpon = document.getElementById('origen_galpon').value;
+                    const origenPoza = document.getElementById('origen_poza').value;
+                    const moverEngorde = document.getElementById('mover_engorde').checked;
                     
                     if (cuyes <= 0) {
                         e.preventDefault();
@@ -507,19 +606,47 @@
                         return false;
                     }
                     
-                    if (!galpon) {
+                    if (!origenGalpon) {
                         e.preventDefault();
-                        alert('Debe seleccionar un galpón para la venta de descarte.');
+                        alert('Debe seleccionar un galpón de origen.');
                         return false;
                     }
                     
-                    if (!poza) {
+                    if (!origenPoza) {
                         e.preventDefault();
-                        alert('Debe seleccionar una poza para la venta de descarte.');
+                        alert('Debe seleccionar una poza de origen.');
                         return false;
+                    }
+                    
+                    if (moverEngorde) {
+                        const engordeGalpon = document.getElementById('engorde_galpon').value;
+                        const engordePoza = document.getElementById('engorde_poza').value;
+                        const fechaMovimiento = document.getElementById('fecha_movimiento').value;
+                        
+                        if (!engordeGalpon) {
+                            e.preventDefault();
+                            alert('Debe seleccionar un galpón de engorde.');
+                            return false;
+                        }
+                        
+                        if (!engordePoza) {
+                            e.preventDefault();
+                            alert('Debe seleccionar una poza de engorde.');
+                            return false;
+                        }
+                        
+                        if (!fechaMovimiento) {
+                            e.preventDefault();
+                            alert('Debe ingresar la fecha de movimiento a engorde.');
+                            return false;
+                        }
                     }
                 }
             });
+
+            // Establecer fecha actual por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_venta').value = today;
 
             // Focus en el primer campo al cargar la página
             const tipoVentaSelect = document.getElementById('tipo_venta');
