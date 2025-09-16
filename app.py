@@ -247,101 +247,114 @@ except Exception as e:
 # Ruta principal
 @app.route('/')
 def index():
+    reproductores_por_poza = []
+    destetados_por_poza = []
+    muertes_por_poza = []
+    total_reproductores = 0
+    total_destetados = 0
+    total_muertes = 0
+    ventas_destetados_mes = 0
+    ventas_descarte_mes = 0
+    ingresos_totales = 0
+
     try:
         with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                # Obtener datos de reproductores por galpón y poza
-                cursor.execute('''
-                    SELECT galpon, poza, SUM(hembras + machos) AS total_reproductores
-                    FROM reproductores
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, CAST(poza AS INTEGER)
-                ''')
-                reproductores_por_poza = cursor.fetchall()
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                # REPRODUCTORES POR POZA - CORREGIDO
+                cur.execute("""
+                    SELECT poza, COUNT(*) as total 
+                    FROM reproductores 
+                    GROUP BY poza 
+                    ORDER BY poza
+                """)
+                reproductores_por_poza = cur.fetchall()
+                
+                # Total de reproductores
+                cur.execute("SELECT COUNT(*) as total FROM reproductores")
+                total_reproductores = cur.fetchone()['total'] or 0
 
-                # Obtener datos de nacidos y muertos_bebes por galpón y poza
-                cursor.execute('''
-                    SELECT galpon, poza, 
-                           SUM(nacidos) AS total_nacidos,
-                           SUM(muertos_bebes) AS total_muertos_bebes
-                    FROM partos
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, CAST(poza AS INTEGER)
-                ''')
-                nacidos_y_muertos_por_poza = cursor.fetchall()
-
-                # Obtener datos de destetes por galpón y poza
-                cursor.execute('''
-                    SELECT galpon, poza, 
-                           SUM(destetados_hembras + destetados_machos) AS total_destetados
+                # DESTETADOS POR POZA - CORREGIDO
+                cur.execute("""
+                    SELECT poza, 
+                           SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total
+                    FROM destetes 
+                    GROUP BY poza 
+                    ORDER BY poza
+                """)
+                destetados_por_poza = cur.fetchall()
+                
+                # Total de destetados
+                cur.execute("""
+                    SELECT SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total 
                     FROM destetes
-                    GROUP BY galpon, poza
-                    ORDER BY galpon, CAST(poza AS INTEGER)
-                ''')
-                destetes_por_poza = cursor.fetchall()
+                """)
+                total_destetados = cur.fetchone()['total'] or 0
 
-        # Inicializar estructuras de datos
-        datos_galpones = {}
-        total_reproductores_por_galpon = {}
-        total_nacidos_por_galpon = {}
-        total_muertos_por_galpon = {}
+                # MUERTES POR POZA - CORREGIDO
+                cur.execute("""
+                    SELECT poza, COUNT(*) as total 
+                    FROM muertes 
+                    GROUP BY poza 
+                    ORDER BY poza
+                """)
+                muertes_por_poza = cur.fetchall()
+                
+                # Total de muertes
+                cur.execute("SELECT COUNT(*) as total FROM muertes")
+                total_muertes = cur.fetchone()['total'] or 0
 
-        # Procesar datos de reproductores
-        for row in reproductores_por_poza:
-            galpon = row['galpon']
-            poza = row['poza']
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0
+                # VENTAS DEL MES - CORREGIDO (solo si la tabla ventas existe)
+                try:
+                    # Ventas de destetados este mes
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='destetados'
+                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
+                    """)
+                    ventas_destetados_mes = int(cur.fetchone()['total'] or 0)
+                    
+                    # Ventas de descarte este mes
+                    cur.execute("""
+                        SELECT COALESCE(SUM(hembras_vendidas + machos_vendidos),0) AS total
+                        FROM ventas
+                        WHERE tipo_venta='descarte'
+                        AND date_trunc('month', fecha_venta) = date_trunc('month', CURRENT_DATE)
+                    """)
+                    ventas_descarte_mes = int(cur.fetchone()['total'] or 0)
+                    
+                    # Ingresos totales (suma de todas las ventas)
+                    cur.execute("""
+                        SELECT COALESCE(SUM(costo_total),0) AS total
+                        FROM ventas
+                    """)
+                    ingresos_totales = float(cur.fetchone()['total'] or 0)
+                except:
+                    # Si la tabla ventas no existe o hay error, continuar con valores 0
+                    ventas_destetados_mes = 0
+                    ventas_descarte_mes = 0
+                    ingresos_totales = 0
 
-            datos_galpones[galpon][poza] = {
-                'reproductores': row['total_reproductores'],
-                'nacidos': 0,  # Inicializar nacidos en 0
-                'muertos': 0,  # Inicializar muertos en 0
-                'destetados': 0  # Inicializar destetados en 0
-            }
-            total_reproductores_por_galpon[galpon] += row['total_reproductores']
+        # Debug logging
+        app.logger.debug(f"Reproductores por poza: {reproductores_por_poza}")
+        app.logger.debug(f"Total reproductores: {total_reproductores}")
+        app.logger.debug(f"Destetados por poza: {destetados_por_poza}")
+        app.logger.debug(f"Total destetados: {total_destetados}")
 
-        # Procesar datos de nacidos y muertos_bebes
-        for row in nacidos_y_muertos_por_poza:
-            galpon = row['galpon']
-            poza = row['poza']
-            if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                total_nacidos = int(row['total_nacidos']) if row['total_nacidos'] else 0
-                total_muertos_bebes = int(row['total_muertos_bebes']) if row['total_muertos_bebes'] else 0
-
-                # Calcular nacidos netos (nacidos - muertos_bebes)
-                datos_galpones[galpon][poza]['nacidos'] = total_nacidos - total_muertos_bebes
-                datos_galpones[galpon][poza]['muertos'] = total_muertos_bebes
-                total_nacidos_por_galpon[galpon] += (total_nacidos - total_muertos_bebes)
-                total_muertos_por_galpon[galpon] += total_muertos_bebes
-
-        # Procesar datos de destetes
-        for row in destetes_por_poza:
-            galpon = row['galpon']
-            poza = row['poza']
-            if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                total_destetados = int(row['total_destetados']) if row['total_destetados'] else 0
-
-                # Restar destetados a los nacidos netos
-                datos_galpones[galpon][poza]['nacidos'] -= total_destetados
-                datos_galpones[galpon][poza]['destetados'] = total_destetados
-                total_nacidos_por_galpon[galpon] -= total_destetados
-
-        # Pasar los datos a la plantilla
-        return render_template(
-            'index.html',
-            datos_galpones=datos_galpones,
-            total_reproductores_por_galpon=total_reproductores_por_galpon,
-            total_nacidos_por_galpon=total_nacidos_por_galpon,
-            total_muertos_por_galpon=total_muertos_por_galpon
-        )
     except Exception as e:
-        error_message = f'Ocurrió un error inesperado: {str(e)}'
-        return render_template('error.html', error_message=error_message)
+        app.logger.error("Error al cargar datos del dashboard", exc_info=e)
+        flash('Error al cargar los datos del dashboard. Revisa los logs.', 'danger')
 
+    return render_template('index.html',
+                           reproductores_por_poza=reproductores_por_poza,
+                           destetados_por_poza=destetados_por_poza,
+                           muertes_por_poza=muertes_por_poza,
+                           total_reproductores=total_reproductores,
+                           total_destetados=total_destetados,
+                           total_muertes=total_muertes,
+                           ventas_destetados_mes=ventas_destetados_mes,
+                           ventas_descarte_mes=ventas_descarte_mes,
+                           ingresos_totales=ingresos_totales)
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
