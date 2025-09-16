@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_secreta_muy_larga_y_compleja')
 
 # Inicializar la tabla al iniciar la aplicación
-init_ventas_table()
+
 print("=== INICIANDO APLICACIÓN ===")
 print(f"Python version: {os.sys.version}")
 print(f"Variables de entorno: {list(os.environ.keys())}")
@@ -137,7 +137,7 @@ def init_ventas_table():
                 app.logger.info("Tabla ventas verificada/creada correctamente")
     except Exception as e:
         app.logger.error("Error al crear tabla ventas", exc_info=e)
-
+init_ventas_table()
 # Función para validar valores positivos
 def validate_positive_values(**kwargs):
     for key, value in kwargs.items():
