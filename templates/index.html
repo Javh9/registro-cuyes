@@ -6,6 +6,7 @@
     <title>Dashboard - Sistema de Registro de Cuyes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -15,6 +16,65 @@
             --warning: #f6c23e;
             --danger: #e74a3b;
             --secondary: #858796;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-top: 0;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 70px;
+        }
+        
+        .sidebar .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 1rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.15);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .topbar {
+            height: 70px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         
         .card {
@@ -22,51 +82,131 @@
             border-radius: 0.5rem;
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
             margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
         }
         
         .card-header {
             background-color: #f8f9fc;
             border-bottom: 1px solid #e3e6f0;
             font-weight: bold;
-            color: #5a5c69;
+            color: var(--dark);
             padding: 1rem 1.5rem;
         }
         
-        .stats-card {
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.35rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+            transform: translateY(-2px);
+            box-shadow: 0 0.15rem 0.75rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .stat-card {
             border-left: 4px solid;
+            transition: transform 0.2s;
         }
         
-        .stats-card.primary {
-            border-left-color: var(--primary);
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
         
-        .stats-card.success {
-            border-left-color: var(--success);
+        .stat-card.primary { border-left-color: var(--primary); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.info { border-left-color: var(--info); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.danger { border-left-color: var(--danger); }
+        
+        .page-title {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
         }
         
-        .stats-card.danger {
-            border-left-color: var(--danger);
+        .galpon-card {
+            transition: all 0.3s ease;
         }
         
-        .stats-card.warning {
-            border-left-color: var(--warning);
+        .galpon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .poza-item {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .poza-item:hover {
+            background-color: rgba(78, 115, 223, 0.05);
+        }
+        
+        .dashboard-stats {
+            margin-bottom: 2rem;
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-top: 1px solid #e3e6f0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: static;
+            }
+            
+            .topbar {
+                position: static;
+            }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i class="fas fa-paw me-2"></i>
-                <span class="fw-bold">Sistema de Registro de Cuyes</span>
+                <span class="fw-bold">Registro de Cuyes</span>
             </a>
+            <div class="d-flex">
+                <span class="navbar-text me-3">Usuario: Admin</span>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home me-1"></i> Inicio
+                </a>
+            </div>
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
+    <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
+            <div class="col-md-3 col-lg-2 sidebar d-none d-md-block">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -109,17 +249,17 @@
             </div>
 
             <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-                    <h1 class="h2">Dashboard - Resumen General</h1>
+                    <h1 class="h2 page-title">Dashboard - Resumen General</h1>
                 </div>
 
                 <!-- Estadísticas Rápidas -->
-                <div class="row">
+                <div class="row dashboard-stats">
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stats-card primary h-100">
+                        <div class="card stat-card primary h-100">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
+                                <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Reproductores</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_reproductores }}</div>
@@ -133,9 +273,9 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stats-card success h-100">
+                        <div class="card stat-card success h-100">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
+                                <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Destetados</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_destetados }}</div>
@@ -149,9 +289,9 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stats-card danger h-100">
+                        <div class="card stat-card danger h-100">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
+                                <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Muertes</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_muertes }}</div>
@@ -165,9 +305,9 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stats-card warning h-100">
+                        <div class="card stat-card warning h-100">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
+                                <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Ingresos Totales</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">S/ {{ ingresos_totales }}</div>
@@ -182,14 +322,16 @@
                 </div>
 
                 <!-- Gráficas -->
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h5 class="card-title">Reproductores por Poza</h5>
                             </div>
                             <div class="card-body">
-                                <canvas id="reproductoresChart" width="400" height="300"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="reproductoresChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -200,7 +342,9 @@
                                 <h5 class="card-title">Destetados por Poza</h5>
                             </div>
                             <div class="card-body">
-                                <canvas id="destetadosChart" width="400" height="300"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="destetadosChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -211,7 +355,9 @@
                                 <h5 class="card-title">Muertes por Poza</h5>
                             </div>
                             <div class="card-body">
-                                <canvas id="muertesChart" width="400" height="300"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="muertesChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -222,39 +368,78 @@
                                 <h5 class="card-title">Ventas del Mes</h5>
                             </div>
                             <div class="card-body">
-                                <canvas id="ventasChart" width="400" height="300"></canvas>
+                                <div class="chart-container">
+                                    <canvas id="ventasChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen por Galpones -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="m-0 font-weight-bold text-primary">Resumen por Galpones</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Galpón</th>
+                                                <th>Poza</th>
+                                                <th>Reproductores</th>
+                                                <th>Destetados</th>
+                                                <th>Muertes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for r in reproductores_por_poza %}
+                                            <tr>
+                                                <td>{{ r.galpon if r.galpon else 'N/A' }}</td>
+                                                <td>{{ r.poza if r.poza else 'N/A' }}</td>
+                                                <td>{{ r.total_reproductores if r.total_reproductores else 0 }}</td>
+                                                <td>{{ r.total_destetados if r.total_destetados else 0 }}</td>
+                                                <td>{{ r.total_muertes if r.total_muertes else 0 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Acciones Rápidas -->
-                <div class="row">
+                <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title">Acciones Rápidas</h5>
+                                <h5 class="m-0 font-weight-bold text-primary">Acciones Rápidas</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-6 mb-3">
                                         <a href="{{ url_for('ingresar_reproductores') }}" class="btn btn-primary w-100">
-                                            <i class="fas fa-plus-circle me-2"></i>Nuevo Reproductor
+                                            <i class="fas fa-plus-circle me-1"></i> Nuevos Reproductores
                                         </a>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-6 mb-3">
                                         <a href="{{ url_for('registrar_partos') }}" class="btn btn-success w-100">
-                                            <i class="fas fa-baby me-2"></i>Registrar Parto
+                                            <i class="fas fa-baby me-1"></i> Registrar Parto
                                         </a>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-6 mb-3">
                                         <a href="{{ url_for('registrar_destete') }}" class="btn btn-info w-100">
-                                            <i class="fas fa-child me-2"></i>Registrar Destete
+                                            <i class="fas fa-child me-1"></i> Registrar Destete
                                         </a>
                                     </div>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 col-6 mb-3">
                                         <a href="{{ url_for('ventas') }}" class="btn btn-warning w-100">
-                                            <i class="fas fa-money-bill-wave me-2"></i>Registrar Venta
+                                            <i class="fas fa-money-bill-wave me-1"></i> Registrar Venta
                                         </a>
                                     </div>
                                 </div>
@@ -266,35 +451,40 @@
         </div>
     </div>
 
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Sistema de Registro de Cuyes &copy; 2023</span>
+                <span>v1.2.0</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Gráfica de reproductores por poza
         const reproductoresCtx = document.getElementById('reproductoresChart').getContext('2d');
         new Chart(reproductoresCtx, {
             type: 'bar',
             data: {
-                labels: [{% for r in reproductores_por_poza %}'Poza {{ r.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: [{% for r in reproductores_por_poza %}'{{ r.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
                 datasets: [{
-                    label: 'Número de Reproductores',
-                    data: [{% for r in reproductores_por_poza %}{{ r.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(78, 115, 223, 0.5)',
+                    label: 'Reproductores',
+                    data: [{% for r in reproductores_por_poza %}{{ r.total_reproductores }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(78, 115, 223, 0.7)',
                     borderColor: 'rgba(78, 115, 223, 1)',
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Cantidad de Reproductores'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Pozas'
+                            text: 'Cantidad'
                         }
                     }
                 }
@@ -306,29 +496,24 @@
         new Chart(destetadosCtx, {
             type: 'bar',
             data: {
-                labels: [{% for d in destetados_por_poza %}'Poza {{ d.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: [{% for d in destetados_por_poza %}'{{ d.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
                 datasets: [{
-                    label: 'Número de Destetados',
+                    label: 'Destetados',
                     data: [{% for d in destetados_por_poza %}{{ d.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(28, 200, 138, 0.5)',
+                    backgroundColor: 'rgba(28, 200, 138, 0.7)',
                     borderColor: 'rgba(28, 200, 138, 1)',
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Cantidad de Destetados'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Pozas'
+                            text: 'Cantidad'
                         }
                     }
                 }
@@ -340,29 +525,24 @@
         new Chart(muertesCtx, {
             type: 'bar',
             data: {
-                labels: [{% for m in muertes_por_poza %}'Poza {{ m.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: [{% for m in muertes_por_poza %}'{{ m.poza }}'{% if not loop.last %}, {% endif %}{% endfor %}],
                 datasets: [{
-                    label: 'Número de Muertes',
+                    label: 'Muertes',
                     data: [{% for m in muertes_por_poza %}{{ m.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: 'rgba(231, 74, 59, 0.5)',
+                    backgroundColor: 'rgba(231, 74, 59, 0.7)',
                     borderColor: 'rgba(231, 74, 59, 1)',
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Cantidad de Muertes'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Pozas'
+                            text: 'Cantidad'
                         }
                     }
                 }
@@ -372,14 +552,14 @@
         // Gráfica de ventas del mes
         const ventasCtx = document.getElementById('ventasChart').getContext('2d');
         new Chart(ventasCtx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
                 labels: ['Destetados', 'Descarte'],
                 datasets: [{
                     data: [{{ ventas_destetados_mes }}, {{ ventas_descarte_mes }}],
                     backgroundColor: [
-                        'rgba(78, 115, 223, 0.5)',
-                        'rgba(246, 194, 62, 0.5)'
+                        'rgba(78, 115, 223, 0.7)',
+                        'rgba(246, 194, 62, 0.7)'
                     ],
                     borderColor: [
                         'rgba(78, 115, 223, 1)',
@@ -390,19 +570,27 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Ventas del Mes'
                     }
                 }
             }
         });
-    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        // Animaciones para las tarjetas de estadísticas
+        document.addEventListener('DOMContentLoaded', function() {
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
