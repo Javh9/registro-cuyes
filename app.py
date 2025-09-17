@@ -245,58 +245,66 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-@app.route('/')
+@app.route("/")
 def index():
-    # ... (tu código actual para obtener estadísticas)
-    
-    # Agregar estas consultas para obtener datos por galpón/poza
     try:
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                # Datos de reproductores por galpón y poza
-                cur.execute("""
-                    SELECT galpon, poza, COUNT(*) as total 
-                    FROM reproductores 
-                    GROUP BY galpon, poza 
-                    ORDER BY galpon, poza
-                """)
-                reproductores_por_poza = cur.fetchall()
-                
-                # Datos de destetados por galpón y poza
-                cur.execute("""
-                    SELECT galpon, poza, 
-                           SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total
-                    FROM destetes 
-                    GROUP BY galpon, poza 
-                    ORDER BY galpon, poza
-                """)
-                destetados_por_poza = cur.fetchall()
-                
-                # Datos de muertes por galpón y poza
-                cur.execute("""
-                    SELECT galpon, poza, COUNT(*) as total 
-                    FROM muertes 
-                    GROUP BY galpon, poza 
-                    ORDER BY galpon, poza
-                """)
-                muertes_por_poza = cur.fetchall()
-                
-    except Exception as e:
-        app.logger.error("Error al cargar datos por galpón/poza", exc_info=e)
-        reproductores_por_poza = []
-        destetados_por_poza = []
-        muertes_por_poza = []
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    return render_template('index.html',
-                           total_reproductores=total_reproductores,
-                           total_destetados=total_destetados,
-                           total_muertes=total_muertes,
-                           ingresos_totales=ingresos_totales,
-                           reproductores_por_poza=reproductores_por_poza,
-                           destetados_por_poza=destetados_por_poza,
-                           muertes_por_poza=muertes_por_poza,
-                           ventas_destetados_mes=ventas_destetados_mes,
-                           ventas_descarte_mes=ventas_descarte_mes)
+        # Reproductores
+        cur.execute("SELECT galpon, poza, COALESCE(hembras,0)+COALESCE(machos,0) as total FROM reproductores;")
+        datos_reproductores = cur.fetchall()  # lista de tuplas (galpon, poza, total)
+        
+        # Destetados
+        cur.execute("SELECT galpon, poza, COALESCE(destetados_hembras,0)+COALESCE(destetados_machos,0) as total FROM destetes;")
+        datos_destetados = cur.fetchall()
+
+        # Nacidos y mortalidad (partos)
+        cur.execute("SELECT galpon, poza, COALESCE(nacidos,0) as nacidos, COALESCE(muertos_bebes,0)+COALESCE(muertos_reproductores,0) as muertos FROM partos;")
+        datos_partos = cur.fetchall()
+
+        # Procesar por galpón y poza
+        datos_galpones = {}
+        total_reproductores_por_galpon = {}
+        total_nacidos_por_galpon = {}
+        total_muertos_por_galpon = {}
+        total_destetados_por_galpon = {}
+
+        # Inicializar diccionarios
+        for galpon, poza, total in datos_reproductores:
+            if galpon not in datos_galpones:
+                datos_galpones[galpon] = {}
+                total_reproductores_por_galpon[galpon] = 0
+                total_nacidos_por_galpon[galpon] = 0
+                total_muertos_por_galpon[galpon] = 0
+                total_destetados_por_galpon[galpon] = 0
+            datos_galpones[galpon][poza] = {'reproductores': total, 'nacidos': 0, 'destetados': 0, 'muertos': 0}
+            total_reproductores_por_galpon[galpon] += total
+
+        for galpon, poza, total in datos_destetados:
+            if galpon in datos_galpones and poza in datos_galpones[galpon]:
+                datos_galpones[galpon][poza]['destetados'] = total
+                total_destetados_por_galpon[galpon] += total
+
+        for galpon, poza, nacidos, muertos in datos_partos:
+            if galpon in datos_galpones and poza in datos_galpones[galpon]:
+                datos_galpones[galpon][poza]['nacidos'] = nacidos
+                datos_galpones[galpon][poza]['muertos'] = muertos
+                total_nacidos_por_galpon[galpon] += nacidos
+                total_muertos_por_galpon[galpon] += muertos
+
+        conn.close()
+
+        return render_template("index.html",
+                               datos_galpones=datos_galpones,
+                               total_reproductores_por_galpon=total_reproductores_por_galpon,
+                               total_nacidos_por_galpon=total_nacidos_por_galpon,
+                               total_muertos_por_galpon=total_muertos_por_galpon,
+                               total_destetados_por_galpon=total_destetados_por_galpon)
+    except Exception as e:
+        print("❌ Error en Dashboard:", e)
+        return "Error cargando Dashboard"
+
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
