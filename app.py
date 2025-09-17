@@ -245,48 +245,58 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-@app.route("/")
+@app.route('/')
 def index():
+    # ... (tu código actual para obtener estadísticas)
+    
+    # Agregar estas consultas para obtener datos por galpón/poza
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Reproductores
-        cur.execute("SELECT COALESCE(SUM(hembras),0), COALESCE(SUM(machos),0) FROM reproductores;")
-        total_hembras, total_machos = cur.fetchone()
-        print("DEBUG ➝ Reproductores:", total_hembras, total_machos)
-
-        # Destetados
-        cur.execute("SELECT COALESCE(SUM(destetados_hembras),0), COALESCE(SUM(destetados_machos),0) FROM destetes;")
-        total_dest_hembras, total_dest_machos = cur.fetchone()
-        print("DEBUG ➝ Destetados:", total_dest_hembras, total_dest_machos)
-
-        # Nacidos y mortalidad (partos)
-        cur.execute("SELECT COALESCE(SUM(nacidos),0), COALESCE(SUM(muertos_bebes),0), COALESCE(SUM(muertos_reproductores),0) FROM partos;")
-        total_nacidos, muertos_bebes, muertos_reproductores = cur.fetchone()
-        print("DEBUG ➝ Partos:", total_nacidos, muertos_bebes, muertos_reproductores)
-
-        # Mortalidad de destetados
-        cur.execute("SELECT COALESCE(SUM(muertos_hembras),0), COALESCE(SUM(muertos_machos),0) FROM muertes_destetados;")
-        muertos_dest_hembras, muertos_dest_machos = cur.fetchone()
-        print("DEBUG ➝ Muertes destetados:", muertos_dest_hembras, muertos_dest_machos)
-
-        conn.close()
-
-        return render_template("index.html",
-                               total_hembras=total_hembras,
-                               total_machos=total_machos,
-                               total_dest_hembras=total_dest_hembras,
-                               total_dest_machos=total_dest_machos,
-                               total_nacidos=total_nacidos,
-                               muertos_bebes=muertos_bebes,
-                               muertos_reproductores=muertos_reproductores,
-                               muertos_dest_hembras=muertos_dest_hembras,
-                               muertos_dest_machos=muertos_dest_machos)
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                # Datos de reproductores por galpón y poza
+                cur.execute("""
+                    SELECT galpon, poza, COUNT(*) as total 
+                    FROM reproductores 
+                    GROUP BY galpon, poza 
+                    ORDER BY galpon, poza
+                """)
+                reproductores_por_poza = cur.fetchall()
+                
+                # Datos de destetados por galpón y poza
+                cur.execute("""
+                    SELECT galpon, poza, 
+                           SUM(COALESCE(hembras_destetadas, 0) + COALESCE(machos_destetados, 0)) as total
+                    FROM destetes 
+                    GROUP BY galpon, poza 
+                    ORDER BY galpon, poza
+                """)
+                destetados_por_poza = cur.fetchall()
+                
+                # Datos de muertes por galpón y poza
+                cur.execute("""
+                    SELECT galpon, poza, COUNT(*) as total 
+                    FROM muertes 
+                    GROUP BY galpon, poza 
+                    ORDER BY galpon, poza
+                """)
+                muertes_por_poza = cur.fetchall()
+                
     except Exception as e:
-        print("❌ Error en Dashboard:", e)
-        return "Error cargando Dashboard"
+        app.logger.error("Error al cargar datos por galpón/poza", exc_info=e)
+        reproductores_por_poza = []
+        destetados_por_poza = []
+        muertes_por_poza = []
 
+    return render_template('index.html',
+                           total_reproductores=total_reproductores,
+                           total_destetados=total_destetados,
+                           total_muertes=total_muertes,
+                           ingresos_totales=ingresos_totales,
+                           reproductores_por_poza=reproductores_por_poza,
+                           destetados_por_poza=destetados_por_poza,
+                           muertes_por_poza=muertes_por_poza,
+                           ventas_destetados_mes=ventas_destetados_mes,
+                           ventas_descarte_mes=ventas_descarte_mes)
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
