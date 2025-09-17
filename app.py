@@ -251,57 +251,41 @@ def index():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Total reproductores (hembras + machos)
-        cur.execute("""
-            SELECT 
-                COALESCE(SUM(hembras), 0) + COALESCE(SUM(machos), 0)
-            FROM reproductores;
-        """)
-        reproductores = cur.fetchone()[0]
+        # Reproductores
+        cur.execute("SELECT COALESCE(SUM(hembras),0), COALESCE(SUM(machos),0) FROM reproductores;")
+        total_hembras, total_machos = cur.fetchone()
+        print("DEBUG ➝ Reproductores:", total_hembras, total_machos)
 
-        # Total destetados (hembras + machos) desde la tabla destetes
-        cur.execute("""
-            SELECT 
-                COALESCE(SUM(destetados_hembras), 0) + COALESCE(SUM(destetados_machos), 0)
-            FROM destetes;
-        """)
-        destetados = cur.fetchone()[0]
+        # Destetados
+        cur.execute("SELECT COALESCE(SUM(destetados_hembras),0), COALESCE(SUM(destetados_machos),0) FROM destetes;")
+        total_dest_hembras, total_dest_machos = cur.fetchone()
+        print("DEBUG ➝ Destetados:", total_dest_hembras, total_dest_machos)
 
-        # Total nacidos y muertes desde partos
-        cur.execute("""
-            SELECT 
-                COALESCE(SUM(nacidos), 0),
-                COALESCE(SUM(muertos_bebes), 0),
-                COALESCE(SUM(muertos_reproductores), 0)
-            FROM partos;
-        """)
-        nacidos, muertos_bebes, muertos_reproductores = cur.fetchone()
+        # Nacidos y mortalidad (partos)
+        cur.execute("SELECT COALESCE(SUM(nacidos),0), COALESCE(SUM(muertos_bebes),0), COALESCE(SUM(muertos_reproductores),0) FROM partos;")
+        total_nacidos, muertos_bebes, muertos_reproductores = cur.fetchone()
+        print("DEBUG ➝ Partos:", total_nacidos, muertos_bebes, muertos_reproductores)
 
-        # Muertes de destetados
-        cur.execute("""
-            SELECT 
-                COALESCE(SUM(muertos_hembras), 0) + COALESCE(SUM(muertos_machos), 0)
-            FROM muertes_destetados;
-        """)
-        muertos_destetados = cur.fetchone()[0]
+        # Mortalidad de destetados
+        cur.execute("SELECT COALESCE(SUM(muertos_hembras),0), COALESCE(SUM(muertos_machos),0) FROM muertes_destetados;")
+        muertos_dest_hembras, muertos_dest_machos = cur.fetchone()
+        print("DEBUG ➝ Muertes destetados:", muertos_dest_hembras, muertos_dest_machos)
 
-        # Mortalidad total = todas las muertes
-        mortalidad = muertos_bebes + muertos_reproductores + muertos_destetados
-
-        cur.close()
         conn.close()
 
-        return render_template(
-            "index.html",
-            reproductores=reproductores,
-            destetados=destetados,
-            nacidos=nacidos,
-            mortalidad=mortalidad
-        )
-
+        return render_template("index.html",
+                               total_hembras=total_hembras,
+                               total_machos=total_machos,
+                               total_dest_hembras=total_dest_hembras,
+                               total_dest_machos=total_dest_machos,
+                               total_nacidos=total_nacidos,
+                               muertos_bebes=muertos_bebes,
+                               muertos_reproductores=muertos_reproductores,
+                               muertos_dest_hembras=muertos_dest_hembras,
+                               muertos_dest_machos=muertos_dest_machos)
     except Exception as e:
-        app.logger.error(f"Error al cargar datos del dashboard: {e}")
-        return "Error al cargar datos del dashboard", 500
+        print("❌ Error en Dashboard:", e)
+        return "Error cargando Dashboard"
 
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
