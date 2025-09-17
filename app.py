@@ -247,36 +247,67 @@ except Exception as e:
 # Ruta principal
 @app.route("/")
 def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    # Total reproductores
-    cur.execute("SELECT COALESCE(SUM(reproductores), 0) FROM reproductores;")
-    reproductores = cur.fetchone()[0]
+        # Total reproductores (hembras + machos)
+        cur.execute("""
+            SELECT 
+                COALESCE(SUM(hembras), 0) + COALESCE(SUM(machos), 0) 
+            FROM reproductores;
+        """)
+        reproductores = cur.fetchone()[0]
 
-    # Total destetados
-    cur.execute("SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) FROM destetados;")
-    destetados = cur.fetchone()[0]
+        # Total destetados
+        cur.execute("""
+            SELECT 
+                COALESCE(SUM(destetados_hembras), 0) + COALESCE(SUM(destetados_machos), 0) 
+            FROM destetados;
+        """)
+        destetados = cur.fetchone()[0]
 
-    # Mortalidad en partos
-    cur.execute("SELECT COALESCE(SUM(muertos_bebes + muertos_reproductores), 0) FROM partos;")
-    mortalidad_partos = cur.fetchone()[0]
+        # Total nacidos
+        cur.execute("SELECT COALESCE(SUM(nacidos), 0) FROM partos;")
+        nacidos = cur.fetchone()[0]
 
-    # Mortalidad en destetados
-    cur.execute("SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0) FROM muertes_destetados;")
-    mortalidad_destetados = cur.fetchone()[0]
+        # Mortalidad (bebés + reproductores + destetados)
+        cur.execute("""
+            SELECT 
+                COALESCE(SUM(muertos_bebes), 0) + COALESCE(SUM(muertos_reproductores), 0) 
+            FROM partos;
+        """)
+        muertes_partos = cur.fetchone()[0]
 
-    mortalidad_total = mortalidad_partos + mortalidad_destetados
+        cur.execute("""
+            SELECT 
+                COALESCE(SUM(muertos_hembras), 0) + COALESCE(SUM(muertos_machos), 0) 
+            FROM muertes_destetados;
+        """)
+        muertes_destetados = cur.fetchone()[0]
 
-    cur.close()
-    conn.close()
+        mortalidad = muertes_partos + muertes_destetados
 
-    return render_template(
-        "index.html",
-        reproductores=reproductores,
-        destetados=destetados,
-        mortalidad=mortalidad_total
-    )
+        cur.close()
+        conn.close()
+
+        return render_template(
+            "index.html",
+            reproductores=reproductores,
+            destetados=destetados,
+            nacidos=nacidos,
+            mortalidad=mortalidad
+        )
+
+    except Exception as e:
+        app.logger.error(f"Error al cargar datos del dashboard: {e}")
+        return render_template(
+            "index.html",
+            reproductores=0,
+            destetados=0,
+            nacidos=0,
+            mortalidad=0
+        )
 
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
