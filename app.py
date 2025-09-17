@@ -254,39 +254,39 @@ def index():
         # Total reproductores (hembras + machos)
         cur.execute("""
             SELECT 
-                COALESCE(SUM(hembras), 0) + COALESCE(SUM(machos), 0) 
+                COALESCE(SUM(hembras), 0) + COALESCE(SUM(machos), 0)
             FROM reproductores;
         """)
         reproductores = cur.fetchone()[0]
 
-        # Total destetados
+        # Total destetados (hembras + machos) desde la tabla destetes
         cur.execute("""
             SELECT 
-                COALESCE(SUM(destetados_hembras), 0) + COALESCE(SUM(destetados_machos), 0) 
-            FROM destetados;
+                COALESCE(SUM(destetados_hembras), 0) + COALESCE(SUM(destetados_machos), 0)
+            FROM destetes;
         """)
         destetados = cur.fetchone()[0]
 
-        # Total nacidos
-        cur.execute("SELECT COALESCE(SUM(nacidos), 0) FROM partos;")
-        nacidos = cur.fetchone()[0]
-
-        # Mortalidad (bebés + reproductores + destetados)
+        # Total nacidos y muertes desde partos
         cur.execute("""
             SELECT 
-                COALESCE(SUM(muertos_bebes), 0) + COALESCE(SUM(muertos_reproductores), 0) 
+                COALESCE(SUM(nacidos), 0),
+                COALESCE(SUM(muertos_bebes), 0),
+                COALESCE(SUM(muertos_reproductores), 0)
             FROM partos;
         """)
-        muertes_partos = cur.fetchone()[0]
+        nacidos, muertos_bebes, muertos_reproductores = cur.fetchone()
 
+        # Muertes de destetados
         cur.execute("""
             SELECT 
-                COALESCE(SUM(muertos_hembras), 0) + COALESCE(SUM(muertos_machos), 0) 
+                COALESCE(SUM(muertos_hembras), 0) + COALESCE(SUM(muertos_machos), 0)
             FROM muertes_destetados;
         """)
-        muertes_destetados = cur.fetchone()[0]
+        muertos_destetados = cur.fetchone()[0]
 
-        mortalidad = muertes_partos + muertes_destetados
+        # Mortalidad total = todas las muertes
+        mortalidad = muertos_bebes + muertos_reproductores + muertos_destetados
 
         cur.close()
         conn.close()
@@ -301,13 +301,7 @@ def index():
 
     except Exception as e:
         app.logger.error(f"Error al cargar datos del dashboard: {e}")
-        return render_template(
-            "index.html",
-            reproductores=0,
-            destetados=0,
-            nacidos=0,
-            mortalidad=0
-        )
+        return "Error al cargar datos del dashboard", 500
 
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
