@@ -245,97 +245,37 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-@app.route('/')
+@app.route("/")
 def index():
     conn = get_db_connection()
+    cur = conn.cursor()
 
-    # Diccionarios para acumular datos
-    datos_galpones = {}
-    total_reproductores_por_galpon = {}
-    total_nacidos_por_galpon = {}
-    total_muertos_por_galpon = {}
+    # Total reproductores
+    cur.execute("SELECT COALESCE(SUM(reproductores), 0) FROM reproductores;")
+    reproductores = cur.fetchone()[0]
 
-    # Reproductores
-    reproductores = conn.execute(
-        "SELECT galpon, poza, COUNT(*) as total FROM reproductores GROUP BY galpon, poza"
-    ).fetchall()
-    for r in reproductores:
-        g, p = r['galpon'], r['poza']
-        if g not in datos_galpones:
-            datos_galpones[g] = {}
-            total_reproductores_por_galpon[g] = 0
-            total_nacidos_por_galpon[g] = 0
-            total_muertos_por_galpon[g] = 0
-        datos_galpones[g][p] = {
-            "reproductores": r['total'],
-            "nacidos": 0,
-            "destetados": 0,
-            "muertos": 0
-        }
-        total_reproductores_por_galpon[g] += r['total']
+    # Total destetados
+    cur.execute("SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) FROM destetados;")
+    destetados = cur.fetchone()[0]
 
-    # Nacidos y muertes de partos
-    partos = conn.execute(
-        "SELECT galpon, poza, SUM(nacidos) as nacidos, SUM(muertos_bebes) as muertos_bebes, SUM(muertos_reproductores) as muertos_reproductores FROM partos GROUP BY galpon, poza"
-    ).fetchall()
-    for p in partos:
-        g, po = p['galpon'], p['poza']
-        if g not in datos_galpones:
-            datos_galpones[g] = {}
-            total_reproductores_por_galpon[g] = 0
-            total_nacidos_por_galpon[g] = 0
-            total_muertos_por_galpon[g] = 0
-        if po not in datos_galpones[g]:
-            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
+    # Mortalidad en partos
+    cur.execute("SELECT COALESCE(SUM(muertos_bebes + muertos_reproductores), 0) FROM partos;")
+    mortalidad_partos = cur.fetchone()[0]
 
-        datos_galpones[g][po]["nacidos"] += p['nacidos'] or 0
-        datos_galpones[g][po]["muertos"] += (p['muertos_bebes'] or 0) + (p['muertos_reproductores'] or 0)
+    # Mortalidad en destetados
+    cur.execute("SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0) FROM muertes_destetados;")
+    mortalidad_destetados = cur.fetchone()[0]
 
-        total_nacidos_por_galpon[g] += p['nacidos'] or 0
-        total_muertos_por_galpon[g] += (p['muertos_bebes'] or 0) + (p['muertos_reproductores'] or 0)
+    mortalidad_total = mortalidad_partos + mortalidad_destetados
 
-    # Destetados
-    destetados = conn.execute(
-        "SELECT galpon, poza, SUM(destetados_hembras) as hembras, SUM(destetados_machos) as machos FROM destetes GROUP BY galpon, poza"
-    ).fetchall()
-    for d in destetados:
-        g, po = d['galpon'], d['poza']
-        if g not in datos_galpones:
-            datos_galpones[g] = {}
-            total_reproductores_por_galpon[g] = 0
-            total_nacidos_por_galpon[g] = 0
-            total_muertos_por_galpon[g] = 0
-        if po not in datos_galpones[g]:
-            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
-
-        total_destetados = (d['hembras'] or 0) + (d['machos'] or 0)
-        datos_galpones[g][po]["destetados"] += total_destetados
-
-    # Muertes de destetados
-    muertes = conn.execute(
-        "SELECT galpon, poza, SUM(muertos_hembras) as hembras, SUM(muertos_machos) as machos FROM muertes_destetados GROUP BY galpon, poza"
-    ).fetchall()
-    for m in muertes:
-        g, po = m['galpon'], m['poza']
-        if g not in datos_galpones:
-            datos_galpones[g] = {}
-            total_reproductores_por_galpon[g] = 0
-            total_nacidos_por_galpon[g] = 0
-            total_muertos_por_galpon[g] = 0
-        if po not in datos_galpones[g]:
-            datos_galpones[g][po] = {"reproductores": 0, "nacidos": 0, "destetados": 0, "muertos": 0}
-
-        muertos_total = (m['hembras'] or 0) + (m['machos'] or 0)
-        datos_galpones[g][po]["muertos"] += muertos_total
-        total_muertos_por_galpon[g] += muertos_total
-
+    cur.close()
     conn.close()
+
     return render_template(
-        'index.html',
-        datos_galpones=datos_galpones,
-        total_reproductores_por_galpon=total_reproductores_por_galpon,
-        total_nacidos_por_galpon=total_nacidos_por_galpon,
-        total_muertos_por_galpon=total_muertos_por_galpon
+        "index.html",
+        reproductores=reproductores,
+        destetados=destetados,
+        mortalidad=mortalidad_total
     )
 
 # Ruta para ingresar reproductores
