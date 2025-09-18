@@ -250,65 +250,49 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 🔹 Primero, vamos a verificar la estructura de las tablas
-    try:
-        # Verificar las columnas de la tabla destetes
-        cur.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'destetes' 
-            ORDER BY ordinal_position;
-        """)
-        columnas_destetes = [row[0] for row in cur.fetchall()]
-        print("Columnas en destetes:", columnas_destetes)
-
-        # Verificar las columnas de la tabla muerte_destetados
-        cur.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'muerte_destetados' 
-            ORDER BY ordinal_position;
-        """)
-        columnas_muerte = [row[0] for row in cur.fetchall()]
-        print("Columnas en muerte_destetados:", columnas_muerte)
-
-    except Exception as e:
-        print("Error al verificar estructura de tablas:", e)
-        # Continuar con valores por defecto
-
-    # 🔹 Total Reproductores (solo de la tabla reproductores)
+    # 🔹 Total Reproductores
     cur.execute("""
         SELECT COALESCE(SUM(hembras + machos), 0)
         FROM reproductores;
     """)
     total_reproductores = cur.fetchone()[0]
 
-    # 🔹 Total Destetados - usando nombres de columnas correctos
-    # Basado en tu código anterior, probablemente las columnas son: hembras_destetadas y machos_destetados
+    # 🔹 Total Destetados - USANDO LOS NOMBRES CORRECTOS
     cur.execute("""
-        SELECT COALESCE(SUM(hembras_destetadas + machos_destetados), 0)
+        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
         FROM destetes;
     """)
     total_destetados = cur.fetchone()[0]
 
-    # 🔹 Total Muertos - usando nombres de columnas correctos
-    cur.execute("""
-        SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0)
-        FROM muerte_destetados;
-    """)
-    total_muertos = cur.fetchone()[0]
+    # 🔹 Total Muertos - Verificamos si la tabla muerte_destetados tiene datos
+    total_muertos = 0
+    try:
+        cur.execute("SELECT COUNT(*) FROM muerte_destetados")
+        if cur.fetchone()[0] > 0:
+            # Si la tabla existe y tiene datos, intentamos sumar
+            cur.execute("""
+                SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0)
+                FROM muerte_destetados;
+            """)
+            total_muertos = cur.fetchone()[0]
+    except:
+        total_muertos = 0
 
     # 🔹 Ingresos totales de ventas
-    cur.execute("SELECT COALESCE(SUM(costo_total), 0) FROM ventas")
-    ingresos_totales = cur.fetchone()[0]
+    ingresos_totales = 0
+    try:
+        cur.execute("SELECT COALESCE(SUM(costo_total), 0) FROM ventas")
+        ingresos_totales = cur.fetchone()[0]
+    except:
+        ingresos_totales = 0
 
-    # 🔹 Datos por galpón y poza - consulta corregida con nombres de columnas correctos
+    # 🔹 Datos por galpón y poza - CON NOMBRES DE COLUMNAS CORRECTOS
     cur.execute("""
         SELECT 
             r.galpon,
             r.poza,
             COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
-            COALESCE(SUM(d.hembras_destetadas + d.machos_destetados), 0) AS destetados,
+            COALESCE(SUM(d.destetados_hembras + d.destetados_machos), 0) AS destetados,
             COALESCE(SUM(md.muertos_hembras + md.muertos_machos), 0) AS muertos
         FROM reproductores r
         LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
@@ -347,7 +331,7 @@ def index():
         total_destetados_por_galpon[galpon] += destetados
         total_muertos_por_galpon[galpon] += muertos
 
-    # Para nacidos actuales, vamos a verificar si existe la tabla partos
+    # Para nacidos actuales, verificamos si existe la tabla partos
     nacidos_actuales = 0
     try:
         cur.execute("""
@@ -359,7 +343,7 @@ def index():
         partos_existe = cur.fetchone()[0]
         
         if partos_existe:
-            # Verificar columnas de partos primero
+            # Verificar columnas de partos
             cur.execute("""
                 SELECT column_name 
                 FROM information_schema.columns 
@@ -369,12 +353,19 @@ def index():
             columnas_partos = [row[0] for row in cur.fetchall()]
             print("Columnas en partos:", columnas_partos)
             
-            # Consulta segura para nacidos
-            cur.execute("""
-                SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos), 0)
-                FROM partos;
-            """)
-            nacidos_actuales = cur.fetchone()[0]
+            # Consulta segura para nacidos (usando nombres de columnas comunes)
+            if 'crias_nacidas_hembras' in columnas_partos and 'crias_nacidas_machos' in columnas_partos:
+                cur.execute("""
+                    SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos), 0)
+                    FROM partos;
+                """)
+                nacidos_actuales = cur.fetchone()[0]
+            elif 'nacidos_hembras' in columnas_partos and 'nacidos_machos' in columnas_partos:
+                cur.execute("""
+                    SELECT COALESCE(SUM(nacidos_hembras + nacidos_machos), 0)
+                    FROM partos;
+                """)
+                nacidos_actuales = cur.fetchone()[0]
     except Exception as e:
         print("Error al consultar partos:", e)
         nacidos_actuales = 0
