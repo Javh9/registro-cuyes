@@ -250,14 +250,39 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 🔹 Total Reproductores
+    # 🔹 Primero, vamos a verificar la estructura de las tablas
+    try:
+        # Verificar las columnas de la tabla destetes
+        cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'destetes' 
+            ORDER BY ordinal_position;
+        """)
+        columnas_destetes = [row[0] for row in cur.fetchall()]
+        print("Columnas en destetes:", columnas_destetes)
+
+        # Verificar las columnas de la tabla muerte_destetados
+        cur.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'muerte_destetados' 
+            ORDER BY ordinal_position;
+        """)
+        columnas_muerte = [row[0] for row in cur.fetchall()]
+        print("Columnas en muerte_destetados:", columnas_muerte)
+
+    except Exception as e:
+        print("Error al verificar estructura de tablas:", e)
+
+    # 🔹 Total Reproductores (solo de la tabla reproductores)
     cur.execute("""
         SELECT COALESCE(SUM(hembras + machos), 0)
         FROM reproductores;
     """)
     total_reproductores = cur.fetchone()[0]
 
-    # 🔹 Total Destetados - USANDO LOS NOMBRES CORRECTOS
+    # 🔹 Total Destetados - USANDO LOS NOMBRES CORRECTOS: destetados_hembras y destetados_machos
     cur.execute("""
         SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
         FROM destetes;
@@ -286,7 +311,7 @@ def index():
     except:
         ingresos_totales = 0
 
-    # 🔹 Datos por galpón y poza - CON NOMBRES DE COLUMNAS CORRECTOS
+    # 🔹 Datos por galpón y poza - CON NOMBRES DE COLUMNAS CORRECTOS: destetados_hembras y destetados_machos
     cur.execute("""
         SELECT 
             r.galpon,
