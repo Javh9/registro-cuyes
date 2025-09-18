@@ -254,7 +254,7 @@ def index():
         # Reproductores
         cur.execute("""
             SELECT galpon, poza,
-                   COALESCE(hembras,0) + COALESCE(machos,0) as total
+                   SELECT COALESCE(SUM(hembras + machos), 0)
             FROM reproductores;
         """)
         datos_reproductores = cur.fetchall()
