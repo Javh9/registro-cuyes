@@ -309,13 +309,7 @@
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Total Reproductores</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_reproductores = [] %}
-                                            {% for galpon in datos_galpones %}
-                                                {% for poza in datos_galpones[galpon] %}
-                                                    {% set _ = total_reproductores.append(datos_galpones[galpon][poza]['reproductores']) %}
-                                                {% endfor %}
-                                            {% endfor %}
-                                            {{ total_reproductores|sum }}
+                                            {{ total_reproductores }}                                            
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -332,13 +326,9 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Nacidos Netos</div>
+                                            Nacidos Actuales</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_nacidos = [] %}
-                                            {% for galpon in total_nacidos_por_galpon %}
-                                                {% set _ = total_nacidos.append(total_nacidos_por_galpon[galpon]) %}
-                                            {% endfor %}
-                                            {{ total_nacidos|sum }}
+                                            {{ nacidos_actuales }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -357,13 +347,7 @@
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Destetados</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_destetados = [] %}
-                                            {% for galpon in datos_galpones %}
-                                                {% for poza in datos_galpones[galpon] %}
-                                                    {% set _ = total_destetados.append(datos_galpones[galpon][poza]['destetados']) %}
-                                                {% endfor %}
-                                            {% endfor %}
-                                            {{ total_destetados|sum }}
+                                            {{ total_destetados }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -382,11 +366,7 @@
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                             Mortalidad</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {% set total_muertos = [] %}
-                                            {% for galpon in total_muertos_por_galpon %}
-                                                {% set _ = total_muertos.append(total_muertos_por_galpon[galpon]) %}
-                                            {% endfor %}
-                                            {{ total_muertos|sum }}
+                                            {{ total_muertos }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -425,10 +405,11 @@
                                                         <span class="fw-medium">Poza {{ poza }}:</span>
                                                     </div>
                                                     <div class="ms-3">
-                                                        <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza]['reproductores'] }}</small><br>
-                                                        <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza]['nacidos'] }}</small><br>
-                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza]['destetados'] }}</small><br>
-                                                        <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza]['muertos'] }}</small>
+                                                        <small class="text-muted">Reproductores: {{ poza[1]['reproductores'] }}</small><br>
+                                                        <small class="text-muted">Nacidos vigentes: {{ poza[1]['nacidos'] - poza[1]['destetados'] }}</small><br>
+                                                        <small class="text-muted">Destetados: {{ poza[1]['destetados'] }}</small><br>
+                                                        <small class="text-danger">Muertos: {{ poza[1]['muertos'] }}</small>
+                                                            
                                                     </div>
                                                 </div>
                                                 {% endfor %}
