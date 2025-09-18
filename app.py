@@ -320,6 +320,7 @@ def index():
             'reproductores': nacidos + destetados,  # o ajusta según lo que quieras mostrar
             'nacidos': nacidos,
             'destetados': destetados,
+            'nacidos_vigentes': nacidos - destetados,
             'muertos': muertos
         }
         datos_galpones[galpon].append((poza, poza_data))
