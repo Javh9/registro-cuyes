@@ -247,120 +247,55 @@ except Exception as e:
 # Ruta principal
 @app.route("/")
 def index():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        # Reproductores
-        cur.execute("""
-            SELECT galpon, poza,
-                   SELECT COALESCE(SUM(hembras + machos), 0)
-            FROM reproductores;
-        """)
-        datos_reproductores = cur.fetchall()
+    # ✅ Total Reproductores (hembras + machos)
+    cur.execute("""
+        SELECT COALESCE(SUM(hembras + machos), 0) 
+        FROM reproductores;
+    """)
+    total_reproductores = cur.fetchone()[0]
 
-        # Destetados
-        cur.execute("""
-            SELECT galpon, poza,
-                   COALESCE(destetados_hembras,0) + COALESCE(destetados_machos,0) as total
-            FROM destetes;
-        """)
-        datos_destetados = cur.fetchall()
+    # ✅ Nacidos actuales = nacidos - destetados
+    cur.execute("""
+        SELECT 
+            COALESCE(SUM(nacidos), 0)
+            - COALESCE((SELECT SUM(destetados_hembras + destetados_machos) 
+                        FROM destetes), 0)
+        FROM partos;
+    """)
+    nacidos_actuales = cur.fetchone()[0]
 
-        # Nacidos y mortalidad (partos)
-        cur.execute("""
-            SELECT galpon, poza,
-                   COALESCE(nacidos,0) as nacidos,
-                   COALESCE(muertos_bebes,0) + COALESCE(muertos_reproductores,0) as muertos
-            FROM partos;
-        """)
-        datos_partos = cur.fetchall()
+    # ✅ Total Destetados
+    cur.execute("""
+        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+        FROM destetes;
+    """)
+    total_destetados = cur.fetchone()[0]
 
-        # Estructuras de datos
-        datos_galpones = {}
-        total_reproductores_por_galpon = {}
-        total_nacidos_por_galpon = {}
-        total_muertos_por_galpon = {}
-        total_destetados_por_galpon = {}
+    # ✅ Cards por poza (nacidos - destetados), ordenadas por poza ASC
+    cur.execute("""
+        SELECT 
+            p.poza,
+            COALESCE(SUM(p.nacidos), 0) 
+            - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) 
+                        FROM destetes d 
+                        WHERE d.poza = p.poza), 0) AS nacidos_vigentes
+        FROM partos p
+        GROUP BY p.poza
+        ORDER BY p.poza ASC;
+    """)
+    cards_data = cur.fetchall()
 
-        # Inicializar con reproductores
-        for galpon, poza, total in datos_reproductores:
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0
-                total_destetados_por_galpon[galpon] = 0
+    cur.close()
+    conn.close()
 
-            datos_galpones[galpon][poza] = {
-                'reproductores': total,
-                'nacidos': 0,
-                'destetados': 0,
-                'muertos': 0
-            }
-            total_reproductores_por_galpon[galpon] += total
-
-        # Agregar destetados
-        for galpon, poza, total in datos_destetados:
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0
-                total_destetados_por_galpon[galpon] = 0
-
-            if poza not in datos_galpones[galpon]:
-                datos_galpones[galpon][poza] = {
-                    'reproductores': 0,
-                    'nacidos': 0,
-                    'destetados': 0,
-                    'muertos': 0
-                }
-
-            datos_galpones[galpon][poza]['destetados'] += total
-            total_destetados_por_galpon[galpon] += total
-
-        # Agregar partos (nacidos y muertos)
-        for galpon, poza, nacidos, muertos in datos_partos:
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_muertos_por_galpon[galpon] = 0
-                total_destetados_por_galpon[galpon] = 0
-
-            if poza not in datos_galpones[galpon]:
-                datos_galpones[galpon][poza] = {
-                    'reproductores': 0,
-                    'nacidos': 0,
-                    'destetados': 0,
-                    'muertos': 0
-                }
-
-            # Nacidos netos = nacidos - destetados
-            datos_galpones[galpon][poza]['nacidos'] += nacidos
-            datos_galpones[galpon][poza]['muertos'] += muertos
-            total_nacidos_por_galpon[galpon] += nacidos
-            total_muertos_por_galpon[galpon] += muertos
-
-        conn.close()
-
-        # Ordenar pozas dentro de cada galpón
-        for galpon in datos_galpones:
-            datos_galpones[galpon] = dict(sorted(
-                datos_galpones[galpon].items(),
-                key=lambda x: int(x[0]) if str(x[0]).isdigit() else x[0]
-            ))
-
-        return render_template("index.html",
-                               datos_galpones=datos_galpones,
-                               total_reproductores_por_galpon=total_reproductores_por_galpon,
-                               total_nacidos_por_galpon=total_nacidos_por_galpon,
-                               total_muertos_por_galpon=total_muertos_por_galpon,
-                               total_destetados_por_galpon=total_destetados_por_galpon)
-    except Exception as e:
-        print("❌ Error en Dashboard:", e)
-        return "Error cargando Dashboard"
+    return render_template("index.html",
+                           total_reproductores=total_reproductores,
+                           nacidos_actuales=nacidos_actuales,
+                           total_destetados=total_destetados,
+                           cards_data=cards_data)
 
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
