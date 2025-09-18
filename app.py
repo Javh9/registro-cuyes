@@ -251,7 +251,7 @@ def index():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # 🔹 Total Reproductores
+        # 🔹 Total Reproductores - CORREGIDO: usar SUM(hembras + machos)
         cur.execute("SELECT COALESCE(SUM(hembras + machos), 0) FROM reproductores;")
         total_reproductores = cur.fetchone()[0]
 
@@ -269,18 +269,24 @@ def index():
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
                 columnas = [row[0] for row in cur.fetchall()]
                 
+                # Verificar qué columnas existen para nacidos
                 if 'crias_nacidas_hembras' in columnas and 'crias_nacidas_machos' in columnas:
                     cur.execute("SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos), 0) FROM partos;")
                 elif 'nacidos_hembras' in columnas and 'nacidos_machos' in columnas:
                     cur.execute("SELECT COALESCE(SUM(nacidos_hembras + nacidos_machos), 0) FROM partos;")
                 else:
-                    # Buscar cualquier columna numérica que pueda contener nacidos
+                    # Si no encuentra las columnas esperadas, buscar cualquier columna que pueda contener nacidos
                     for col in columnas:
-                        if any(keyword in col.lower() for keyword in ['nacido', 'cria', 'bebe']):
-                            cur.execute(f"SELECT COALESCE(SUM({col}), 0) FROM partos;")
-                            break
+                        if any(keyword in col.lower() for keyword in ['nacido', 'cria', 'bebe', 'parto']):
+                            if col != 'fecha_nacimiento' and col != 'fecha_parto':
+                                cur.execute(f"SELECT COALESCE(SUM({col}), 0) FROM partos;")
+                                break
+                    else:
+                        # Si no encuentra ninguna columna apropiada, usar COUNT
+                        cur.execute("SELECT COUNT(*) FROM partos;")
                 total_nacidos = cur.fetchone()[0]
-        except:
+        except Exception as e:
+            print("Error al obtener total de nacidos:", e)
             total_nacidos = 0
             conn.rollback()
 
@@ -289,12 +295,13 @@ def index():
         try:
             cur.execute("SELECT COALESCE(SUM(costo_total), 0) FROM ventas")
             ingresos_totales = cur.fetchone()[0]
-        except:
+        except Exception as e:
+            print("Error al obtener ingresos:", e)
             ingresos_totales = 0
 
-        # 🔹 CONSULTAS SEPARADAS - SIN JOINs PARA EVITAR DUPLICADOS
+        # 🔹 CONSULTAS SEPARADAS PARA EVITAR DUPLICADOS
 
-        # 1. Reproductores por galpón/poza
+        # 1. Reproductores por galpón/poza - CORREGIDO: usar SUM(hembras + machos)
         cur.execute("""
             SELECT galpon, poza, SUM(hembras + machos) as cantidad 
             FROM reproductores 
@@ -302,7 +309,10 @@ def index():
             ORDER BY galpon, poza;
         """)
         reproductores_data = {}
-        for galpon, poza, cantidad in cur.fetchall():
+        for row in cur.fetchall():
+            galpon = row[0]
+            poza = row[1]
+            cantidad = row[2]
             if galpon not in reproductores_data:
                 reproductores_data[galpon] = {}
             reproductores_data[galpon][poza] = cantidad
@@ -315,6 +325,7 @@ def index():
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
                 columnas = [row[0] for row in cur.fetchall()]
                 
+                # Determinar qué columnas usar para nacidos
                 if 'crias_nacidas_hembras' in columnas and 'crias_nacidas_machos' in columnas:
                     cur.execute("""
                         SELECT galpon, poza, SUM(crias_nacidas_hembras + crias_nacidas_machos) as cantidad 
@@ -333,9 +344,11 @@ def index():
                     # Buscar columna para nacidos
                     columna_nacidos = None
                     for col in columnas:
-                        if any(keyword in col.lower() for keyword in ['nacido', 'cria', 'bebe']):
-                            columna_nacidos = col
-                            break
+                        if any(keyword in col.lower() for keyword in ['nacido', 'cria', 'bebe', 'parto']):
+                            if col != 'fecha_nacimiento' and col != 'fecha_parto':
+                                columna_nacidos = col
+                                break
+                    
                     if columna_nacidos:
                         cur.execute(f"""
                             SELECT galpon, poza, SUM({columna_nacidos}) as cantidad 
@@ -343,12 +356,24 @@ def index():
                             GROUP BY galpon, poza 
                             ORDER BY galpon, poza;
                         """)
+                    else:
+                        # Si no encuentra columnas de nacidos, usar COUNT
+                        cur.execute("""
+                            SELECT galpon, poza, COUNT(*) as cantidad 
+                            FROM partos 
+                            GROUP BY galpon, poza 
+                            ORDER BY galpon, poza;
+                        """)
                 
-                for galpon, poza, cantidad in cur.fetchall():
+                for row in cur.fetchall():
+                    galpon = row[0]
+                    poza = row[1]
+                    cantidad = row[2]
                     if galpon not in nacidos_data:
                         nacidos_data[galpon] = {}
                     nacidos_data[galpon][poza] = cantidad
-        except:
+        except Exception as e:
+            print("Error al obtener nacidos por galpón/poza:", e)
             conn.rollback()
 
         # 3. Destetados por galpón/poza
@@ -359,7 +384,10 @@ def index():
             ORDER BY galpon, poza;
         """)
         destetados_data = {}
-        for galpon, poza, cantidad in cur.fetchall():
+        for row in cur.fetchall():
+            galpon = row[0]
+            poza = row[1]
+            cantidad = row[2]
             if galpon not in destetados_data:
                 destetados_data[galpon] = {}
             destetados_data[galpon][poza] = cantidad
@@ -390,39 +418,24 @@ def index():
                 total_destetados_por_galpon[galpon] += destetados_data.get(galpon, {}).get(poza, 0)
 
         # Luego, agregar pozas que solo tengan nacidos o destetados (sin reproductores)
-        for galpon in nacidos_data:
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_destetados_por_galpon[galpon] = 0
+        for data_source in [nacidos_data, destetados_data]:
+            for galpon in data_source:
+                if galpon not in datos_galpones:
+                    datos_galpones[galpon] = {}
+                    total_reproductores_por_galpon[galpon] = 0
+                    total_nacidos_por_galpon[galpon] = 0
+                    total_destetados_por_galpon[galpon] = 0
 
-            for poza in nacidos_data[galpon]:
-                if poza not in datos_galpones[galpon]:
-                    datos_galpones[galpon][poza] = {
-                        'reproductores': 0,
-                        'nacidos': nacidos_data[galpon][poza],
-                        'destetados': destetados_data.get(galpon, {}).get(poza, 0)
-                    }
-                    total_nacidos_por_galpon[galpon] += nacidos_data[galpon][poza]
-                    total_destetados_por_galpon[galpon] += destetados_data.get(galpon, {}).get(poza, 0)
-
-        # Finalmente, agregar pozas que solo tengan destetados (sin reproductores ni nacidos)
-        for galpon in destetados_data:
-            if galpon not in datos_galpones:
-                datos_galpones[galpon] = {}
-                total_reproductores_por_galpon[galpon] = 0
-                total_nacidos_por_galpon[galpon] = 0
-                total_destetados_por_galpon[galpon] = 0
-
-            for poza in destetados_data[galpon]:
-                if poza not in datos_galpones[galpon]:
-                    datos_galpones[galpon][poza] = {
-                        'reproductores': 0,
-                        'nacidos': 0,
-                        'destetados': destetados_data[galpon][poza]
-                    }
-                    total_destetados_por_galpon[galpon] += destetados_data[galpon][poza]
+                for poza in data_source[galpon]:
+                    if poza not in datos_galpones[galpon]:
+                        datos_galpones[galpon][poza] = {
+                            'reproductores': 0,
+                            'nacidos': nacidos_data.get(galpon, {}).get(poza, 0),
+                            'destetados': destetados_data.get(galpon, {}).get(poza, 0)
+                        }
+                        
+                        total_nacidos_por_galpon[galpon] += nacidos_data.get(galpon, {}).get(poza, 0)
+                        total_destetados_por_galpon[galpon] += destetados_data.get(galpon, {}).get(poza, 0)
 
         cur.close()
         conn.close()
@@ -432,6 +445,7 @@ def index():
         print("Total Reproductores:", total_reproductores)
         print("Total Nacidos:", total_nacidos)
         print("Total Destetados:", total_destetados)
+        print("Ingresos Totales:", ingresos_totales)
         print("Datos por Galpón:", datos_galpones)
 
         return render_template(
@@ -439,7 +453,7 @@ def index():
             total_reproductores=total_reproductores,
             total_nacidos=total_nacidos,
             total_destetados=total_destetados,
-            ingresos_totales=ingresos_totales,
+            ingresos_totales=ingresos_totales,  # ✅ Agregado
             datos_galpones=datos_galpones,
             total_reproductores_por_galpon=total_reproductores_por_galpon,
             total_nacidos_por_galpon=total_nacidos_por_galpon,
@@ -459,7 +473,6 @@ def index():
             total_nacidos_por_galpon={},
             total_destetados_por_galpon={}
         )
-
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
