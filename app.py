@@ -250,9 +250,9 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # ✅ Total Reproductores (hembras + machos)
+    # ✅ Total Reproductores
     cur.execute("""
-        SELECT COALESCE(SUM(hembras + machos), 0) 
+        SELECT COALESCE(SUM(hembras + machos), 0)
         FROM reproductores;
     """)
     total_reproductores = cur.fetchone()[0]
@@ -260,10 +260,10 @@ def index():
     # ✅ Nacidos actuales = nacidos - destetados
     cur.execute("""
         SELECT 
-            COALESCE(SUM(nacidos), 0)
-            - COALESCE((SELECT SUM(destetados_hembras + destetados_machos) 
-                        FROM destetes), 0)
-        FROM partos;
+            COALESCE(SUM(p.nacidos), 0) 
+            - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) 
+                        FROM destetes d), 0) AS nacidos_vigentes
+        FROM partos p;
     """)
     nacidos_actuales = cur.fetchone()[0]
 
@@ -274,7 +274,7 @@ def index():
     """)
     total_destetados = cur.fetchone()[0]
 
-    # ✅ Cards por poza (nacidos - destetados), ordenadas por poza ASC
+    # ✅ Cards por poza (nacidos - destetados), ordenadas
     cur.execute("""
         SELECT 
             p.poza,
@@ -291,11 +291,20 @@ def index():
     cur.close()
     conn.close()
 
-    return render_template("index.html",
-                           total_reproductores=total_reproductores,
-                           nacidos_actuales=nacidos_actuales,
-                           total_destetados=total_destetados,
-                           cards_data=cards_data)
+    # 🔎 DEPURACIÓN
+    print("=== RESUMEN GENERAL ===")
+    print("Total Reproductores:", total_reproductores)
+    print("Nacidos actuales:", nacidos_actuales)
+    print("Total Destetados:", total_destetados)
+    print("Cards:", cards_data)
+
+    return render_template(
+        "index.html",
+        total_reproductores=total_reproductores,
+        nacidos_actuales=nacidos_actuales,
+        total_destetados=total_destetados,
+        cards_data=cards_data
+    )
 
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
