@@ -247,67 +247,77 @@ except Exception as e:
 # Ruta principal
 @app.route('/')
 def index():
-    conn = get_db_connection()
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
-    # Consulta todos los datos necesarios de tus tablas
-    cur.execute("""
-        SELECT galpon, poza, reproductores, nacidos, destetados, muertos
-        FROM resumen_cuyes
-        ORDER BY galpon, poza
-    """)
-    rows = cur.fetchall()
+    # ----- 1. Resumen general -----
+    # Total reproductores
+    cur.execute("SELECT COUNT(*) FROM reproductores")
+    total_reproductores = cur.fetchone()[0]
+
+    # Total nacidos
+    cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM partos")
+    nacidos_actuales = cur.fetchone()[0]
+
+    # Total destetados
+    cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM destetes")
+    total_destetados = cur.fetchone()[0]
+
+    # Total muertos
+    cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM muertes")
+    total_muertos = cur.fetchone()[0]
+
+    # ----- 2. Resumen por galpón y pozo -----
+    cur.execute("SELECT DISTINCT galpon FROM reproductores")
+    galpones = [row[0] for row in cur.fetchall()]
+    datos_galpones = {}
+    total_reproductores_por_galpon = {}
+
+    for galpon in galpones:
+        # Obtenemos los pozos de ese galpón
+        cur.execute("SELECT DISTINCT poza FROM reproductores WHERE galpon=%s", (galpon,))
+        pozas = [row[0] for row in cur.fetchall()]
+        datos_galpones[galpon] = []
+
+        total_por_galpon = 0
+        for poza in pozas:
+            # Reproductores por pozo
+            cur.execute("SELECT COUNT(*) FROM reproductores WHERE galpon=%s AND poza=%s", (galpon, poza))
+            reproductores = cur.fetchone()[0]
+
+            # Nacidos
+            cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM partos WHERE galpon=%s AND poza=%s", (galpon, poza))
+            nacidos = cur.fetchone()[0]
+
+            # Destetados
+            cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM destetes WHERE galpon=%s AND poza=%s", (galpon, poza))
+            destetados = cur.fetchone()[0]
+
+            # Muertos
+            cur.execute("SELECT COALESCE(SUM(cantidad),0) FROM muertes WHERE galpon=%s AND poza=%s", (galpon, poza))
+            muertos = cur.fetchone()[0]
+
+            datos_galpones[galpon].append((poza, {
+                'reproductores': reproductores,
+                'nacidos': nacidos,
+                'destetados': destetados,
+                'muertos': muertos
+            }))
+
+            total_por_galpon += reproductores
+
+        total_reproductores_por_galpon[galpon] = total_por_galpon
+
     cur.close()
     conn.close()
 
-    # Preparar la estructura de datos por galpón
-    datos_galpones = {}
-    total_reproductores_por_galpon = {}
-    total_reproductores = 0
-    total_nacidos_actuales = 0
-    total_destetados = 0
-    total_muertos = 0
-
-    for galpon, poza, reproductores, nacidos, destetados, muertos in rows:
-        # Agregar galpón si no existe
-        if galpon not in datos_galpones:
-            datos_galpones[galpon] = []
-            total_reproductores_por_galpon[galpon] = 0
-
-        datos_galpones[galpon].append({
-            'poza': poza,
-            'reproductores': reproductores,
-            'nacidos': nacidos,
-            'destetados': destetados,
-            'muertos': muertos
-        })
-
-        # Totales por galpón
-        total_reproductores_por_galpon[galpon] += reproductores
-
-        # Totales generales
-        total_reproductores += reproductores
-        total_nacidos_actuales += nacidos
-        total_destetados += destetados
-        total_muertos += muertos
-
-    # Ajuste de formato para el template
-    # Cada 'poza' se pasa como una tupla (id, dict)
-    datos_galpones_formato = {}
-    for galpon, pozas in datos_galpones.items():
-        datos_galpones_formato[galpon] = []
-        for p in pozas:
-            datos_galpones_formato[galpon].append((p['poza'], p))
-
-    return render_template(
-        'index.html',
-        total_reproductores=total_reproductores,
-        nacidos_actuales=total_nacidos_actuales,
-        total_destetados=total_destetados,
-        total_muertos=total_muertos,
-        datos_galpones=datos_galpones_formato,
-        total_reproductores_por_galpon=total_reproductores_por_galpon
-    )
+    return render_template("index.html",
+                           total_reproductores=total_reproductores,
+                           nacidos_actuales=nacidos_actuales,
+                           total_destetados=total_destetados,
+                           total_muertos=total_muertos,
+                           datos_galpones=datos_galpones,
+                           total_reproductores_por_galpon=total_reproductores_por_galpon)
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
