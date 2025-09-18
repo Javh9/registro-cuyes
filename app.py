@@ -251,40 +251,39 @@ def index():
     cur = conn.cursor()
 
     # 🔹 Total Reproductores
-    cur.execute("""
-        SELECT COALESCE(SUM(hembras + machos), 0)
-        FROM reproductores;
-    """)
+    cur.execute("SELECT COALESCE(SUM(hembras + machos), 0) FROM reproductores;")
     total_reproductores = cur.fetchone()[0]
 
     # 🔹 Nacidos actuales = nacidos - destetados
     cur.execute("""
-        SELECT 
-            COALESCE(SUM(p.nacidos), 0) 
-            - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) 
-                        FROM destetes d), 0) AS nacidos_vigentes
+        SELECT COALESCE(SUM(p.nacidos), 0)
+        - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) FROM destetes d), 0)
+        AS nacidos_vigentes
         FROM partos p;
     """)
     nacidos_actuales = cur.fetchone()[0]
 
     # 🔹 Total Destetados
-    cur.execute("""
-        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
-        FROM destetes;
-    """)
+    cur.execute("SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) FROM destetes;")
     total_destetados = cur.fetchone()[0]
 
     # 🔹 Total Muertos (de partos + destetes)
     cur.execute("""
-        SELECT 
-            COALESCE(SUM(muertos_bebes + muertos_reproductores), 0)
-            + COALESCE((SELECT SUM(muertos_hembras + muertos_machos) 
-                        FROM muertes_destetados), 0) 
+        SELECT COALESCE(SUM(muertos_bebes + muertos_reproductores), 0)
+        + COALESCE((SELECT SUM(muertos_hembras + muertos_machos) FROM muertes_destetados), 0)
         FROM partos;
     """)
     total_muertos = cur.fetchone()[0]
 
-    # 🔹 Datos por galpón y poza
+    # 🔹 Reproductores por galpón y poza (una sola query)
+    cur.execute("""
+        SELECT galpon, poza, COALESCE(SUM(hembras + machos), 0) AS reproductores
+        FROM reproductores
+        GROUP BY galpon, poza;
+    """)
+    reproductores_data = {(galpon, poza): r for galpon, poza, r in cur.fetchall()}
+
+    # 🔹 Datos por galpón y poza (partos + destetes + muertes)
     cur.execute("""
         SELECT 
             p.galpon,
@@ -307,13 +306,7 @@ def index():
     total_reproductores_por_galpon = {}
 
     for galpon, poza, nacidos, destetados, muertos in rows:
-        # Obtener reproductores reales por galpón y poza
-        cur.execute("""
-            SELECT COALESCE(SUM(hembras + machos), 0)
-            FROM reproductores
-            WHERE galpon = %s AND poza = %s;
-        """, (galpon, poza))
-        total_reproductores_poza = cur.fetchone()[0]
+        total_reproductores_poza = reproductores_data.get((galpon, poza), 0)
 
         # Inicializar galpón
         if galpon not in datos_galpones:
@@ -329,8 +322,6 @@ def index():
             'muertos': muertos
         }
         datos_galpones[galpon].append((poza, poza_data))
-
-        # Sumar total reproductores por galpón
         total_reproductores_por_galpon[galpon] += total_reproductores_poza
 
     cur.close()
