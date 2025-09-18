@@ -250,7 +250,7 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # ✅ Total Reproductores
+    # ✅ Total Reproductores (todos los galpones)
     cur.execute("""
         SELECT COALESCE(SUM(hembras + machos), 0)
         FROM reproductores;
@@ -302,9 +302,6 @@ def index():
     """)
     rows = cur.fetchall()
 
-    cur.close()
-    conn.close()
-
     # 🔹 Organizar los datos para el template
     datos_galpones = {}
     total_reproductores_por_galpon = {}
@@ -313,20 +310,36 @@ def index():
         # Inicializar galpón
         if galpon not in datos_galpones:
             datos_galpones[galpon] = []
-            total_reproductores_por_galpon[galpon] = 0
 
-        # Por cada poza
+            # Total reproductores por galpón
+            cur.execute("""
+                SELECT COALESCE(SUM(hembras + machos), 0)
+                FROM reproductores
+                WHERE galpon = %s
+            """, (galpon,))
+            total_reproductores_por_galpon[galpon] = cur.fetchone()[0]
+
+        # Reproductores por poza
+        cur.execute("""
+            SELECT COALESCE(SUM(hembras + machos), 0)
+            FROM reproductores
+            WHERE galpon = %s AND poza = %s
+        """, (galpon, poza))
+        reproductores_poza = cur.fetchone()[0]
+
+        # Datos de la poza
         poza_data = {
-            'reproductores': nacidos + destetados,  # o ajusta según lo que quieras mostrar
+            'reproductores': reproductores_poza,
             'nacidos': nacidos,
             'destetados': destetados,
             'nacidos_vigentes': nacidos - destetados,
             'muertos': muertos
         }
+
         datos_galpones[galpon].append((poza, poza_data))
 
-        # Sumar total reproductores por galpón
-        total_reproductores_por_galpon[galpon] += poza_data['reproductores']
+    cur.close()
+    conn.close()
 
     # 🔎 Depuración
     print("=== RESUMEN GENERAL ===")
