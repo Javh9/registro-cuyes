@@ -252,25 +252,38 @@ def index():
         cur = conn.cursor()
 
         # Reproductores
-        cur.execute("SELECT galpon, poza, COALESCE(hembras,0)+COALESCE(machos,0) as total FROM reproductores;")
-        datos_reproductores = cur.fetchall()  # lista de tuplas (galpon, poza, total)
-        
+        cur.execute("""
+            SELECT galpon, poza,
+                   COALESCE(hembras,0) + COALESCE(machos,0) as total
+            FROM reproductores;
+        """)
+        datos_reproductores = cur.fetchall()
+
         # Destetados
-        cur.execute("SELECT galpon, poza, COALESCE(destetados_hembras,0)+COALESCE(destetados_machos,0) as total FROM destetes;")
+        cur.execute("""
+            SELECT galpon, poza,
+                   COALESCE(destetados_hembras,0) + COALESCE(destetados_machos,0) as total
+            FROM destetes;
+        """)
         datos_destetados = cur.fetchall()
 
         # Nacidos y mortalidad (partos)
-        cur.execute("SELECT galpon, poza, COALESCE(nacidos,0) as nacidos, COALESCE(muertos_bebes,0)+COALESCE(muertos_reproductores,0) as muertos FROM partos;")
+        cur.execute("""
+            SELECT galpon, poza,
+                   COALESCE(nacidos,0) as nacidos,
+                   COALESCE(muertos_bebes,0) + COALESCE(muertos_reproductores,0) as muertos
+            FROM partos;
+        """)
         datos_partos = cur.fetchall()
 
-        # Procesar por galpón y poza
+        # Estructuras de datos
         datos_galpones = {}
         total_reproductores_por_galpon = {}
         total_nacidos_por_galpon = {}
         total_muertos_por_galpon = {}
         total_destetados_por_galpon = {}
 
-        # Inicializar diccionarios
+        # Inicializar con reproductores
         for galpon, poza, total in datos_reproductores:
             if galpon not in datos_galpones:
                 datos_galpones[galpon] = {}
@@ -278,22 +291,66 @@ def index():
                 total_nacidos_por_galpon[galpon] = 0
                 total_muertos_por_galpon[galpon] = 0
                 total_destetados_por_galpon[galpon] = 0
-            datos_galpones[galpon][poza] = {'reproductores': total, 'nacidos': 0, 'destetados': 0, 'muertos': 0}
+
+            datos_galpones[galpon][poza] = {
+                'reproductores': total,
+                'nacidos': 0,
+                'destetados': 0,
+                'muertos': 0
+            }
             total_reproductores_por_galpon[galpon] += total
 
+        # Agregar destetados
         for galpon, poza, total in datos_destetados:
-            if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                datos_galpones[galpon][poza]['destetados'] = total
-                total_destetados_por_galpon[galpon] += total
+            if galpon not in datos_galpones:
+                datos_galpones[galpon] = {}
+                total_reproductores_por_galpon[galpon] = 0
+                total_nacidos_por_galpon[galpon] = 0
+                total_muertos_por_galpon[galpon] = 0
+                total_destetados_por_galpon[galpon] = 0
 
+            if poza not in datos_galpones[galpon]:
+                datos_galpones[galpon][poza] = {
+                    'reproductores': 0,
+                    'nacidos': 0,
+                    'destetados': 0,
+                    'muertos': 0
+                }
+
+            datos_galpones[galpon][poza]['destetados'] += total
+            total_destetados_por_galpon[galpon] += total
+
+        # Agregar partos (nacidos y muertos)
         for galpon, poza, nacidos, muertos in datos_partos:
-            if galpon in datos_galpones and poza in datos_galpones[galpon]:
-                datos_galpones[galpon][poza]['nacidos'] = nacidos
-                datos_galpones[galpon][poza]['muertos'] = muertos
-                total_nacidos_por_galpon[galpon] += nacidos
-                total_muertos_por_galpon[galpon] += muertos
+            if galpon not in datos_galpones:
+                datos_galpones[galpon] = {}
+                total_reproductores_por_galpon[galpon] = 0
+                total_nacidos_por_galpon[galpon] = 0
+                total_muertos_por_galpon[galpon] = 0
+                total_destetados_por_galpon[galpon] = 0
+
+            if poza not in datos_galpones[galpon]:
+                datos_galpones[galpon][poza] = {
+                    'reproductores': 0,
+                    'nacidos': 0,
+                    'destetados': 0,
+                    'muertos': 0
+                }
+
+            # Nacidos netos = nacidos - destetados
+            datos_galpones[galpon][poza]['nacidos'] += nacidos
+            datos_galpones[galpon][poza]['muertos'] += muertos
+            total_nacidos_por_galpon[galpon] += nacidos
+            total_muertos_por_galpon[galpon] += muertos
 
         conn.close()
+
+        # Ordenar pozas dentro de cada galpón
+        for galpon in datos_galpones:
+            datos_galpones[galpon] = dict(sorted(
+                datos_galpones[galpon].items(),
+                key=lambda x: int(x[0]) if str(x[0]).isdigit() else x[0]
+            ))
 
         return render_template("index.html",
                                datos_galpones=datos_galpones,
