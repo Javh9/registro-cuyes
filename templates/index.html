@@ -402,13 +402,13 @@
                                                 {% for poza in datos_galpones[galpon] %}
                                                 <div class="poza-item mb-2">
                                                     <div class="d-flex justify-content-between">
-                                                        <span class="fw-medium">Poza {{ poza[0] }}:</span>
+                                                        <span class="fw-medium">Poza {{ poza }}:</span>
                                                     </div>
                                                     <div class="ms-3">
-                                                        <small class="text-muted">Reproductores: {{ poza[1]['reproductores'] }}</small><br>
-                                                        <small class="text-muted">Nacidos vigentes: {{ poza[1]['nacidos'] - poza[1]['destetados'] }}</small><br>
-                                                        <small class="text-muted">Destetados: {{ poza[1]['destetados'] }}</small><br>
-                                                        <small class="text-danger">Muertos: {{ poza[1]['muertos'] }}</small>
+                                                        <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza]['reproductores'] }}</small><br>
+                                                        <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza]['nacidos'] }}</small><br>
+                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza]['destetados'] }}</small><br>
+                                                        <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza]['muertos'] }}</small>
                                                             
                                                     </div>
                                                 </div>
