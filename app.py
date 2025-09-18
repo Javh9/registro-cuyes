@@ -250,104 +250,89 @@ def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # ✅ Total Reproductores (todos los galpones)
-    cur.execute("""
-        SELECT COALESCE(SUM(hembras + machos), 0)
-        FROM reproductores;
-    """)
+    # Total reproductores generales
+    cur.execute("SELECT COALESCE(SUM(hembras + machos), 0) FROM reproductores;")
     total_reproductores = cur.fetchone()[0]
 
-    # ✅ Nacidos actuales = nacidos - destetados
+    # Nacidos actuales
     cur.execute("""
-        SELECT 
-            COALESCE(SUM(p.nacidos), 0) 
-            - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) 
-                        FROM destetes d), 0) AS nacidos_vigentes
-        FROM partos p;
+        SELECT COALESCE(SUM(nacidos), 0) - COALESCE((SELECT SUM(destetados_hembras + destetados_machos) FROM destetes),0)
+        FROM partos;
     """)
     nacidos_actuales = cur.fetchone()[0]
 
-    # ✅ Total Destetados
-    cur.execute("""
-        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
-        FROM destetes;
-    """)
+    # Total destetados
+    cur.execute("SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0) FROM destetes;")
     total_destetados = cur.fetchone()[0]
 
-    # ✅ Total Muertos (de partos + destetes)
+    # Total muertos
     cur.execute("""
-        SELECT 
-            COALESCE(SUM(muertos_bebes + muertos_reproductores), 0)
-            + COALESCE((SELECT SUM(muertos_hembras + muertos_machos) FROM muertes_destetados), 0) 
+        SELECT COALESCE(SUM(muertos_bebes + muertos_reproductores),0) 
+             + COALESCE((SELECT SUM(muertos_hembras + muertos_machos) FROM muertes_destetados),0)
         FROM partos;
     """)
     total_muertos = cur.fetchone()[0]
 
-    # ✅ Datos por galpón y poza
+    # Reproductores por galpón y poza
     cur.execute("""
-        SELECT 
-            p.galpon,
-            p.poza,
-            COALESCE(SUM(p.nacidos), 0) AS nacidos,
-            COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos)
-                      FROM destetes d
-                      WHERE d.galpon = p.galpon AND d.poza = p.poza), 0) AS destetados,
-            COALESCE(SUM(p.muertos_bebes + p.muertos_reproductores), 0)
-            + COALESCE((SELECT SUM(md.muertos_hembras + md.muertos_machos)
-                        FROM muertes_destetados md
-                        WHERE md.galpon = p.galpon AND md.poza = p.poza), 0) AS muertos
+        SELECT galpon, poza, SUM(hembras + machos) as reproductores
+        FROM reproductores
+        GROUP BY galpon, poza
+        ORDER BY galpon, poza;
+    """)
+    reproduc_poza_rows = cur.fetchall()
+
+    # Partos y destetes por galpón y poza
+    cur.execute("""
+        SELECT p.galpon, p.poza,
+               SUM(p.nacidos) AS nacidos,
+               COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos)
+                         FROM destetes d
+                         WHERE d.galpon = p.galpon AND d.poza = p.poza),0) AS destetados,
+               SUM(p.muertos_bebes + p.muertos_reproductores)
+               + COALESCE((SELECT SUM(md.muertos_hembras + md.muertos_machos)
+                           FROM muertes_destetados md
+                           WHERE md.galpon = p.galpon AND md.poza = p.poza),0) AS muertos
         FROM partos p
         GROUP BY p.galpon, p.poza
         ORDER BY p.galpon, p.poza;
     """)
-    rows = cur.fetchall()
+    partos_rows = cur.fetchall()
 
-    # 🔹 Organizar los datos para el template
+    # Organizar datos por galpón y poza
     datos_galpones = {}
     total_reproductores_por_galpon = {}
 
-    for galpon, poza, nacidos, destetados, muertos in rows:
-        # Inicializar galpón
+    # Inicializamos totales de reproductores
+    for galpon, poza, reproductores in reproduc_poza_rows:
         if galpon not in datos_galpones:
             datos_galpones[galpon] = []
+            total_reproductores_por_galpon[galpon] = 0
 
-            # Total reproductores por galpón
-            cur.execute("""
-                SELECT COALESCE(SUM(hembras + machos), 0)
-                FROM reproductores
-                WHERE galpon = %s
-            """, (galpon,))
-            total_reproductores_por_galpon[galpon] = cur.fetchone()[0]
+        # Inicialmente ponemos 0 en parto/destete/muertos
+        datos_galpones[galpon].append((poza, {
+            'reproductores': reproductores,
+            'nacidos': 0,
+            'destetados': 0,
+            'nacidos_vigentes': 0,
+            'muertos': 0
+        }))
 
-        # Reproductores por poza
-        cur.execute("""
-            SELECT COALESCE(SUM(hembras + machos), 0)
-            FROM reproductores
-            WHERE galpon = %s AND poza = %s
-        """, (galpon, poza))
-        reproductores_poza = cur.fetchone()[0]
+        total_reproductores_por_galpon[galpon] += reproductores
 
-        # Datos de la poza
-        poza_data = {
-            'reproductores': reproductores_poza,
-            'nacidos': nacidos,
-            'destetados': destetados,
-            'nacidos_vigentes': nacidos - destetados,
-            'muertos': muertos
-        }
-
-        datos_galpones[galpon].append((poza, poza_data))
+    # Actualizamos con datos de partos
+    for galpon, poza, nacidos, destetados, muertos in partos_rows:
+        for i, (p_id, data) in enumerate(datos_galpones[galpon]):
+            if p_id == poza:
+                data['nacidos'] = nacidos
+                data['destetados'] = destetados
+                data['nacidos_vigentes'] = nacidos - destetados
+                data['muertos'] = muertos
+                datos_galpones[galpon][i] = (poza, data)
+                break
 
     cur.close()
     conn.close()
-
-    # 🔎 Depuración
-    print("=== RESUMEN GENERAL ===")
-    print("Total Reproductores:", total_reproductores)
-    print("Nacidos actuales:", nacidos_actuales)
-    print("Total Destetados:", total_destetados)
-    print("Total Muertos:", total_muertos)
-    print("Datos por Galpón:", datos_galpones)
 
     return render_template(
         "index.html",
