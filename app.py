@@ -247,178 +247,210 @@ except Exception as e:
 # Ruta principal
 @app.route("/")
 def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # 🔹 Primero, vamos a verificar la estructura de las tablas
     try:
-        # Verificar las columnas de la tabla destetes
-        cur.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'destetes' 
-            ORDER BY ordinal_position;
-        """)
-        columnas_destetes = [row[0] for row in cur.fetchall()]
-        print("Columnas en destetes:", columnas_destetes)
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-        # Verificar las columnas de la tabla muerte_destetados
-        cur.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'muerte_destetados' 
-            ORDER BY ordinal_position;
-        """)
-        columnas_muerte = [row[0] for row in cur.fetchall()]
-        print("Columnas en muerte_destetados:", columnas_muerte)
-
-    except Exception as e:
-        print("Error al verificar estructura de tablas:", e)
-
-    # 🔹 Total Reproductores (solo de la tabla reproductores)
-    cur.execute("""
-        SELECT COALESCE(SUM(hembras + machos), 0)
-        FROM reproductores;
-    """)
-    total_reproductores = cur.fetchone()[0]
-
-    # 🔹 Total Destetados - USANDO LOS NOMBRES CORRECTOS: destetados_hembras y destetados_machos
-    cur.execute("""
-        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
-        FROM destetes;
-    """)
-    total_destetados = cur.fetchone()[0]
-
-    # 🔹 Total Muertos - Verificamos si la tabla muerte_destetados tiene datos
-    total_muertos = 0
-    try:
-        cur.execute("SELECT COUNT(*) FROM muerte_destetados")
-        if cur.fetchone()[0] > 0:
-            # Si la tabla existe y tiene datos, intentamos sumar
-            cur.execute("""
-                SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0)
-                FROM muerte_destetados;
-            """)
-            total_muertos = cur.fetchone()[0]
-    except:
-        total_muertos = 0
-
-    # 🔹 Ingresos totales de ventas
-    ingresos_totales = 0
-    try:
-        cur.execute("SELECT COALESCE(SUM(costo_total), 0) FROM ventas")
-        ingresos_totales = cur.fetchone()[0]
-    except:
-        ingresos_totales = 0
-
-    # 🔹 Datos por galpón y poza - CON NOMBRES DE COLUMNAS CORRECTOS: destetados_hembras y destetados_machos
-    cur.execute("""
-        SELECT 
-            r.galpon,
-            r.poza,
-            COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
-            COALESCE(SUM(d.destetados_hembras + d.destetados_machos), 0) AS destetados,
-            COALESCE(SUM(md.muertos_hembras + md.muertos_machos), 0) AS muertos
-        FROM reproductores r
-        LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
-        LEFT JOIN muerte_destetados md ON r.galpon = md.galpon AND r.poza = md.poza
-        GROUP BY r.galpon, r.poza
-        ORDER BY r.galpon, r.poza;
-    """)
-    rows = cur.fetchall()
-
-    # Estructura de datos compatible con el template
-    datos_galpones = {}
-    total_reproductores_por_galpon = {}
-    total_destetados_por_galpon = {}
-    total_muertos_por_galpon = {}
-
-    for row in rows:
-        galpon = row[0]
-        poza = row[1]
-        reproductores = row[2]
-        destetados = row[3]
-        muertos = row[4]
-
-        if galpon not in datos_galpones:
-            datos_galpones[galpon] = {}
-            total_reproductores_por_galpon[galpon] = 0
-            total_destetados_por_galpon[galpon] = 0
-            total_muertos_por_galpon[galpon] = 0
-
-        datos_galpones[galpon][poza] = {
-            'reproductores': reproductores,
-            'destetados': destetados,
-            'muertos': muertos
-        }
-
-        total_reproductores_por_galpon[galpon] += reproductores
-        total_destetados_por_galpon[galpon] += destetados
-        total_muertos_por_galpon[galpon] += muertos
-
-    # Para nacidos actuales, verificamos si existe la tabla partos
-    nacidos_actuales = 0
-    try:
-        cur.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'partos'
-            );
-        """)
-        partos_existe = cur.fetchone()[0]
-        
-        if partos_existe:
-            # Verificar columnas de partos
+        # 🔹 Primero, vamos a verificar la estructura de las tablas
+        try:
+            # Verificar las columnas de la tabla destetes
             cur.execute("""
                 SELECT column_name 
                 FROM information_schema.columns 
-                WHERE table_name = 'partos' 
+                WHERE table_name = 'destetes' 
                 ORDER BY ordinal_position;
             """)
-            columnas_partos = [row[0] for row in cur.fetchall()]
-            print("Columnas en partos:", columnas_partos)
-            
-            # Consulta segura para nacidos (usando nombres de columnas comunes)
-            if 'crias_nacidas_hembras' in columnas_partos and 'crias_nacidas_machos' in columnas_partos:
+            columnas_destetes = [row[0] for row in cur.fetchall()]
+            print("Columnas en destetes:", columnas_destetes)
+
+            # Verificar las columnas de la tabla muerte_destetados
+            cur.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'muerte_destetados' 
+                ORDER BY ordinal_position;
+            """)
+            columnas_muerte = [row[0] for row in cur.fetchall()]
+            print("Columnas en muerte_destetados:", columnas_muerte)
+
+        except Exception as e:
+            print("Error al verificar estructura de tablas:", e)
+            # Si hay error, hacemos rollback para limpiar la transacción
+            conn.rollback()
+
+        # 🔹 Total Reproductores (solo de la tabla reproductores)
+        cur.execute("""
+            SELECT COALESCE(SUM(hembras + machos), 0)
+            FROM reproductores;
+        """)
+        total_reproductores = cur.fetchone()[0]
+
+        # 🔹 Total Destetados - USANDO LOS NOMBRES CORRECTOS: destetados_hembras y destetados_machos
+        cur.execute("""
+            SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
+            FROM destetes;
+        """)
+        total_destetados = cur.fetchone()[0]
+
+        # 🔹 Total Muertos - Verificamos si la tabla muerte_destetados tiene datos
+        total_muertos = 0
+        try:
+            cur.execute("SELECT COUNT(*) FROM muerte_destetados")
+            if cur.fetchone()[0] > 0:
+                # Si la tabla existe y tiene datos, intentamos sumar
                 cur.execute("""
-                    SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos), 0)
-                    FROM partos;
+                    SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0)
+                    FROM muerte_destetados;
                 """)
-                nacidos_actuales = cur.fetchone()[0]
-            elif 'nacidos_hembras' in columnas_partos and 'nacidos_machos' in columnas_partos:
-                cur.execute("""
-                    SELECT COALESCE(SUM(nacidos_hembras + nacidos_machos), 0)
-                    FROM partos;
-                """)
-                nacidos_actuales = cur.fetchone()[0]
-    except Exception as e:
-        print("Error al consultar partos:", e)
+                total_muertos = cur.fetchone()[0]
+        except:
+            total_muertos = 0
+            conn.rollback()  # Limpiar transacción en caso de error
+
+        # 🔹 Ingresos totales de ventas
+        ingresos_totales = 0
+        try:
+            cur.execute("SELECT COALESCE(SUM(costo_total), 0) FROM ventas")
+            ingresos_totales = cur.fetchone()[0]
+        except:
+            ingresos_totales = 0
+            conn.rollback()  # Limpiar transacción en caso de error
+
+        # 🔹 Datos por galpón y poza - CON NOMBRES DE COLUMNAS CORRECTOS: destetados_hembras y destetados_machos
+        cur.execute("""
+            SELECT 
+                r.galpon,
+                r.poza,
+                COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
+                COALESCE(SUM(d.destetados_hembras + d.destetados_machos), 0) AS destetados,
+                COALESCE(SUM(md.muertos_hembras + md.muertos_machos), 0) AS muertos
+            FROM reproductores r
+            LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
+            LEFT JOIN muerte_destetados md ON r.galpon = md.galpon AND r.poza = md.poza
+            GROUP BY r.galpon, r.poza
+            ORDER BY r.galpon, r.poza;
+        """)
+        rows = cur.fetchall()
+
+        # Estructura de datos compatible con el template
+        datos_galpones = {}
+        total_reproductores_por_galpon = {}
+        total_destetados_por_galpon = {}
+        total_muertos_por_galpon = {}
+
+        for row in rows:
+            galpon = row[0]
+            poza = row[1]
+            reproductores = row[2]
+            destetados = row[3]
+            muertos = row[4]
+
+            if galpon not in datos_galpones:
+                datos_galpones[galpon] = {}
+                total_reproductores_por_galpon[galpon] = 0
+                total_destetados_por_galpon[galpon] = 0
+                total_muertos_por_galpon[galpon] = 0
+
+            datos_galpones[galpon][poza] = {
+                'reproductores': reproductores,
+                'destetados': destetados,
+                'muertos': muertos
+            }
+
+            total_reproductores_por_galpon[galpon] += reproductores
+            total_destetados_por_galpon[galpon] += destetados
+            total_muertos_por_galpon[galpon] += muertos
+
+        # Para nacidos actuales, verificamos si existe la tabla partos
         nacidos_actuales = 0
+        try:
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'partos'
+                );
+            """)
+            partos_existe = cur.fetchone()[0]
+            
+            if partos_existe:
+                # Verificar columnas de partos
+                cur.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'partos' 
+                    ORDER BY ordinal_position;
+                """)
+                columnas_partos = [row[0] for row in cur.fetchall()]
+                print("Columnas en partos:", columnas_partos)
+                
+                # Consulta segura para nacidos (usando nombres de columnas comunes)
+                if 'crias_nacidas_hembras' in columnas_partos and 'crias_nacidas_machos' in columnas_partos:
+                    cur.execute("""
+                        SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos), 0)
+                        FROM partos;
+                    """)
+                    nacidos_actuales = cur.fetchone()[0]
+                elif 'nacidos_hembras' in columnas_partos and 'nacidos_machos' in columnas_partos:
+                    cur.execute("""
+                        SELECT COALESCE(SUM(nacidos_hembras + nacidos_machos), 0)
+                        FROM partos;
+                    """)
+                    nacidos_actuales = cur.fetchone()[0]
+        except Exception as e:
+            print("Error al consultar partos:", e)
+            nacidos_actuales = 0
+            conn.rollback()  # Limpiar transacción en caso de error
 
-    cur.close()
-    conn.close()
+        cur.close()
+        conn.close()
 
-    # 🔎 Depuración
-    print("=== RESUMEN GENERAL ===")
-    print("Total Reproductores:", total_reproductores)
-    print("Nacidos actuales:", nacidos_actuales)
-    print("Total Destetados:", total_destetados)
-    print("Total Muertos:", total_muertos)
-    print("Ingresos Totales:", ingresos_totales)
-    print("Datos por Galpón:", datos_galpones)
+        # 🔎 Depuración
+        print("=== RESUMEN GENERAL ===")
+        print("Total Reproductores:", total_reproductores)
+        print("Nacidos actuales:", nacidos_actuales)
+        print("Total Destetados:", total_destetados)
+        print("Total Muertos:", total_muertos)
+        print("Ingresos Totales:", ingresos_totales)
+        print("Datos por Galpón:", datos_galpones)
 
-    return render_template(
-        "index.html",
-        total_reproductores=total_reproductores,
-        nacidos_actuales=nacidos_actuales,
-        total_destetados=total_destetados,
-        total_muertos=total_muertos,
-        ingresos_totales=ingresos_totales,
-        datos_galpones=datos_galpones,
-        total_reproductores_por_galpon=total_reproductores_por_galpon,
-        total_destetados_por_galpon=total_destetados_por_galpon,
-        total_muertos_por_galpon=total_muertos_por_galpon
-    )
+        return render_template(
+            "index.html",
+            total_reproductores=total_reproductores,
+            nacidos_actuales=nacidos_actuales,
+            total_destetados=total_destetados,
+            total_muertos=total_muertos,
+            ingresos_totales=ingresos_totales,
+            datos_galpones=datos_galpones,
+            total_reproductores_por_galpon=total_reproductores_por_galpon,
+            total_destetados_por_galpon=total_destetados_por_galpon,
+            total_muertos_por_galpon=total_muertos_por_galpon
+        )
+
+    except Exception as e:
+        print("Error general en la función index:", e)
+        # Asegurarse de cerrar la conexión en caso de error
+        try:
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
+        except:
+            pass
+        
+        # Devolver datos vacíos pero renderizar el template
+        return render_template(
+            "index.html",
+            total_reproductores=0,
+            nacidos_actuales=0,
+            total_destetados=0,
+            total_muertos=0,
+            ingresos_totales=0,
+            datos_galpones={},
+            total_reproductores_por_galpon={},
+            total_destetados_por_galpon={},
+            total_muertos_por_galpon={}
+        )
+
+
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
