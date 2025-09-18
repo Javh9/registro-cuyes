@@ -245,103 +245,69 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
-@app.route("/")
+@app.route('/')
 def index():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 🔹 Total Reproductores (solo de la tabla reproductores)
+    # Consulta todos los datos necesarios de tus tablas
     cur.execute("""
-        SELECT COALESCE(SUM(hembras + machos), 0)
-        FROM reproductores;
-    """)
-    total_reproductores = cur.fetchone()[0]
-
-    # 🔹 Total Nacidos actuales = nacidos - destetados (de todas las tablas)
-    cur.execute("""
-        SELECT 
-            COALESCE(SUM(p.nacidos), 0) - COALESCE(SUM(d.destetados_hembras + d.destetados_machos), 0)
-        FROM partos p
-        LEFT JOIN destetes d ON p.galpon = d.galpon AND p.poza = d.poza;
-    """)
-    nacidos_actuales = cur.fetchone()[0]
-
-    # 🔹 Total Destetados
-    cur.execute("""
-        SELECT COALESCE(SUM(destetados_hembras + destetados_machos), 0)
-        FROM destetes;
-    """)
-    total_destetados = cur.fetchone()[0]
-
-    # 🔹 Total Muertos (partos + destetados)
-    cur.execute("""
-        SELECT 
-            COALESCE(SUM(p.muertos_bebes + p.muertos_reproductores), 0) +
-            COALESCE(SUM(md.muertos_hembras + md.muertos_machos), 0)
-        FROM partos p
-        LEFT JOIN muertes_destetados md ON p.galpon = md.galpon AND p.poza = md.poza;
-    """)
-    total_muertos = cur.fetchone()[0]
-
-    # 🔹 Datos por galpón y poza (usando LEFT JOIN y sumas)
-    cur.execute("""
-        SELECT 
-            r.galpon,
-            r.poza,
-            COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
-            COALESCE(SUM(p.nacidos), 0) AS nacidos,
-            COALESCE(SUM(d.destetados_hembras + d.destetados_machos), 0) AS destetados,
-            COALESCE(SUM(p.muertos_bebes + p.muertos_reproductores), 0) +
-            COALESCE(SUM(md.muertos_hembras + md.muertos_machos), 0) AS muertos
-        FROM reproductores r
-        LEFT JOIN partos p ON r.galpon = p.galpon AND r.poza = p.poza
-        LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
-        LEFT JOIN muertes_destetados md ON r.galpon = md.galpon AND r.poza = md.poza
-        GROUP BY r.galpon, r.poza
-        ORDER BY r.galpon, r.poza;
+        SELECT galpon, poza, reproductores, nacidos, destetados, muertos
+        FROM resumen_cuyes
+        ORDER BY galpon, poza
     """)
     rows = cur.fetchall()
+    cur.close()
+    conn.close()
 
+    # Preparar la estructura de datos por galpón
     datos_galpones = {}
     total_reproductores_por_galpon = {}
+    total_reproductores = 0
+    total_nacidos_actuales = 0
+    total_destetados = 0
+    total_muertos = 0
 
     for galpon, poza, reproductores, nacidos, destetados, muertos in rows:
+        # Agregar galpón si no existe
         if galpon not in datos_galpones:
             datos_galpones[galpon] = []
             total_reproductores_por_galpon[galpon] = 0
 
-        poza_data = {
+        datos_galpones[galpon].append({
+            'poza': poza,
             'reproductores': reproductores,
             'nacidos': nacidos,
             'destetados': destetados,
-            'nacidos_vigentes': max(nacidos - destetados, 0),
             'muertos': muertos
-        }
+        })
 
-        datos_galpones[galpon].append((poza, poza_data))
+        # Totales por galpón
         total_reproductores_por_galpon[galpon] += reproductores
 
-    cur.close()
-    conn.close()
+        # Totales generales
+        total_reproductores += reproductores
+        total_nacidos_actuales += nacidos
+        total_destetados += destetados
+        total_muertos += muertos
 
-    # 🔎 Depuración
-    print("=== RESUMEN GENERAL ===")
-    print("Total Reproductores:", total_reproductores)
-    print("Nacidos actuales:", nacidos_actuales)
-    print("Total Destetados:", total_destetados)
-    print("Total Muertos:", total_muertos)
-    print("Datos por Galpón:", datos_galpones)
+    # Ajuste de formato para el template
+    # Cada 'poza' se pasa como una tupla (id, dict)
+    datos_galpones_formato = {}
+    for galpon, pozas in datos_galpones.items():
+        datos_galpones_formato[galpon] = []
+        for p in pozas:
+            datos_galpones_formato[galpon].append((p['poza'], p))
 
     return render_template(
-        "index.html",
+        'index.html',
         total_reproductores=total_reproductores,
-        nacidos_actuales=nacidos_actuales,
+        nacidos_actuales=total_nacidos_actuales,
         total_destetados=total_destetados,
         total_muertos=total_muertos,
-        datos_galpones=datos_galpones,
+        datos_galpones=datos_galpones_formato,
         total_reproductores_por_galpon=total_reproductores_por_galpon
     )
-
 # Ruta para ingresar reproductores
 @app.route('/ingresar_reproductores', methods=['GET', 'POST'])
 def ingresar_reproductores():
