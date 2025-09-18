@@ -274,19 +274,48 @@ def index():
     """)
     total_destetados = cur.fetchone()[0]
 
-    # ✅ Cards por poza (nacidos - destetados), ordenadas
+    # ✅ Total Muertos (tabla muertes_destetados)
+    cur.execute("""
+        SELECT COALESCE(SUM(muertos), 0)
+        FROM muertes_destetados;
+    """)
+    total_muertos = cur.fetchone()[0]
+
+    # ✅ Datos por galpón y poza
     cur.execute("""
         SELECT 
+            p.galpon,
             p.poza,
-            COALESCE(SUM(p.nacidos), 0) 
-            - COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos) 
-                        FROM destetes d 
-                        WHERE d.poza = p.poza), 0) AS nacidos_vigentes
+            COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
+            COALESCE(SUM(p.nacidos), 0) AS nacidos,
+            COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos)
+                      FROM destetes d WHERE d.poza = p.poza), 0) AS destetados,
+            COALESCE((SELECT SUM(m.muertos) 
+                      FROM muertes_destetados m WHERE m.poza = p.poza), 0) AS muertos
         FROM partos p
-        GROUP BY p.poza
-        ORDER BY p.poza ASC;
+        LEFT JOIN reproductores r ON r.poza = p.poza
+        GROUP BY p.galpon, p.poza
+        ORDER BY p.galpon, p.poza;
     """)
-    cards_data = cur.fetchall()
+    galpones_data = cur.fetchall()
+
+    # Reorganizar datos en diccionario para el template
+    datos_galpones = {}
+    total_reproductores_por_galpon = {}
+
+    for galpon, poza, reproductores, nacidos, destetados, muertos in galpones_data:
+        if galpon not in datos_galpones:
+            datos_galpones[galpon] = []
+            total_reproductores_por_galpon[galpon] = 0
+
+        datos_galpones[galpon].append((poza, {
+            "reproductores": reproductores,
+            "nacidos": nacidos,
+            "destetados": destetados,
+            "muertos": muertos
+        }))
+
+        total_reproductores_por_galpon[galpon] += reproductores
 
     cur.close()
     conn.close()
@@ -296,14 +325,17 @@ def index():
     print("Total Reproductores:", total_reproductores)
     print("Nacidos actuales:", nacidos_actuales)
     print("Total Destetados:", total_destetados)
-    print("Cards:", cards_data)
+    print("Total Muertos:", total_muertos)
+    print("Datos Galpones:", datos_galpones)
 
     return render_template(
         "index.html",
         total_reproductores=total_reproductores,
         nacidos_actuales=nacidos_actuales,
         total_destetados=total_destetados,
-        cards_data=cards_data
+        total_muertos=total_muertos,
+        datos_galpones=datos_galpones,
+        total_reproductores_por_galpon=total_reproductores_por_galpon
     )
 
 # Ruta para ingresar reproductores
