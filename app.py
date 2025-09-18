@@ -274,48 +274,52 @@ def index():
     """)
     total_destetados = cur.fetchone()[0]
 
-    # ✅ Total Muertos (tabla muertes_destetados)
+    # ✅ Total Muertos (destetados + partos)
     cur.execute("""
-        SELECT COALESCE(SUM(muertos), 0)
+        SELECT COALESCE(SUM(muertos_hembras + muertos_machos), 0)
         FROM muertes_destetados;
     """)
-    total_muertos = cur.fetchone()[0]
+    muertos_destetados = cur.fetchone()[0]
 
-    # ✅ Datos por galpón y poza
+    cur.execute("""
+        SELECT COALESCE(SUM(muertos_bebes + muertos_reproductores), 0)
+        FROM partos;
+    """)
+    muertos_partos = cur.fetchone()[0]
+
+    total_muertos = muertos_destetados + muertos_partos
+
+    # ✅ Cards por galpón y poza
+    # Primero obtenemos los datos por galpón y poza
     cur.execute("""
         SELECT 
-            p.galpon,
-            p.poza,
-            COALESCE(SUM(r.hembras + r.machos), 0) AS reproductores,
-            COALESCE(SUM(p.nacidos), 0) AS nacidos,
-            COALESCE((SELECT SUM(d.destetados_hembras + d.destetados_machos)
-                      FROM destetes d WHERE d.poza = p.poza), 0) AS destetados,
-            COALESCE((SELECT SUM(m.muertos) 
-                      FROM muertes_destetados m WHERE m.poza = p.poza), 0) AS muertos
+            galpon,
+            poza,
+            COALESCE(SUM(nacidos), 0) AS nacidos,
+            COALESCE(SUM(destetados_hembras + destetados_machos), 0) AS destetados,
+            COALESCE(SUM(muertos_bebes + muertos_reproductores), 0) AS muertos
         FROM partos p
-        LEFT JOIN reproductores r ON r.poza = p.poza
-        GROUP BY p.galpon, p.poza
-        ORDER BY p.galpon, p.poza;
+        LEFT JOIN destetes d ON p.galpon = d.galpon AND p.poza = d.poza
+        GROUP BY galpon, poza
+        ORDER BY galpon, poza;
     """)
-    galpones_data = cur.fetchall()
+    rows = cur.fetchall()
 
-    # Reorganizar datos en diccionario para el template
     datos_galpones = {}
     total_reproductores_por_galpon = {}
 
-    for galpon, poza, reproductores, nacidos, destetados, muertos in galpones_data:
+    for galpon, poza, nacidos, destetados, muertos in rows:
         if galpon not in datos_galpones:
             datos_galpones[galpon] = []
             total_reproductores_por_galpon[galpon] = 0
-
+        # Guardamos los datos de la poza
         datos_galpones[galpon].append((poza, {
-            "reproductores": reproductores,
-            "nacidos": nacidos,
-            "destetados": destetados,
-            "muertos": muertos
+            'reproductores': nacidos + destetados,  # opcional: puedes usar otra lógica
+            'nacidos': nacidos,
+            'destetados': destetados,
+            'muertos': muertos
         }))
-
-        total_reproductores_por_galpon[galpon] += reproductores
+        total_reproductores_por_galpon[galpon] += nacidos + destetados
 
     cur.close()
     conn.close()
@@ -326,7 +330,7 @@ def index():
     print("Nacidos actuales:", nacidos_actuales)
     print("Total Destetados:", total_destetados)
     print("Total Muertos:", total_muertos)
-    print("Datos Galpones:", datos_galpones)
+    print("Datos por galpón:", datos_galpones)
 
     return render_template(
         "index.html",
