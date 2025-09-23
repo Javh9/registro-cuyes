@@ -179,6 +179,18 @@
             border-top: 1px solid #e3e6f0;
         }
         
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
@@ -195,7 +207,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <i class="fas fa-paw me-2"></i>
                 <span class="fw-bold">Registro de Cuyes</span>
             </a>
@@ -223,12 +235,12 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar CORREGIDO -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
+                            <a class="nav-link active" href="/">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
@@ -261,7 +273,8 @@
                             <a class="nav-link" href="/registrar_gastos">
                                 <i class="fas fa-receipt"></i> Gastos
                             </a>
-                        </li><a href="/ventas">
+                        </li>
+                        <!-- CORREGIDO: Eliminada la etiqueta <a> suelta -->
                         <li class="nav-item">
                             <a class="nav-link" href="/analisis_datos">
                                 <i class="fas fa-chart-bar"></i> Análisis
@@ -364,13 +377,13 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Mortalidad</div>
+                                            Ingresos Totales</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {{ total_muertos }}
+                                            S/ {{ "%.2f"|format(ingresos_totales) }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-skull fa-2x text-gray-300"></i>
+                                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -386,6 +399,7 @@
                                 <h6 class="m-0 font-weight-bold text-primary">Resumen por Galpones y Pozas</h6>
                             </div>
                             <div class="card-body">
+                                {% if datos_galpones %}
                                 <div class="row">
                                     {% for galpon in datos_galpones %}
                                     <div class="col-md-6 col-lg-4 mb-4">
@@ -396,7 +410,7 @@
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between mb-3">
                                                     <span class="fw-bold">Reproductores:</span>
-                                                    <span class="badge bg-primary">{{ total_reproductores_por_galpon[galpon] }}</span>
+                                                    <span class="badge bg-primary">{{ total_reproductores_por_galpon.get(galpon, 0) }}</span>
                                                 </div>
                                                 
                                                 {% for poza in datos_galpones[galpon] %}
@@ -405,11 +419,9 @@
                                                         <span class="fw-medium">Poza {{ poza }}:</span>
                                                     </div>
                                                     <div class="ms-3">
-                                                        <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza]['reproductores'] }}</small><br>
-                                                        <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza]['nacidos'] }}</small><br>
-                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza]['destetados'] }}</small><br>
-                                                        <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza]['muertos'] }}</small>
-                                                            
+                                                        <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza].get('reproductores', 0) }}</small><br>
+                                                        <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza].get('nacidos', 0) }}</small><br>
+                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza].get('destetados', 0) }}</small>
                                                     </div>
                                                 </div>
                                                 {% endfor %}
@@ -418,6 +430,16 @@
                                     </div>
                                     {% endfor %}
                                 </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <h4>No hay datos disponibles</h4>
+                                    <p>Comienza registrando algunos reproductores para ver la información aquí.</p>
+                                    <a href="/ingresar_reproductores" class="btn btn-primary mt-3">
+                                        <i class="fas fa-plus-circle me-1"></i> Registrar Primeros Reproductores
+                                    </a>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -491,7 +513,40 @@
                     card.style.transform = 'translateY(0)';
                 });
             });
+
+            // Mostrar notificaciones flash de Flask
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        showFlashMessage('{{ message }}', '{{ category }}');
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         });
+
+        function showFlashMessage(message, category) {
+            // Crear elemento de alerta
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${category} alert-dismissible fade show`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '80px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
     </script>
 </body>
 </html>
