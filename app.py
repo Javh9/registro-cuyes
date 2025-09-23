@@ -7,6 +7,7 @@ import pandas as pd
 from urllib.parse import urlparse
 import io
 from sklearn.linear_model import LinearRegression
+from collections import OrderedDict
 import numpy as np
 
 # Inicializar la aplicación Flask
@@ -245,6 +246,8 @@ except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
 # Ruta principal
+
+
 @app.route("/")
 def index():
     try:
@@ -270,10 +273,9 @@ def index():
             print("Error total_destetados:", e)
             total_destetados = 0
 
-        # Total nacidos (suma inteligente según columnas disponibles en partos)
+        # Total nacidos
         total_nacidos = 0
         try:
-            # verificar existencia tabla partos
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'partos');")
             if cur.fetchone()[0]:
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
@@ -286,7 +288,6 @@ def index():
                 elif 'crias_nacidas_hembras' in parto_cols and 'crias_nacidas_machos' in parto_cols:
                     cur.execute("SELECT COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos),0) FROM partos;")
                 else:
-                    # buscar alguna columna sospechosa
                     columna_nacidos = None
                     for c in parto_cols:
                         if any(k in c.lower() for k in ('nac', 'cria', 'bebe', 'parto')) and not c.lower().startswith('fecha'):
@@ -295,7 +296,6 @@ def index():
                     if columna_nacidos:
                         cur.execute(f"SELECT COALESCE(SUM({columna_nacidos}),0) FROM partos;")
                     else:
-                        # fallback: contar filas si no hay columnas numéricas de nacidos
                         cur.execute("SELECT COUNT(*) FROM partos;")
                 total_nacidos = cur.fetchone()[0] or 0
         except Exception as e:
@@ -303,20 +303,18 @@ def index():
             conn.rollback()
             total_nacidos = 0
 
-        # nacidos actuales que muestran en la tarjeta: nacidos - destetados
+        # Nacidos actuales
         nacidos_actuales = total_nacidos - total_destetados
 
-        # Total muertos (sumar partos.muertos_* + muertes_destetados si existe)
+        # Total muertos
         total_muertos = 0
         try:
             muertos_partos = 0
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'partos');")
             if cur.fetchone()[0]:
-                # decidir columnas de muerte en partos
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
                 parto_cols = [r[0] for r in cur.fetchall()]
                 if 'muertos_bebes' in parto_cols or 'muertos_reproductores' in parto_cols:
-                    # use those if exist (tolerante a ausencia sumando 0)
                     expr = []
                     if 'muertos_bebes' in parto_cols:
                         expr.append('COALESCE(SUM(muertos_bebes),0)')
@@ -325,11 +323,9 @@ def index():
                     if expr:
                         cur.execute("SELECT " + " + ".join(expr) + " FROM partos;")
                         muertos_partos = cur.fetchone()[0] or 0
-            # muertes en destetados
             muertos_dest = 0
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'muertes_destetados');")
             if cur.fetchone()[0]:
-                # comprobar columnas
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'muertes_destetados';")
                 md_cols = [r[0] for r in cur.fetchall()]
                 if 'muertos_hembras' in md_cols and 'muertos_machos' in md_cols:
@@ -344,19 +340,16 @@ def index():
         # -----------------------
         # Datos por galpón / poza
         # -----------------------
-        # 1) Reproductores por galpón/poza — obtener el registro más reciente por galpon+poza.
-        reproductores_data = {}
+        reproductores_data, nacidos_data, destetados_data, muertos_data = {}, {}, {}, {}
+
+        # Reproductores
         try:
-            # obtener columnas de reproductores para detectar columna fecha
             cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'reproductores';")
             repro_cols = [r[0] for r in cur.fetchall()]
-
-            # posibles nombres de la columna fecha (ajusta si tu DB usa otro nombre)
             posibles_fecha = ['fecha_ingreso', 'fecha_registro', 'created_at', 'tiempo_reproductores', 'fecha', 'fecha_creacion']
             fecha_col = next((c for c in posibles_fecha if c in repro_cols), None)
 
             if fecha_col:
-                # usar la columna fecha para coger el último registro por galpon/poza
                 cur.execute(f"""
                     SELECT r.galpon, r.poza, (r.hembras + r.machos) as cantidad
                     FROM reproductores r
@@ -371,7 +364,6 @@ def index():
                     ORDER BY r.galpon, r.poza;
                 """)
             else:
-                # fallback: usar el registro con MAX(id) por galpon/poza
                 cur.execute("""
                     SELECT r.galpon, r.poza, (r.hembras + r.machos) as cantidad
                     FROM reproductores r
@@ -385,25 +377,19 @@ def index():
                     AND r.id = ult.maxid
                     ORDER BY r.galpon, r.poza;
                 """)
-
             for row in cur.fetchall():
-                galpon = str(row[0])
-                poza = str(row[1])
-                cantidad = int(row[2] or 0)
+                galpon, poza, cantidad = str(row[0]), str(row[1]), int(row[2] or 0)
                 reproductores_data.setdefault(galpon, {})[poza] = cantidad
         except Exception as e:
             print("Error reproductores_data:", e)
             conn.rollback()
-            reproductores_data = {}
 
-        # 2) Nacidos por galpón/poza (similar detección de columnas)
-        nacidos_data = {}
+        # Nacidos
         try:
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'partos');")
             if cur.fetchone()[0]:
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
                 parto_cols = [r[0] for r in cur.fetchall()]
-
                 if 'nacidos' in parto_cols:
                     cur.execute("SELECT galpon, poza, COALESCE(SUM(nacidos),0) FROM partos GROUP BY galpon, poza ORDER BY galpon, poza;")
                 elif 'nacidos_hembras' in parto_cols and 'nacidos_machos' in parto_cols:
@@ -411,7 +397,6 @@ def index():
                 elif 'crias_nacidas_hembras' in parto_cols and 'crias_nacidas_machos' in parto_cols:
                     cur.execute("SELECT galpon, poza, COALESCE(SUM(crias_nacidas_hembras + crias_nacidas_machos),0) FROM partos GROUP BY galpon, poza ORDER BY galpon, poza;")
                 else:
-                    # buscar alguna columna sospechosa
                     columna_nacidos = None
                     for c in parto_cols:
                         if any(k in c.lower() for k in ('nac', 'cria', 'bebe', 'parto')) and not c.lower().startswith('fecha'):
@@ -421,40 +406,28 @@ def index():
                         cur.execute(f"SELECT galpon, poza, COALESCE(SUM({columna_nacidos}),0) FROM partos GROUP BY galpon, poza ORDER BY galpon, poza;")
                     else:
                         cur.execute("SELECT galpon, poza, COUNT(*) FROM partos GROUP BY galpon, poza ORDER BY galpon, poza;")
-
                 for r in cur.fetchall():
-                    galpon = str(r[0])
-                    poza = str(r[1])
-                    cantidad = int(r[2] or 0)
+                    galpon, poza, cantidad = str(r[0]), str(r[1]), int(r[2] or 0)
                     nacidos_data.setdefault(galpon, {})[poza] = cantidad
         except Exception as e:
             print("Error nacidos_data:", e)
             conn.rollback()
-            nacidos_data = {}
 
-        # 3) Destetados por galpón/poza
-        destetados_data = {}
+        # Destetados
         try:
             cur.execute("""
                 SELECT galpon, poza, COALESCE(SUM(destetados_hembras + destetados_machos),0)
-                FROM destetes
-                GROUP BY galpon, poza
-                ORDER BY galpon, poza;
+                FROM destetes GROUP BY galpon, poza ORDER BY galpon, poza;
             """)
             for r in cur.fetchall():
-                galpon = str(r[0])
-                poza = str(r[1])
-                cantidad = int(r[2] or 0)
+                galpon, poza, cantidad = str(r[0]), str(r[1]), int(r[2] or 0)
                 destetados_data.setdefault(galpon, {})[poza] = cantidad
         except Exception as e:
             print("Error destetados_data:", e)
             conn.rollback()
-            destetados_data = {}
 
-        # 4) Muertos por galpón/poza (partos + muertes_destetados si existe)
-        muertos_data = {}
+        # Muertos
         try:
-            # muertos desde partos
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'partos');")
             if cur.fetchone()[0]:
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'partos';")
@@ -468,10 +441,9 @@ def index():
                     if expr:
                         cur.execute("SELECT galpon, poza, " + " + ".join(expr) + " FROM partos GROUP BY galpon, poza ORDER BY galpon, poza;")
                         for r in cur.fetchall():
-                            galpon = str(r[0]); poza = str(r[1]); cantidad = int(r[2] or 0)
+                            galpon, poza, cantidad = str(r[0]), str(r[1]), int(r[2] or 0)
                             muertos_data.setdefault(galpon, {})[poza] = muertos_data.get(galpon, {}).get(poza, 0) + cantidad
 
-            # muertos desde muertes_destetados (si existe)
             cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'muertes_destetados');")
             if cur.fetchone()[0]:
                 cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'muertes_destetados';")
@@ -479,39 +451,34 @@ def index():
                 if 'muertos_hembras' in md_cols and 'muertos_machos' in md_cols:
                     cur.execute("SELECT galpon, poza, COALESCE(SUM(muertos_hembras + muertos_machos),0) FROM muertes_destetados GROUP BY galpon, poza ORDER BY galpon, poza;")
                     for r in cur.fetchall():
-                        galpon = str(r[0]); poza = str(r[1]); cantidad = int(r[2] or 0)
+                        galpon, poza, cantidad = str(r[0]), str(r[1]), int(r[2] or 0)
                         muertos_data.setdefault(galpon, {})[poza] = muertos_data.get(galpon, {}).get(poza, 0) + cantidad
         except Exception as e:
             print("Error muertos_data:", e)
             conn.rollback()
-            muertos_data = {}
 
         # -----------------------
-        # Combinar TODO en datos_galpones y totales por galpón
+        # Combinar y ORDENAR
         # -----------------------
-        datos_galpones = {}
-        total_reproductores_por_galpon = {}
-        total_nacidos_por_galpon = {}
-        total_destetados_por_galpon = {}
+        datos_galpones = OrderedDict()
+        total_reproductores_por_galpon, total_nacidos_por_galpon, total_destetados_por_galpon = {}, {}, {}
 
-        # union de todas las fuentes de galpones/pozas
         fuentes = [reproductores_data, nacidos_data, destetados_data, muertos_data]
         all_galpones = set()
         for src in fuentes:
             all_galpones.update(src.keys())
 
-        for galpon in all_galpones:
-            datos_galpones[galpon] = {}
+        for galpon in sorted(all_galpones, key=lambda x: int(x) if x.isdigit() else x):
+            datos_galpones[galpon] = OrderedDict()
             total_reproductores_por_galpon[galpon] = 0
             total_nacidos_por_galpon[galpon] = 0
             total_destetados_por_galpon[galpon] = 0
 
-            # todas las pozas de este galpon (union)
             pozas = set()
             for src in fuentes:
                 pozas.update(src.get(galpon, {}).keys())
 
-            for poza in sorted(pozas, key=lambda x: (int(x) if x.isdigit() else x)):
+            for poza in sorted(pozas, key=lambda x: int(x) if x.isdigit() else x):
                 r = reproductores_data.get(galpon, {}).get(poza, 0)
                 n = nacidos_data.get(galpon, {}).get(poza, 0)
                 d = destetados_data.get(galpon, {}).get(poza, 0)
@@ -532,16 +499,15 @@ def index():
         cur.close()
         conn.close()
 
-        # Depuración en logs
+        # Logs
         print("=== RESUMEN GENERAL ===")
         print("Total Reproductores:", total_reproductores)
         print("Total Nacidos:", total_nacidos)
-        print("Nacidos actuales (nacidos - destetados):", nacidos_actuales)
+        print("Nacidos actuales:", nacidos_actuales)
         print("Total Destetados:", total_destetados)
         print("Total Muertos:", total_muertos)
         print("Datos por Galpón:", datos_galpones)
 
-        # Renderizar (paso múltiples nombres por compatibilidad con distintas plantillas)
         return render_template(
             "index.html",
             total_reproductores=total_reproductores,
@@ -557,7 +523,6 @@ def index():
 
     except Exception as e:
         print("Error general en la función index:", e)
-        # asegurar que la página carga aunque haya error
         return render_template(
             "index.html",
             total_reproductores=0,
