@@ -1085,60 +1085,54 @@ def registrar_gastos():
     return render_template('registrar_gastos.html')
 
 # Ruta para ver análisis de datos
+# Ruta para ver análisis de datos - CORREGIDA
 @app.route('/analisis_datos')
 def analisis_datos():
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute('''
-                    SELECT 
-                        r.id AS reproductor_id,
-                        r.galpon AS galpon_reproductor,
-                        r.poza AS poza_reproductor,
-                        r.hembras AS hembras_reproductor,
-                        r.machos AS machos_reproductor,
-                        r.tiempo_reproductores,
-                        r.fecha_ingreso,
-                        p.id AS parto_id,
-                        p.numero_parto,
-                        p.nacidos,
-                        p.muertos_bebes,
-                        p.muertos_reproductores,
-                        p.fecha_nacimiento,
-                        d.id AS destete_id,
-                        d.destetados_hembras,
-                        d.destetados_machos,
-                        d.fecha_destete,
-                        m.id AS muerte_id,
-                        m.muertos_hembras AS muertes_hembras,
-                        m.muertos_machos AS muertes_machos,
-                        m.fecha_muerte,
-                        vd.id AS venta_destetado_id,
-                        vd.hembras_vendidas,
-                        vd.machos_vendidos,
-                        vd.costo_venta AS costo_venta_destetados,
-                        vd.fecha_venta AS fecha_venta_destetados,
-                        vc.id AS venta_descarte_id,
-                        vc.cuyes_vendidos,
-                        vc.costo_venta AS costo_venta_descarte,
-                        vc.fecha_venta AS fecha_venta_descarte
-                    FROM reproductores r
-                    LEFT JOIN partos p ON r.galpon = p.galpon AND r.poza = p.poza
-                    LEFT JOIN destetes d ON r.galpon = d.galpon AND r.poza = d.poza
-                    LEFT JOIN muertes_destetados m ON r.galpon = m.galpon AND r.poza = m.poza
-                    LEFT JOIN ventas_destetados vd ON r.galpon = vd.galpon AND r.poza = vd.poza
-                    LEFT JOIN ventas_descarte vc ON r.galpon = vc.galpon AND r.poza = vc.poza
-                ''')
-                datos = cursor.fetchall()
+                # Obtener datos de reproductores
+                cursor.execute('SELECT * FROM reproductores ORDER BY galpon, poza')
+                reproductores = cursor.fetchall()
 
-                cursor.execute('SELECT descripcion, monto, tipo, fecha_gasto FROM gastos')
+                # Obtener datos de partos
+                cursor.execute('SELECT * FROM partos ORDER BY galpon, poza, fecha_nacimiento')
+                partos = cursor.fetchall()
+
+                # Obtener datos de destetes
+                cursor.execute('SELECT * FROM destetes ORDER BY galpon, poza, fecha_destete')
+                destetes = cursor.fetchall()
+
+                # Obtener datos de muertes de destetados
+                cursor.execute('SELECT * FROM muertes_destetados ORDER BY galpon, poza, fecha_muerte')
+                muertes_destetados = cursor.fetchall()
+
+                # Obtener datos de ventas de destetados
+                cursor.execute('SELECT * FROM ventas_destetados ORDER BY galpon, poza, fecha_venta')
+                ventas_destetados = cursor.fetchall()
+
+                # Obtener datos de ventas de descarte
+                cursor.execute('SELECT * FROM ventas_descarte ORDER BY galpon, poza, fecha_venta')
+                ventas_descarte = cursor.fetchall()
+
+                # Obtener datos de gastos
+                cursor.execute('SELECT * FROM gastos ORDER BY fecha_gasto DESC')
                 gastos = cursor.fetchall()
 
-        return render_template('analisis_datos.html', datos=datos, gastos=gastos)
-    except Exception as e:
-        flash(f'Ocurrió un error inesperado: {str(e)}', 'danger')
-        return render_template('error.html')
+        # Pasar los datos organizados por tabla
+        return render_template('analisis_datos.html', 
+                             reproductores=reproductores,
+                             partos=partos,
+                             destetes=destetes,
+                             muertes_destetados=muertes_destetados,
+                             ventas_destetados=ventas_destetados,
+                             ventas_descarte=ventas_descarte,
+                             gastos=gastos)
 
+    except Exception as e:
+        print(f"Error en análisis de datos: {e}")
+        flash(f'Ocurrió un error al cargar los datos: {str(e)}', 'danger')
+        return redirect(url_for('index'))
 # Ruta para ver el balance
 @app.route('/balance')
 def balance():
