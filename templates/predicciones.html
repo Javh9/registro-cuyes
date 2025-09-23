@@ -3,46 +3,609 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predicciones</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Predicciones - Sistema de Cuyes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --secondary: #858796;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-top: 0;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 70px;
+        }
+        
+        .sidebar .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 1rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.15);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .topbar {
+            height: 70px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: var(--dark);
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.35rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+            transform: translateY(-2px);
+            box-shadow: 0 0.15rem 0.75rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .stat-card {
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.primary { border-left-color: var(--primary); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.info { border-left-color: var(--info); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.danger { border-left-color: var(--danger); }
+        
+        .page-title {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+        
+        .prediction-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .prediction-positive {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .prediction-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .prediction-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-top: 1px solid #e3e6f0;
+        }
+        
+        .form-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .prediction-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: static;
+            }
+            
+            .topbar {
+                position: static;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="my-4">Predicciones</h1>
-
-        <!-- Formulario para ingresar el número de meses a predecir -->
-        <form method="POST" action="{{ url_for('predicciones') }}">
-            <div class="form-group">
-                <label for="meses_a_predecir">Número de meses a predecir:</label>
-                <input type="number" class="form-control" id="meses_a_predecir" name="meses_a_predecir" required>
+    <!-- Navbar IDÉNTICO al index -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-paw me-2"></i>
+                <span class="fw-bold">Registro de Cuyes</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> Administrador
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
-            <button type="submit" class="btn btn-primary">Predecir</button>
-        </form>
+        </div>
+    </nav>
 
-        <!-- Mostrar predicciones -->
-        {% if predicciones %}
-            <h2 class="my-4">Resultados de las Predicciones</h2>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Predicción de Mortalidad</th>
-                        <th>Predicción de Nacidos</th>
-                        <th>Predicción de Ganancias</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for prediccion in predicciones %}
-                        <tr>
-                            <td>{{ prediccion.mes }}</td>
-                            <td>{{ prediccion.prediccion_mortalidad | round(2) }}</td>
-                            <td>{{ prediccion.prediccion_nacimientos | round(2) }}</td>
-                            <td>{{ prediccion.prediccion_ganancias | round(2) }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar IDÉNTICO al index -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ingresar_reproductores">
+                                <i class="fas fa-egg"></i> Reproductores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_partos">
+                                <i class="fas fa-baby"></i> Partos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_destete">
+                                <i class="fas fa-child"></i> Destetes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_muertes_destetados">
+                                <i class="fas fa-skull"></i> Mortalidad
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ventas">
+                                <i class="fas fa-money-bill-wave"></i> Ventas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_gastos">
+                                <i class="fas fa-receipt"></i> Gastos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/analisis_datos">
+                                <i class="fas fa-chart-bar"></i> Análisis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/balance">
+                                <i class="fas fa-calculator"></i> Balance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/resultados">
+                                <i class="fas fa-chart-line"></i> Resultados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/predicciones">
+                                <i class="fas fa-crystal-ball"></i> Predicciones
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <h1 class="h2 page-title">
+                        <i class="fas fa-crystal-ball me-2"></i>Predicciones Inteligentes
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="/" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mensajes Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Formulario de Predicción -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h5 class="m-0"><i class="fas fa-magic me-2"></i>Configurar Predicción</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="predictionForm">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="meses_a_predecir" class="form-label">
+                                            <i class="fas fa-calendar-alt me-2"></i>Número de meses a predecir:
+                                        </label>
+                                        <input type="number" class="form-control" id="meses_a_predecir" 
+                                               name="meses_a_predecir" min="1" max="12" value="6" required>
+                                        <div class="form-text">
+                                            Selecciona cuántos meses en el futuro quieres predecir (1-12 meses)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-bolt me-1"></i> Generar Predicciones
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resultados de Predicciones -->
+                {% if predicciones %}
+                <!-- Resumen de Predicciones -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="prediction-card prediction-info">
+                            <div class="text-center">
+                                <i class="fas fa-baby fa-3x mb-3 opacity-75"></i>
+                                <h3>{{ predicciones|sum(attribute='prediccion_nacimientos')|round|int }}</h3>
+                                <p class="mb-0">Nacimientos Totales Previstos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="prediction-card prediction-warning">
+                            <div class="text-center">
+                                <i class="fas fa-skull fa-3x mb-3 opacity-75"></i>
+                                <h3>{{ predicciones|sum(attribute='prediccion_mortalidad')|round|int }}</h3>
+                                <p class="mb-0">Mortalidad Total Prevista</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="prediction-card prediction-positive">
+                            <div class="text-center">
+                                <i class="fas fa-money-bill-wave fa-3x mb-3 opacity-75"></i>
+                                <h3>S/ {{ predicciones|sum(attribute='prediccion_ganancias')|round(2) }}</h3>
+                                <p class="mb-0">Ganancias Totales Previstas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Predicciones -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="m-0"><i class="fas fa-chart-line me-2"></i>Visualización de Predicciones</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="predictionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla Detallada de Predicciones -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="m-0"><i class="fas fa-table me-2"></i>Detalle de Predicciones por Mes</h5>
+                        <span class="badge bg-primary prediction-badge">{{ predicciones|length }} meses proyectados</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mes</th>
+                                        <th>Predicción de Nacimientos</th>
+                                        <th>Predicción de Mortalidad</th>
+                                        <th>Predicción de Ganancias</th>
+                                        <th>Crecimiento Neto</th>
+                                        <th>Tendencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prediccion in predicciones %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ prediccion.mes }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ prediccion.prediccion_nacimientos | round(1) }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">{{ prediccion.prediccion_mortalidad | round(1) }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">S/ {{ prediccion.prediccion_ganancias | round(2) }}</span>
+                                        </td>
+                                        <td>
+                                            {% set crecimiento_neto = prediccion.prediccion_nacimientos - prediccion.prediccion_mortalidad %}
+                                            <span class="badge {% if crecimiento_neto > 0 %}bg-success{% else %}bg-warning{% endif %}">
+                                                {{ crecimiento_neto | round(1) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if loop.index > 1 %}
+                                                {% set prev_nacimientos = predicciones[loop.index-2].prediccion_nacimientos %}
+                                                {% set tendencia = ((prediccion.prediccion_nacimientos - prev_nacimientos) / prev_nacimientos * 100) if prev_nacimientos > 0 else 0 %}
+                                                <span class="badge {% if tendencia > 0 %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {{ tendencia | round(1) }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Base</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análisis y Recomendaciones -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="m-0"><i class="fas fa-lightbulb me-2"></i>Análisis y Recomendaciones</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set total_nacimientos = predicciones|sum(attribute='prediccion_nacimientos') %}
+                        {% set total_mortalidad = predicciones|sum(attribute='prediccion_mortalidad') %}
+                        {% set total_ganancias = predicciones|sum(attribute='prediccion_ganancias') %}
+                        {% set tasa_supervivencia = ((total_nacimientos - total_mortalidad) / total_nacimientos * 100) if total_nacimientos > 0 else 0 %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-chart-line me-2"></i>Resumen Predictivo</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Tasa de supervivencia proyectada:</strong> {{ tasa_supervivencia|round(1) }}%</li>
+                                        <li><strong>Crecimiento neto esperado:</strong> {{ (total_nacimientos - total_mortalidad)|round|int }} animales</li>
+                                        <li><strong>Ganancia promedio mensual:</strong> S/ {{ (total_ganancias / predicciones|length)|round(2) }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Recomendaciones</h6>
+                                    <ul class="mb-0">
+                                        {% if tasa_supervivencia > 90 %}
+                                            <li>Excelente tasa de supervivencia proyectada</li>
+                                        {% elif tasa_supervivencia > 80 %}
+                                            <li>Buena proyección, considere mejorar condiciones</li>
+                                        {% else %}
+                                            <li>Revise protocolos de manejo y salud</li>
+                                        {% endif %}
+                                        <li>Planifique recursos para el crecimiento esperado</li>
+                                        <li>Monitoree mensualmente las desviaciones</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Estado cuando no hay predicciones -->
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-crystal-ball fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Genera tu Primera Predicción</h4>
+                        <p class="text-muted">
+                            Ingresa el número de meses que deseas predecir y haz clic en "Generar Predicciones" 
+                            para ver proyecciones basadas en tus datos históricos.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </main>
+        </div>
     </div>
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Sistema de Registro de Cuyes &copy; 2023</span>
+                <span>v1.2.0</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animación para las tarjetas
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Gráfico de Predicciones
+            {% if predicciones %}
+            new Chart(document.getElementById('predictionChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ predicciones | map(attribute='mes') | list | tojson }},
+                    datasets: [
+                        {
+                            label: 'Nacimientos Previstos',
+                            data: {{ predicciones | map(attribute='prediccion_nacimientos') | list | tojson }},
+                            backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                            borderColor: 'rgba(28, 200, 138, 1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Mortalidad Prevista',
+                            data: {{ predicciones | map(attribute='prediccion_mortalidad') | list | tojson }},
+                            backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                            borderColor: 'rgba(231, 74, 59, 1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Ganancias Previstas (S/)',
+                            data: {{ predicciones | map(attribute='prediccion_ganancias') | list | tojson }},
+                            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                            borderColor: 'rgba(78, 115, 223, 1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Cantidad de Animales'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Ganancias (S/)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+            {% endif %}
+
+            // Validación del formulario
+            const form = document.getElementById('predictionForm');
+            form.addEventListener('submit', function(e) {
+                const meses = document.getElementById('meses_a_predecir').value;
+                if (meses < 1 || meses > 12) {
+                    e.preventDefault();
+                    alert('Por favor ingresa un número entre 1 y 12 meses.');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
