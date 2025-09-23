@@ -124,6 +124,7 @@
         .stat-card.success { border-left-color: var(--success); }
         .stat-card.info { border-left-color: var(--info); }
         .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.danger { border-left-color: var(--danger); }
         
         .page-title {
             color: var(--dark);
@@ -274,7 +275,6 @@
                                 <i class="fas fa-receipt"></i> Gastos
                             </a>
                         </li>
-                        <!-- CORREGIDO: Eliminada la etiqueta <a> suelta -->
                         <li class="nav-item">
                             <a class="nav-link" href="/analisis_datos">
                                 <i class="fas fa-chart-bar"></i> Análisis
@@ -312,7 +312,7 @@
                     </div>
                 </div>
 
-                <!-- Stats Cards -->
+                <!-- Stats Cards - ADAPTADO A TUS VARIABLES -->
                 <div class="row mb-4 dashboard-stats">
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card stat-card primary h-100">
@@ -353,14 +353,14 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card warning h-100">
+                        <div class="card stat-card info h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Destetados</div>
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Nacidos Actuales</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            {{ total_destetados }}
+                                            {{ nacidos_actuales }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -372,18 +372,18 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card stat-card info h-100">
+                        <div class="card stat-card danger h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Ingresos Totales</div>
+                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                            Total Muertos</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                            S/ {{ "%.2f"|format(ingresos_totales) }}
+                                            {{ total_muertos }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                                        <i class="fas fa-skull fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -391,7 +391,7 @@
                     </div>
                 </div>
 
-                <!-- Resumen por Galpones -->
+                <!-- Resumen por Galpones - ADAPTADO -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
@@ -421,7 +421,9 @@
                                                     <div class="ms-3">
                                                         <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza].get('reproductores', 0) }}</small><br>
                                                         <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza].get('nacidos', 0) }}</small><br>
-                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza].get('destetados', 0) }}</small>
+                                                        <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza].get('destetados', 0) }}</small><br>
+                                                        <small class="text-success">Nacidos Vigentes: {{ datos_galpones[galpon][poza].get('nacidos_vigentes', 0) }}</small><br>
+                                                        <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza].get('muertos', 0) }}</small>
                                                     </div>
                                                 </div>
                                                 {% endfor %}
