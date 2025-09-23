@@ -61,40 +61,47 @@ def entrenar_modelos():
                 ''')
                 ganancias_data = cursor.fetchall()
 
-        # Convertir a DataFrames de Pandas
-        df_mortalidad = pd.DataFrame(mortalidad_data, columns=['mes', 'total_muertes'])
-        df_nacimientos = pd.DataFrame(nacimientos_data, columns=['mes', 'total_nacidos'])
-        df_ganancias = pd.DataFrame(ganancias_data, columns=['mes', 'total_ganancias'])
+        # Verificar que hay suficientes datos para entrenar
+        if len(mortalidad_data) < 2:
+            print("⚠️  No hay suficientes datos de mortalidad para entrenar el modelo")
+            modelo_mortalidad = None
+        else:
+            # Convertir a DataFrames de Pandas
+            df_mortalidad = pd.DataFrame(mortalidad_data, columns=['mes', 'total_muertes'])
+            df_mortalidad['mes_num'] = (pd.to_datetime(df_mortalidad['mes']) - pd.to_datetime(df_mortalidad['mes'].min())).dt.days / 30
+            X_mortalidad = df_mortalidad[['mes_num']]
+            y_mortalidad = df_mortalidad['total_muertes']
+            modelo_mortalidad = LinearRegression()
+            modelo_mortalidad.fit(X_mortalidad, y_mortalidad)
 
-        # Convertir fechas a formato numérico (meses desde el inicio)
-        df_mortalidad['mes_num'] = (pd.to_datetime(df_mortalidad['mes']) - pd.to_datetime(df_mortalidad['mes'].min())).dt.days / 30
-        df_nacimientos['mes_num'] = (pd.to_datetime(df_nacimientos['mes']) - pd.to_datetime(df_nacimientos['mes'].min())).dt.days / 30
-        df_ganancias['mes_num'] = (pd.to_datetime(df_ganancias['mes']) - pd.to_datetime(df_ganancias['mes'].min())).dt.days / 30
+        if len(nacimientos_data) < 2:
+            print("⚠️  No hay suficientes datos de nacimientos para entrenar el modelo")
+            modelo_nacimientos = None
+        else:
+            df_nacimientos = pd.DataFrame(nacimientos_data, columns=['mes', 'total_nacidos'])
+            df_nacimientos['mes_num'] = (pd.to_datetime(df_nacimientos['mes']) - pd.to_datetime(df_nacimientos['mes'].min())).dt.days / 30
+            X_nacimientos = df_nacimientos[['mes_num']]
+            y_nacimientos = df_nacimientos['total_nacidos']
+            modelo_nacimientos = LinearRegression()
+            modelo_nacimientos.fit(X_nacimientos, y_nacimientos)
 
-        # Entrenar modelo de mortalidad
-        X_mortalidad = df_mortalidad[['mes_num']]
-        y_mortalidad = df_mortalidad['total_muertes']
-        modelo_mortalidad = LinearRegression()
-        modelo_mortalidad.fit(X_mortalidad, y_mortalidad)
-
-        # Entrenar modelo de nacimientos
-        X_nacimientos = df_nacimientos[['mes_num']]
-        y_nacimientos = df_nacimientos['total_nacidos']
-        modelo_nacimientos = LinearRegression()
-        modelo_nacimientos.fit(X_nacimientos, y_nacimientos)
-
-        # Entrenar modelo de ganancias
-        X_ganancias = df_ganancias[['mes_num']]
-        y_ganancias = df_ganancias['total_ganancias']
-        modelo_ganancias = LinearRegression()
-        modelo_ganancias.fit(X_ganancias, y_ganancias)
+        if len(ganancias_data) < 2:
+            print("⚠️  No hay suficientes datos de ganancias para entrenar el modelo")
+            modelo_ganancias = None
+        else:
+            df_ganancias = pd.DataFrame(ganancias_data, columns=['mes', 'total_ganancias'])
+            df_ganancias['mes_num'] = (pd.to_datetime(df_ganancias['mes']) - pd.to_datetime(df_ganancias['mes'].min())).dt.days / 30
+            X_ganancias = df_ganancias[['mes_num']]
+            y_ganancias = df_ganancias['total_ganancias']
+            modelo_ganancias = LinearRegression()
+            modelo_ganancias.fit(X_ganancias, y_ganancias)
 
         return modelo_mortalidad, modelo_nacimientos, modelo_ganancias
 
     except Exception as e:
         print(f"Error al entrenar los modelos: {str(e)}")
         return None, None, None
-
+    
 # Función para obtener la conexión a la base de datos CORREGIDA
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
@@ -1488,30 +1495,68 @@ def predicciones():
             # Entrenar los modelos
             modelo_mortalidad, modelo_nacimientos, modelo_ganancias = entrenar_modelos()
 
-            if modelo_mortalidad is None or modelo_nacimientos is None or modelo_ganancias is None:
-                flash('Error al entrenar los modelos predictivos.', 'danger')
+            # Verificar si los modelos se entrenaron correctamente
+            modelos_entrenados = 0
+            if modelo_mortalidad is not None:
+                modelos_entrenados += 1
+            if modelo_nacimientos is not None:
+                modelos_entrenados += 1
+            if modelo_ganancias is not None:
+                modelos_entrenados += 1
+
+            if modelos_entrenados == 0:
+                flash('No hay suficientes datos históricos para generar predicciones. Se necesitan al menos 2 meses de datos.', 'warning')
                 return redirect(url_for('predicciones'))
 
             # Crear fechas futuras para la predicción
             ultima_fecha = pd.to_datetime('now')  # Fecha actual
             fechas_futuras = pd.date_range(start=ultima_fecha, periods=meses_a_predecir, freq='M')
-            meses_futuros = (fechas_futuras - fechas_futuras.min()).days / 30
+            
+            predicciones = []
+            for i, fecha in enumerate(fechas_futuras):
+                mes_num = i + 1  # Meses futuros desde el presente
+                
+                prediccion = {
+                    'mes': fecha.strftime('%Y-%m'),
+                    'prediccion_mortalidad': 0,
+                    'prediccion_nacimientos': 0,
+                    'prediccion_ganancias': 0
+                }
+                
+                # Realizar predicciones solo si los modelos están disponibles
+                if modelo_mortalidad is not None:
+                    try:
+                        prediccion['prediccion_mortalidad'] = max(0, float(modelo_mortalidad.predict([[mes_num]])[0]))
+                    except:
+                        prediccion['prediccion_mortalidad'] = 0
+                
+                if modelo_nacimientos is not None:
+                    try:
+                        prediccion['prediccion_nacimientos'] = max(0, float(modelo_nacimientos.predict([[mes_num]])[0]))
+                    except:
+                        prediccion['prediccion_nacimientos'] = 0
+                
+                if modelo_ganancias is not None:
+                    try:
+                        prediccion['prediccion_ganancias'] = max(0, float(modelo_ganancias.predict([[mes_num]])[0]))
+                    except:
+                        prediccion['prediccion_ganancias'] = 0
+                
+                predicciones.append(prediccion)
 
-            # Realizar predicciones
-            predicciones_mortalidad = modelo_mortalidad.predict(meses_futuros.reshape(-1, 1))
-            predicciones_nacimientos = modelo_nacimientos.predict(meses_futuros.reshape(-1, 1))
-            predicciones_ganancias = modelo_ganancias.predict(meses_futuros.reshape(-1, 1))
-
-            # Crear un DataFrame con las predicciones
-            df_predicciones = pd.DataFrame({
-                'mes': fechas_futuras.strftime('%Y-%m'),
-                'prediccion_mortalidad': predicciones_mortalidad,
-                'prediccion_nacimientos': predicciones_nacimientos,
-                'prediccion_ganancias': predicciones_ganancias
-            })
-
-            # Convertir el DataFrame a una lista de diccionarios para la plantilla
-            predicciones = df_predicciones.to_dict('records')
+            # Informar al usuario sobre los modelos que se pudieron entrenar
+            mensaje_modelos = []
+            if modelo_nacimientos is not None:
+                mensaje_modelos.append("nacimientos")
+            if modelo_mortalidad is not None:
+                mensaje_modelos.append("mortalidad")
+            if modelo_ganancias is not None:
+                mensaje_modelos.append("ganancias")
+            
+            if mensaje_modelos:
+                flash(f'Predicciones generadas usando datos de: {", ".join(mensaje_modelos)}', 'success')
+            else:
+                flash('No se pudieron generar predicciones por falta de datos históricos.', 'warning')
 
             return render_template('predicciones.html', predicciones=predicciones)
 
@@ -1519,7 +1564,9 @@ def predicciones():
             flash(f'Ocurrió un error al realizar las predicciones: {str(e)}', 'danger')
             return redirect(url_for('predicciones'))
 
+    # Para GET requests, simplemente mostrar el formulario
     return render_template('predicciones.html')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

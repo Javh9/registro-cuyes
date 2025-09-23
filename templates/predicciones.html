@@ -180,6 +180,22 @@
             padding: 0.3rem 0.6rem;
         }
         
+        .model-status {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .model-available {
+            background-color: rgba(28, 200, 138, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        .model-unavailable {
+            background-color: rgba(108, 117, 125, 0.1);
+            border-left: 4px solid var(--secondary);
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
@@ -317,6 +333,16 @@
                     {% endif %}
                 {% endwith %}
 
+                <!-- Información sobre Requisitos de Datos -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Requisitos para Predicciones</h6>
+                    <p class="mb-0">
+                        Para generar predicciones precisas, necesitas al menos <strong>2 meses de datos históricos</strong> 
+                        en cada categoría (nacimientos, mortalidad, ventas). Los modelos se entrenan automáticamente 
+                        con los datos disponibles.
+                    </p>
+                </div>
+
                 <!-- Formulario de Predicción -->
                 <div class="card form-card">
                     <div class="card-header">
@@ -349,38 +375,101 @@
 
                 <!-- Resultados de Predicciones -->
                 {% if predicciones %}
+                <!-- Indicador de Modelos Disponibles -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-microchip me-2"></i>Estado de los Modelos Predictivos</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="model-status {% if predicciones.0.prediccion_nacimientos > 0 %}model-available{% else %}model-unavailable{% endif %}">
+                                        <i class="fas fa-baby me-2"></i>
+                                        <strong>Modelo de Nacimientos:</strong> 
+                                        {% if predicciones.0.prediccion_nacimientos > 0 %}
+                                            <span class="text-success">Disponible</span>
+                                        {% else %}
+                                            <span class="text-muted">Datos insuficientes</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="model-status {% if predicciones.0.prediccion_mortalidad > 0 %}model-available{% else %}model-unavailable{% endif %}">
+                                        <i class="fas fa-skull me-2"></i>
+                                        <strong>Modelo de Mortalidad:</strong> 
+                                        {% if predicciones.0.prediccion_mortalidad > 0 %}
+                                            <span class="text-success">Disponible</span>
+                                        {% else %}
+                                            <span class="text-muted">Datos insuficientes</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="model-status {% if predicciones.0.prediccion_ganancias > 0 %}model-available{% else %}model-unavailable{% endif %}">
+                                        <i class="fas fa-money-bill-wave me-2"></i>
+                                        <strong>Modelo de Ganancias:</strong> 
+                                        {% if predicciones.0.prediccion_ganancias > 0 %}
+                                            <span class="text-success">Disponible</span>
+                                        {% else %}
+                                            <span class="text-muted">Datos insuficientes</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Resumen de Predicciones -->
                 <div class="row mb-4">
                     <div class="col-md-4">
-                        <div class="prediction-card prediction-info">
+                        <div class="prediction-card {% if predicciones.0.prediccion_nacimientos > 0 %}prediction-info{% else %}prediction-warning{% endif %}">
                             <div class="text-center">
                                 <i class="fas fa-baby fa-3x mb-3 opacity-75"></i>
-                                <h3>{{ predicciones|sum(attribute='prediccion_nacimientos')|round|int }}</h3>
+                                <h3>
+                                    {% if predicciones.0.prediccion_nacimientos > 0 %}
+                                        {{ predicciones|sum(attribute='prediccion_nacimientos')|round|int }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </h3>
                                 <p class="mb-0">Nacimientos Totales Previstos</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="prediction-card prediction-warning">
+                        <div class="prediction-card {% if predicciones.0.prediccion_mortalidad > 0 %}prediction-warning{% else %}prediction-info{% endif %}">
                             <div class="text-center">
                                 <i class="fas fa-skull fa-3x mb-3 opacity-75"></i>
-                                <h3>{{ predicciones|sum(attribute='prediccion_mortalidad')|round|int }}</h3>
+                                <h3>
+                                    {% if predicciones.0.prediccion_mortalidad > 0 %}
+                                        {{ predicciones|sum(attribute='prediccion_mortalidad')|round|int }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </h3>
                                 <p class="mb-0">Mortalidad Total Prevista</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="prediction-card prediction-positive">
+                        <div class="prediction-card {% if predicciones.0.prediccion_ganancias > 0 %}prediction-positive{% else %}prediction-info{% endif %}">
                             <div class="text-center">
                                 <i class="fas fa-money-bill-wave fa-3x mb-3 opacity-75"></i>
-                                <h3>S/ {{ predicciones|sum(attribute='prediccion_ganancias')|round(2) }}</h3>
+                                <h3>
+                                    {% if predicciones.0.prediccion_ganancias > 0 %}
+                                        S/ {{ predicciones|sum(attribute='prediccion_ganancias')|round(2) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </h3>
                                 <p class="mb-0">Ganancias Totales Previstas</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráfico de Predicciones -->
+                <!-- Gráfico de Predicciones (solo si hay datos) -->
+                {% if predicciones.0.prediccion_nacimientos > 0 or predicciones.0.prediccion_mortalidad > 0 or predicciones.0.prediccion_ganancias > 0 %}
                 <div class="card">
                     <div class="card-header">
                         <h5 class="m-0"><i class="fas fa-chart-line me-2"></i>Visualización de Predicciones</h5>
@@ -391,6 +480,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Tabla Detallada de Predicciones -->
                 <div class="card">
@@ -418,29 +508,45 @@
                                             <strong>{{ prediccion.mes }}</strong>
                                         </td>
                                         <td>
-                                            <span class="badge bg-success">{{ prediccion.prediccion_nacimientos | round(1) }}</span>
+                                            {% if prediccion.prediccion_nacimientos > 0 %}
+                                                <span class="badge bg-success">{{ prediccion.prediccion_nacimientos | round(1) }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sin datos</span>
+                                            {% endif %}
                                         </td>
                                         <td>
-                                            <span class="badge bg-danger">{{ prediccion.prediccion_mortalidad | round(1) }}</span>
+                                            {% if prediccion.prediccion_mortalidad > 0 %}
+                                                <span class="badge bg-danger">{{ prediccion.prediccion_mortalidad | round(1) }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sin datos</span>
+                                            {% endif %}
                                         </td>
                                         <td>
-                                            <span class="badge bg-primary">S/ {{ prediccion.prediccion_ganancias | round(2) }}</span>
+                                            {% if prediccion.prediccion_ganancias > 0 %}
+                                                <span class="badge bg-primary">S/ {{ prediccion.prediccion_ganancias | round(2) }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Sin datos</span>
+                                            {% endif %}
                                         </td>
                                         <td>
-                                            {% set crecimiento_neto = prediccion.prediccion_nacimientos - prediccion.prediccion_mortalidad %}
-                                            <span class="badge {% if crecimiento_neto > 0 %}bg-success{% else %}bg-warning{% endif %}">
-                                                {{ crecimiento_neto | round(1) }}
-                                            </span>
+                                            {% if prediccion.prediccion_nacimientos > 0 and prediccion.prediccion_mortalidad > 0 %}
+                                                {% set crecimiento_neto = prediccion.prediccion_nacimientos - prediccion.prediccion_mortalidad %}
+                                                <span class="badge {% if crecimiento_neto > 0 %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {{ crecimiento_neto | round(1) }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">-</span>
+                                            {% endif %}
                                         </td>
                                         <td>
-                                            {% if loop.index > 1 %}
+                                            {% if loop.index > 1 and prediccion.prediccion_nacimientos > 0 and predicciones[loop.index-2].prediccion_nacimientos > 0 %}
                                                 {% set prev_nacimientos = predicciones[loop.index-2].prediccion_nacimientos %}
                                                 {% set tendencia = ((prediccion.prediccion_nacimientos - prev_nacimientos) / prev_nacimientos * 100) if prev_nacimientos > 0 else 0 %}
                                                 <span class="badge {% if tendencia > 0 %}bg-success{% else %}bg-warning{% endif %}">
                                                     {{ tendencia | round(1) }}%
                                                 </span>
                                             {% else %}
-                                                <span class="badge bg-secondary">Base</span>
+                                                <span class="badge bg-secondary">-</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -460,16 +566,22 @@
                         {% set total_nacimientos = predicciones|sum(attribute='prediccion_nacimientos') %}
                         {% set total_mortalidad = predicciones|sum(attribute='prediccion_mortalidad') %}
                         {% set total_ganancias = predicciones|sum(attribute='prediccion_ganancias') %}
-                        {% set tasa_supervivencia = ((total_nacimientos - total_mortalidad) / total_nacimientos * 100) if total_nacimientos > 0 else 0 %}
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="alert alert-info">
                                     <h6><i class="fas fa-chart-line me-2"></i>Resumen Predictivo</h6>
                                     <ul class="mb-0">
-                                        <li><strong>Tasa de supervivencia proyectada:</strong> {{ tasa_supervivencia|round(1) }}%</li>
-                                        <li><strong>Crecimiento neto esperado:</strong> {{ (total_nacimientos - total_mortalidad)|round|int }} animales</li>
-                                        <li><strong>Ganancia promedio mensual:</strong> S/ {{ (total_ganancias / predicciones|length)|round(2) }}</li>
+                                        {% if total_nacimientos > 0 and total_mortalidad > 0 %}
+                                            {% set tasa_supervivencia = ((total_nacimientos - total_mortalidad) / total_nacimientos * 100) %}
+                                            <li><strong>Tasa de supervivencia proyectada:</strong> {{ tasa_supervivencia|round(1) }}%</li>
+                                            <li><strong>Crecimiento neto esperado:</strong> {{ (total_nacimientos - total_mortalidad)|round|int }} animales</li>
+                                        {% else %}
+                                            <li><strong>Tasa de supervivencia:</strong> Datos insuficientes</li>
+                                        {% endif %}
+                                        {% if total_ganancias > 0 %}
+                                            <li><strong>Ganancia promedio mensual:</strong> S/ {{ (total_ganancias / predicciones|length)|round(2) }}</li>
+                                        {% endif %}
                                     </ul>
                                 </div>
                             </div>
@@ -477,15 +589,17 @@
                                 <div class="alert alert-warning">
                                     <h6><i class="fas fa-exclamation-triangle me-2"></i>Recomendaciones</h6>
                                     <ul class="mb-0">
-                                        {% if tasa_supervivencia > 90 %}
-                                            <li>Excelente tasa de supervivencia proyectada</li>
-                                        {% elif tasa_supervivencia > 80 %}
-                                            <li>Buena proyección, considere mejorar condiciones</li>
-                                        {% else %}
-                                            <li>Revise protocolos de manejo y salud</li>
+                                        {% if total_nacimientos == 0 %}
+                                            <li>💡 <strong>Registra más datos de partos</strong> para habilitar predicciones de nacimientos</li>
                                         {% endif %}
-                                        <li>Planifique recursos para el crecimiento esperado</li>
-                                        <li>Monitoree mensualmente las desviaciones</li>
+                                        {% if total_mortalidad == 0 %}
+                                            <li>💡 <strong>Registra datos de mortalidad</strong> para mejorar las predicciones</li>
+                                        {% endif %}
+                                        {% if total_ganancias == 0 %}
+                                            <li>💡 <strong>Registra datos de ventas</strong> para predecir ganancias</li>
+                                        {% endif %}
+                                        <li>📊 <strong>Mantén registros consistentes</strong> por al menos 2 meses</li>
+                                        <li>🔍 <strong>Verifica la calidad de los datos</strong> ingresados</li>
                                     </ul>
                                 </div>
                             </div>
@@ -498,10 +612,18 @@
                     <div class="card-body text-center py-5">
                         <i class="fas fa-crystal-ball fa-4x text-muted mb-3"></i>
                         <h4 class="text-muted">Genera tu Primera Predicción</h4>
-                        <p class="text-muted">
+                        <p class="text-muted mb-4">
                             Ingresa el número de meses que deseas predecir y haz clic en "Generar Predicciones" 
                             para ver proyecciones basadas en tus datos históricos.
                         </p>
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Para mejores resultados:</h6>
+                            <ul class="mb-0 text-start">
+                                <li>Asegúrate de tener al menos 2 meses de datos históricos</li>
+                                <li>Registra partos, mortalidad y ventas consistentemente</li>
+                                <li>Usa fechas reales en todos los registros</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -532,42 +654,61 @@
                 });
             });
 
-            // Gráfico de Predicciones
-            {% if predicciones %}
-            new Chart(document.getElementById('predictionChart'), {
+            // Gráfico de Predicciones (solo si hay datos)
+            {% if predicciones and (predicciones.0.prediccion_nacimientos > 0 or predicciones.0.prediccion_mortalidad > 0 or predicciones.0.prediccion_ganancias > 0) %}
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            
+            // Preparar datos para el gráfico
+            const labels = {{ predicciones | map(attribute='mes') | list | tojson }};
+            const nacimientosData = {{ predicciones | map(attribute='prediccion_nacimientos') | list | tojson }};
+            const mortalidadData = {{ predicciones | map(attribute='prediccion_mortalidad') | list | tojson }};
+            const gananciasData = {{ predicciones | map(attribute='prediccion_ganancias') | list | tojson }};
+            
+            const datasets = [];
+            
+            // Solo agregar datasets que tengan datos
+            if (nacimientosData.some(val => val > 0)) {
+                datasets.push({
+                    label: 'Nacimientos Previstos',
+                    data: nacimientosData,
+                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                });
+            }
+            
+            if (mortalidadData.some(val => val > 0)) {
+                datasets.push({
+                    label: 'Mortalidad Prevista',
+                    data: mortalidadData,
+                    backgroundColor: 'rgba(231, 74, 59, 0.1)',
+                    borderColor: 'rgba(231, 74, 59, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                });
+            }
+            
+            if (gananciasData.some(val => val > 0)) {
+                datasets.push({
+                    label: 'Ganancias Previstas (S/)',
+                    data: gananciasData,
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                });
+            }
+            
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: {{ predicciones | map(attribute='mes') | list | tojson }},
-                    datasets: [
-                        {
-                            label: 'Nacimientos Previstos',
-                            data: {{ predicciones | map(attribute='prediccion_nacimientos') | list | tojson }},
-                            backgroundColor: 'rgba(28, 200, 138, 0.1)',
-                            borderColor: 'rgba(28, 200, 138, 1)',
-                            borderWidth: 3,
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Mortalidad Prevista',
-                            data: {{ predicciones | map(attribute='prediccion_mortalidad') | list | tojson }},
-                            backgroundColor: 'rgba(231, 74, 59, 0.1)',
-                            borderColor: 'rgba(231, 74, 59, 1)',
-                            borderWidth: 3,
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Ganancias Previstas (S/)',
-                            data: {{ predicciones | map(attribute='prediccion_ganancias') | list | tojson }},
-                            backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                            borderColor: 'rgba(78, 115, 223, 1)',
-                            borderWidth: 3,
-                            tension: 0.4,
-                            fill: true,
-                            yAxisID: 'y1'
-                        }
-                    ]
+                    labels: labels,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -603,7 +744,18 @@
                 if (meses < 1 || meses > 12) {
                     e.preventDefault();
                     alert('Por favor ingresa un número entre 1 y 12 meses.');
+                    return false;
                 }
+                // Mostrar loading
+                const button = form.querySelector('button[type="submit"]');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generando...';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 3000);
             });
         });
     </script>
