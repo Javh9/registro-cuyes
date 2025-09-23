@@ -303,11 +303,21 @@ def index():
 
         # 1. Reproductores por galpón/poza - CORREGIDO: usar SUM(hembras + machos)
         cur.execute("""
-            SELECT galpon, poza, SUM(hembras + machos) as cantidad 
-            FROM reproductores 
-            GROUP BY galpon, poza 
-            ORDER BY galpon, poza;
+            SELECT r.galpon, r.poza, (r.hembras + r.machos) as cantidad
+            FROM reproductores r
+            JOIN (
+                SELECT galpon, poza, MAX(fecha_registro) as ultima_fecha
+                FROM reproductores
+                GROUP BY galpon, poza
+            ) ultimos
+            ON r.galpon = ultimos.galpon
+            AND r.poza = ultimos.poza
+            AND r.fecha_registro = ultimos.ultima_fecha
+            ORDER BY r.galpon, r.poza;
         """)
+
+                    
+
         reproductores_data = {}
         for row in cur.fetchall():
             galpon = row[0]
