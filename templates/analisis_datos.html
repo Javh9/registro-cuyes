@@ -22,6 +22,7 @@
         body {
             background-color: #f8f9fc;
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-top: 0;
         }
         
         .navbar-custom {
@@ -33,6 +34,46 @@
             min-height: calc(100vh - 70px);
             background: white;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 70px;
+        }
+        
+        .sidebar .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 1rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.15);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .topbar {
+            height: 70px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         
         .card {
@@ -40,11 +81,115 @@
             border-radius: 0.5rem;
             box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
             margin-bottom: 1.5rem;
+            transition: transform 0.2s;
         }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: var(--dark);
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.35rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+            transform: translateY(-2px);
+            box-shadow: 0 0.15rem 0.75rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .stat-card {
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.primary { border-left-color: var(--primary); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.info { border-left-color: var(--info); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.danger { border-left-color: var(--danger); }
         
         .page-title {
             color: var(--dark);
+            margin-bottom: 1.5rem;
             font-weight: 700;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--dark);
+            background-color: #f8f9fc;
+        }
+        
+        .badge-status {
+            padding: 0.5em 0.8em;
+            border-radius: 0.35rem;
+            font-weight: 600;
+        }
+        
+        .galpon-card {
+            transition: all 0.3s ease;
+        }
+        
+        .galpon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .poza-item {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .poza-item:hover {
+            background-color: rgba(78, 115, 223, 0.05);
+        }
+        
+        .dashboard-stats {
+            margin-bottom: 2rem;
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-top: 1px solid #e3e6f0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
         
         .nav-tabs .nav-link.active {
@@ -53,31 +198,55 @@
             border-bottom: 3px solid var(--primary);
         }
         
-        .stat-card {
-            border-left: 4px solid;
+        .data-table {
+            font-size: 0.9rem;
         }
         
-        .stat-card.primary { border-left-color: var(--primary); }
-        .stat-card.success { border-left-color: var(--success); }
-        .stat-card.info { border-left-color: var(--info); }
-        .stat-card.warning { border-left-color: var(--warning); }
-        .stat-card.danger { border-left-color: var(--danger); }
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: static;
+            }
+            
+            .topbar {
+                position: static;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Navbar IDÉNTICO al index -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-paw me-2"></i>
                 <span class="fw-bold">Registro de Cuyes</span>
             </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> Administrador
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar IDÉNTICO al index -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
@@ -126,6 +295,16 @@
                                 <i class="fas fa-calculator"></i> Balance
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/resultados">
+                                <i class="fas fa-chart-line"></i> Resultados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/predicciones">
+                                <i class="fas fa-crystal-ball"></i> Predicciones
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -134,18 +313,107 @@
             <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
                     <h1 class="h2 page-title">
-                        <i class="fas fa-chart-bar me-2"></i>Análisis de Datos
+                        <i class="fas fa-chart-bar me-2"></i>Análisis de Datos - Vista Completa
                     </h1>
-                    <a href="/" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
-                    </a>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="/exportar_excel" class="btn btn-sm btn-success">
+                                <i class="fas fa-file-excel me-1"></i> Exportar Excel
+                            </a>
+                            <a href="/" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards IDÉNTICOS al index -->
+                <div class="row mb-4 dashboard-stats">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card primary h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Reproductores</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            {% set total_repro = reproductores|sum(attribute='hembras') + reproductores|sum(attribute='machos') if reproductores else 0 %}
+                                            {{ total_repro }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-egg fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card success h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Total Partos Registrados</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            {{ partos|length if partos else 0 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-baby fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card info h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Total Destetados</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            {% set total_dest = destetes|sum(attribute='destetados_hembras') + destetes|sum(attribute='destetados_machos') if destetes else 0 %}
+                                            {{ total_dest }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-child fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card stat-card danger h-100">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                            Total Gastos</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            S/ {{ "%.2f"|format(gastos|sum(attribute='monto')) if gastos else 0.00 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-receipt fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Mensajes Flash -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
                                 {{ message }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
@@ -153,99 +421,52 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- Resumen Estadístico -->
-                <div class="row mb-4">
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card primary h-100">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Total Reproductores</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ reproductores|length if reproductores else 0 }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card success h-100">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                    Total Partos</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ partos|length if partos else 0 }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card info h-100">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Total Destetes</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ destetes|length if destetes else 0 }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card danger h-100">
-                            <div class="card-body">
-                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                    Total Gastos</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ gastos|length if gastos else 0 }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Navegación por pestañas -->
-                <ul class="nav nav-tabs mb-4" id="analysisTabs">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#reproductores">
-                            <i class="fas fa-egg me-1"></i>Reproductores
+                <ul class="nav nav-tabs mb-4" id="analysisTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="reproductores-tab" data-bs-toggle="tab" data-bs-target="#reproductores" type="button" role="tab">
+                            <i class="fas fa-egg me-1"></i>Reproductores ({{ reproductores|length if reproductores else 0 }})
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#partos">
-                            <i class="fas fa-baby me-1"></i>Partos
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="partos-tab" data-bs-toggle="tab" data-bs-target="#partos" type="button" role="tab">
+                            <i class="fas fa-baby me-1"></i>Partos ({{ partos|length if partos else 0 }})
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#destetes">
-                            <i class="fas fa-child me-1"></i>Destetes
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="destetes-tab" data-bs-toggle="tab" data-bs-target="#destetes" type="button" role="tab">
+                            <i class="fas fa-child me-1"></i>Destetes ({{ destetes|length if destetes else 0 }})
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mortalidad">
-                            <i class="fas fa-skull me-1"></i>Mortalidad
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mortalidad-tab" data-bs-toggle="tab" data-bs-target="#mortalidad" type="button" role="tab">
+                            <i class="fas fa-skull me-1"></i>Mortalidad ({{ muertes_destetados|length if muertes_destetados else 0 }})
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ventas">
-                            <i class="fas fa-money-bill-wave me-1"></i>Ventas
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ventas-tab" data-bs-toggle="tab" data-bs-target="#ventas" type="button" role="tab">
+                            <i class="fas fa-money-bill-wave me-1"></i>Ventas ({{ (ventas_destetados|length if ventas_destetados else 0) + (ventas_descarte|length if ventas_descarte else 0) }})
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#gastos">
-                            <i class="fas fa-receipt me-1"></i>Gastos
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="gastos-tab" data-bs-toggle="tab" data-bs-target="#gastos" type="button" role="tab">
+                            <i class="fas fa-receipt me-1"></i>Gastos ({{ gastos|length if gastos else 0 }})
                         </button>
                     </li>
                 </ul>
 
-                <div class="tab-content">
-                    <!-- Reproductores -->
-                    <div class="tab-pane fade show active" id="reproductores">
+                <div class="tab-content" id="analysisTabsContent">
+                    <!-- Pestaña de Reproductores -->
+                    <div class="tab-pane fade show active" id="reproductores" role="tabpanel">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="m-0"><i class="fas fa-egg me-2"></i>Reproductores</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="m-0"><i class="fas fa-egg me-2"></i>Datos de Reproductores</h5>
+                                <span class="badge bg-primary">{{ reproductores|length if reproductores else 0 }} registros</span>
                             </div>
                             <div class="card-body">
                                 {% if reproductores %}
                                 <div class="table-responsive">
-                                    <table class="table table-striped">
+                                    <table class="table table-striped table-hover data-table">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -254,18 +475,20 @@
                                                 <th>Hembras</th>
                                                 <th>Machos</th>
                                                 <th>Total</th>
-                                                <th>Fecha Ingreso</th>
+                                                <th>Tiempo (días)</th>
+                                                <th>Fecha de Ingreso</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {% for r in reproductores %}
                                             <tr>
                                                 <td>{{ r.id }}</td>
-                                                <td>{{ r.galpon }}</td>
-                                                <td>{{ r.poza }}</td>
+                                                <td><span class="badge bg-secondary">{{ r.galpon }}</span></td>
+                                                <td><span class="badge bg-light text-dark">{{ r.poza }}</span></td>
                                                 <td>{{ r.hembras }}</td>
                                                 <td>{{ r.machos }}</td>
-                                                <td><strong>{{ r.hembras + r.machos }}</strong></td>
+                                                <td><strong class="text-primary">{{ r.hembras + r.machos }}</strong></td>
+                                                <td>{{ r.tiempo_reproductores }}</td>
                                                 <td>{{ r.fecha_ingreso }}</td>
                                             </tr>
                                             {% endfor %}
@@ -273,25 +496,30 @@
                                     </table>
                                 </div>
                                 {% else %}
-                                <div class="text-center py-4">
-                                    <i class="fas fa-database fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">No hay datos de reproductores</p>
+                                <div class="empty-state">
+                                    <i class="fas fa-egg"></i>
+                                    <h5>No hay datos de reproductores</h5>
+                                    <p>Registra algunos reproductores para ver la información aquí.</p>
+                                    <a href="/ingresar_reproductores" class="btn btn-primary mt-2">
+                                        <i class="fas fa-plus-circle me-1"></i> Registrar Reproductores
+                                    </a>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Partos -->
-                    <div class="tab-pane fade" id="partos">
+                    <!-- Pestaña de Partos -->
+                    <div class="tab-pane fade" id="partos" role="tabpanel">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="m-0"><i class="fas fa-baby me-2"></i>Partos</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="m-0"><i class="fas fa-baby me-2"></i>Datos de Partos</h5>
+                                <span class="badge bg-success">{{ partos|length if partos else 0 }} registros</span>
                             </div>
                             <div class="card-body">
                                 {% if partos %}
                                 <div class="table-responsive">
-                                    <table class="table table-striped">
+                                    <table class="table table-striped table-hover data-table">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -308,12 +536,12 @@
                                             {% for p in partos %}
                                             <tr>
                                                 <td>{{ p.id }}</td>
-                                                <td>{{ p.galpon }}</td>
-                                                <td>{{ p.poza }}</td>
+                                                <td><span class="badge bg-secondary">{{ p.galpon }}</span></td>
+                                                <td><span class="badge bg-light text-dark">{{ p.poza }}</span></td>
                                                 <td>{{ p.numero_parto }}</td>
-                                                <td>{{ p.nacidos }}</td>
-                                                <td>{{ p.muertos_bebes }}</td>
-                                                <td>{{ p.muertos_reproductores }}</td>
+                                                <td><span class="badge bg-success">{{ p.nacidos }}</span></td>
+                                                <td><span class="badge bg-danger">{{ p.muertos_bebes }}</span></td>
+                                                <td><span class="badge bg-warning">{{ p.muertos_reproductores }}</span></td>
                                                 <td>{{ p.fecha_nacimiento }}</td>
                                             </tr>
                                             {% endfor %}
@@ -321,25 +549,30 @@
                                     </table>
                                 </div>
                                 {% else %}
-                                <div class="text-center py-4">
-                                    <i class="fas fa-baby fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">No hay datos de partos</p>
+                                <div class="empty-state">
+                                    <i class="fas fa-baby"></i>
+                                    <h5>No hay datos de partos</h5>
+                                    <p>Registra algunos partos para ver la información aquí.</p>
+                                    <a href="/registrar_partos" class="btn btn-success mt-2">
+                                        <i class="fas fa-plus-circle me-1"></i> Registrar Parto
+                                    </a>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Gastos -->
-                    <div class="tab-pane fade" id="gastos">
+                    <!-- Pestaña de Gastos -->
+                    <div class="tab-pane fade" id="gastos" role="tabpanel">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="m-0"><i class="fas fa-receipt me-2"></i>Gastos</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="m-0"><i class="fas fa-receipt me-2"></i>Datos de Gastos</h5>
+                                <span class="badge bg-danger">{{ gastos|length if gastos else 0 }} registros</span>
                             </div>
                             <div class="card-body">
                                 {% if gastos %}
                                 <div class="table-responsive">
-                                    <table class="table table-striped">
+                                    <table class="table table-striped table-hover data-table">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -354,7 +587,7 @@
                                             <tr>
                                                 <td>{{ g.id }}</td>
                                                 <td>{{ g.descripcion }}</td>
-                                                <td>S/ {{ "%.2f"|format(g.monto) }}</td>
+                                                <td><span class="badge bg-danger">S/ {{ "%.2f"|format(g.monto) }}</span></td>
                                                 <td><span class="badge bg-secondary">{{ g.tipo }}</span></td>
                                                 <td>{{ g.fecha_gasto }}</td>
                                             </tr>
@@ -363,9 +596,13 @@
                                     </table>
                                 </div>
                                 {% else %}
-                                <div class="text-center py-4">
-                                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">No hay datos de gastos</p>
+                                <div class="empty-state">
+                                    <i class="fas fa-receipt"></i>
+                                    <h5>No hay datos de gastos</h5>
+                                    <p>Registra algunos gastos para ver la información aquí.</p>
+                                    <a href="/registrar_gastos" class="btn btn-warning mt-2">
+                                        <i class="fas fa-plus-circle me-1"></i> Registrar Gasto
+                                    </a>
                                 </div>
                                 {% endif %}
                             </div>
@@ -378,6 +615,35 @@
         </div>
     </div>
 
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Sistema de Registro de Cuyes &copy; 2023</span>
+                <span>v1.2.0</span>
+            </div>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Activar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+            
+            // Animación para las tarjetas de estadísticas (igual que el index)
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
