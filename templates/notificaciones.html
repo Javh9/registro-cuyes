@@ -1,0 +1,140 @@
+<!-- Componente de Campana de Notificaciones -->
+<div class="dropdown">
+    <button class="btn btn-light dropdown-toggle position-relative" type="button" 
+            id="dropdownNotificaciones" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-bell"></i>
+        <span id="contadorNotificaciones" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
+            0
+        </span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownNotificaciones" style="width: 400px; max-height: 500px; overflow-y: auto;">
+        <li class="dropdown-header d-flex justify-content-between align-items-center">
+            <span>Notificaciones</span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="marcarTodasLeidas()">
+                    <i class="fas fa-check-double"></i> Leer todas
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="generarNotificaciones()">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <div id="listaNotificaciones">
+            <li class="px-3 py-2 text-center text-muted">
+                <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                <p>No hay notificaciones</p>
+            </li>
+        </div>
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-footer text-center">
+            <a href="/notificaciones" class="text-decoration-none">Ver todas las notificaciones</a>
+        </li>
+    </ul>
+</div>
+
+<script>
+// Función para cargar notificaciones
+function cargarNotificaciones() {
+    fetch('/api/notificaciones')
+        .then(response => response.json())
+        .then(data => {
+            const lista = document.getElementById('listaNotificaciones');
+            const contador = document.getElementById('contadorNotificaciones');
+            
+            if (data.length === 0) {
+                lista.innerHTML = `
+                    <li class="px-3 py-2 text-center text-muted">
+                        <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                        <p>No hay notificaciones</p>
+                    </li>
+                `;
+                contador.style.display = 'none';
+            } else {
+                lista.innerHTML = data.map(notif => `
+                    <li class="dropdown-item notificacion-item ${notif.prioridad === 'urgente' ? 'bg-warning' : ''}" 
+                        onclick="marcarLeida(${notif.id})">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-${obtenerIcono(notif.tipo)} me-2 text-${obtenerColor(notif.prioridad)}"></i>
+                                ${notif.titulo}
+                            </h6>
+                            <small class="text-muted">${formatearFecha(notif.fecha_creacion)}</small>
+                        </div>
+                        <p class="mb-1">${notif.mensaje}</p>
+                        <small class="text-${obtenerColor(notif.prioridad)}">
+                            <i class="fas fa-circle me-1"></i>${notif.prioridad}
+                        </small>
+                    </li>
+                `).join('');
+                
+                contador.textContent = data.length;
+                contador.style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Error cargando notificaciones:', error));
+}
+
+// Funciones auxiliares
+function obtenerIcono(tipo) {
+    const iconos = {
+        'destete': 'baby',
+        'descarte': 'exchange-alt',
+        'salud': 'heartbeat',
+        'vacunacion': 'syringe',
+        'peso': 'weight'
+    };
+    return iconos[tipo] || 'bell';
+}
+
+function obtenerColor(prioridad) {
+    const colores = {
+        'urgente': 'danger',
+        'alta': 'warning',
+        'media': 'info',
+        'baja': 'secondary'
+    };
+    return colores[prioridad] || 'secondary';
+}
+
+function formatearFecha(fechaStr) {
+    const fecha = new Date(fechaStr);
+    return fecha.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function marcarLeida(id) {
+    fetch(`/api/notificaciones/${id}/leer`, { method: 'POST' })
+        .then(() => cargarNotificaciones());
+}
+
+function marcarTodasLeidas() {
+    fetch('/api/notificaciones/leer-todas', { method: 'POST' })
+        .then(() => cargarNotificaciones());
+}
+
+function generarNotificaciones() {
+    fetch('/api/notificaciones/generar', { method: 'POST' })
+        .then(() => {
+            cargarNotificaciones();
+            mostrarToast('Notificaciones actualizadas', 'success');
+        });
+}
+
+// Cargar notificaciones al abrir la página y cada 5 minutos
+document.addEventListener('DOMContentLoaded', cargarNotificaciones);
+setInterval(cargarNotificaciones, 300000); // 5 minutos
+
+// Función para mostrar toast de confirmación
+function mostrarToast(mensaje, tipo) {
+    // Implementar toast de Bootstrap
+    const toast = new bootstrap.Toast(document.getElementById('liveToast'));
+    document.querySelector('.toast-body').textContent = mensaje;
+    document.querySelector('.toast').classList.add(`text-bg-${tipo}`);
+    toast.show();
+}
+</script>

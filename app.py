@@ -243,8 +243,47 @@ def crear_o_actualizar_tablas():
                 )
             ''')
 
-            conn.commit()
+            # === NUEVAS TABLAS PARA NOTIFICACIONES ===
+            # Crear tabla de notificaciones si no existe
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS notificaciones (
+                    id SERIAL PRIMARY KEY,
+                    tipo VARCHAR(50) NOT NULL,
+                    titulo VARCHAR(200) NOT NULL,
+                    mensaje TEXT NOT NULL,
+                    prioridad VARCHAR(20) CHECK (prioridad IN ('baja', 'media', 'alta', 'urgente')),
+                    leida BOOLEAN DEFAULT FALSE,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    fecha_vencimiento TIMESTAMP,
+                    relacion_id INTEGER,
+                    relacion_tipo VARCHAR(50)
+                )
+            ''')
 
+            # Crear tabla de configuraciones de alertas si no existe
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS configuraciones_alertas (
+                    id SERIAL PRIMARY KEY,
+                    tipo_alerta VARCHAR(50) UNIQUE NOT NULL,
+                    dias_antes INTEGER DEFAULT 0,
+                    activa BOOLEAN DEFAULT TRUE,
+                    parametros JSONB
+                )
+            ''')
+
+            # Insertar configuraciones predeterminadas si no existen
+            cursor.execute('''
+                INSERT INTO configuraciones_alertas (tipo_alerta, dias_antes, parametros) 
+                VALUES 
+                    ('destete', 15, '{"dias_min": 15, "dias_max": 20}'),
+                    ('descarte', 360, '{"meses_min": 12}'),
+                    ('vacunacion', 0, '{"intervalo_dias": 90}'),
+                    ('control_peso', 30, '{}'),
+                    ('parto_proximo', 70, '{"dias_gestacion": 70}')
+                ON CONFLICT (tipo_alerta) DO NOTHING
+            ''')
+
+            conn.commit()
 # Llamar a la función para crear o actualizar las tablas al iniciar la aplicación
 try:
     crear_o_actualizar_tablas()
@@ -252,6 +291,141 @@ try:
 except Exception as e:
     print(f"⚠️  Error al inicializar tablas: {e}")
 
+# Agregar estas funciones después de las funciones existentes
+def generar_notificaciones_destetes():
+    """Detectar cuyes listos para destete (15-20 días)"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Buscar partos con crías entre 15 y 20 días
+                cursor.execute('''
+                    SELECT p.id, p.galpon, p.poza, p.nacidos, p.fecha_nacimiento,
+                           EXTRACT(DAYS FROM (CURRENT_DATE - TO_DATE(p.fecha_nacimiento, 'YYYY-MM-DD'))) as dias
+                    FROM partos p
+                    LEFT JOIN destetes d ON p.galpon = d.galpon AND p.poza = d.poza
+                    WHERE d.id IS NULL 
+                    AND EXTRACT(DAYS FROM (CURRENT_DATE - TO_DATE(p.fecha_nacimiento, 'YYYY-MM-DD'))) BETWEEN 15 AND 20
+                ''')
+                partos_pendientes = cursor.fetchall()
+                
+                notificaciones = []
+                for parto in partos_pendientes:
+                    # Verificar si ya existe notificación para este parto
+                    cursor.execute('''
+                        SELECT id FROM notificaciones 
+                        WHERE relacion_id = %s AND relacion_tipo = 'destete' AND leida = FALSE
+                    ''', (parto['id'],))
+                    existe = cursor.fetchone()
+                    
+                    if not existe:
+                        notificaciones.append({
+                            'tipo': 'destete',
+                            'titulo': f'Destete Pendiente - Galpón {parto["galpon"]} Poza {parto["poza"]}',
+                            'mensaje': f'{parto["nacidos"]} cuyes tienen {parto["dias"]} días. ¡Es tiempo de destetar!',
+                            'prioridad': 'alta' if parto['dias'] > 25 else 'media',
+                            'relacion_id': parto['id'],
+                            'relacion_tipo': 'destete'
+                        })
+                
+                return notificaciones
+    except Exception as e:
+        print(f"Error generando notificaciones de destete: {e}")
+        return []
+
+def generar_notificaciones_descarte():
+    """Detectar reproductores para descarte (> 12 meses)"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                cursor.execute('''
+                    SELECT id, galpon, poza, hembras, machos, fecha_ingreso,
+                           EXTRACT(MONTHS FROM (CURRENT_DATE - TO_DATE(fecha_ingreso, 'YYYY-MM-DD'))) as meses
+                    FROM reproductores 
+                    WHERE EXTRACT(MONTHS FROM (CURRENT_DATE - TO_DATE(fecha_ingreso, 'YYYY-MM-DD'))) >= 12
+                ''')
+                reproductores_descarte = cursor.fetchall()
+                
+                notificaciones = []
+                for repro in reproductores_descarte:
+                    cursor.execute('''
+                        SELECT id FROM notificaciones 
+                        WHERE relacion_id = %s AND relacion_tipo = 'descarte' AND leida = FALSE
+                    ''', (repro['id'],))
+                    existe = cursor.fetchone()
+                    
+                    if not existe:
+                        notificaciones.append({
+                            'tipo': 'descarte',
+                            'titulo': f'Descarte Programado - Galpón {repro["galpon"]} Poza {repro["poza"]}',
+                            'mensaje': f'Reproductores con {repro["meses"]} meses. Considerar descarte.',
+                            'prioridad': 'media',
+                            'relacion_id': repro['id'],
+                            'relacion_tipo': 'descarte'
+                        })
+                
+                return notificaciones
+    except Exception as e:
+        print(f"Error generando notificaciones de descarte: {e}")
+        return []
+
+def generar_notificaciones_salud():
+    """Alertas de salud basadas en mortalidad"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                # Mortalidad alta en últimos 7 días
+                cursor.execute('''
+                    SELECT galpon, poza, SUM(muertos_hembras + muertos_machos) as total_muertes
+                    FROM muertes_destetados 
+                    WHERE TO_DATE(fecha_muerte, 'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '7 days'
+                    GROUP BY galpon, poza 
+                    HAVING SUM(muertos_hembras + muertos_machos) > 3
+                ''')
+                mortalidad_alta = cursor.fetchall()
+                
+                notificaciones = []
+                for registro in mortalidad_alta:
+                    notificaciones.append({
+                        'tipo': 'salud',
+                        'titulo': f'Alerta de Salud - Galpón {registro["galpon"]} Poza {registro["poza"]}',
+                        'mensaje': f'Alta mortalidad: {registro["total_muertes"]} muertes en 7 días.',
+                        'prioridad': 'urgente',
+                        'relacion_id': None,
+                        'relacion_tipo': 'salud'
+                    })
+                
+                return notificaciones
+    except Exception as e:
+        print(f"Error generando notificaciones de salud: {e}")
+        return []
+
+def guardar_notificaciones(notificaciones):
+    """Guardar notificaciones en la base de datos"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                for notif in notificaciones:
+                    cursor.execute('''
+                        INSERT INTO notificaciones (tipo, titulo, mensaje, prioridad, relacion_id, relacion_tipo)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    ''', (notif['tipo'], notif['titulo'], notif['mensaje'], 
+                          notif['prioridad'], notif['relacion_id'], notif['relacion_tipo']))
+                conn.commit()
+    except Exception as e:
+        print(f"Error guardando notificaciones: {e}")
+
+# Función principal para generar todas las notificaciones
+def generar_todas_las_notificaciones():
+    notificaciones = []
+    notificaciones.extend(generar_notificaciones_destetes())
+    notificaciones.extend(generar_notificaciones_descarte())
+    notificaciones.extend(generar_notificaciones_salud())
+    
+    if notificaciones:
+        guardar_notificaciones(notificaciones)
+        print(f"✅ Generadas {len(notificaciones)} notificaciones")
+    
+    return notificaciones
 # Ruta principal
 
 
@@ -1567,6 +1741,70 @@ def predicciones():
     # Para GET requests, simplemente mostrar el formulario
     return render_template('predicciones.html')
 
+# Agregar estas rutas después de las rutas existentes en app.py
+
+@app.route('/api/notificaciones')
+def obtener_notificaciones():
+    """Obtener notificaciones no leídas"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                cursor.execute('''
+                    SELECT * FROM notificaciones 
+                    WHERE leida = FALSE 
+                    ORDER BY 
+                        CASE prioridad 
+                            WHEN 'urgente' THEN 1
+                            WHEN 'alta' THEN 2
+                            WHEN 'media' THEN 3
+                            ELSE 4
+                        END,
+                    fecha_creacion DESC
+                    LIMIT 20
+                ''')
+                notificaciones = cursor.fetchall()
+                return jsonify([dict(notif) for notif in notificaciones])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notificaciones/<int:notificacion_id>/leer', methods=['POST'])
+def marcar_notificacion_leida(notificacion_id):
+    """Marcar notificación como leída"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    UPDATE notificaciones SET leida = TRUE WHERE id = %s
+                ''', (notificacion_id,))
+                conn.commit()
+                return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notificaciones/leer-todas', methods=['POST'])
+def marcar_todas_leidas():
+    """Marcar todas las notificaciones como leídas"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('UPDATE notificaciones SET leida = TRUE')
+                conn.commit()
+                return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/notificaciones/generar', methods=['POST'])
+def generar_notificaciones():
+    """Forzar generación de notificaciones"""
+    try:
+        notificaciones = generar_todas_las_notificaciones()
+        return jsonify({
+            'success': True,
+            'generadas': len(notificaciones),
+            'notificaciones': notificaciones
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
