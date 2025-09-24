@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, jsonify
 import psycopg2
 from psycopg2 import extras
 from datetime import datetime
