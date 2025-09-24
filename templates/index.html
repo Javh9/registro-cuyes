@@ -224,13 +224,16 @@
         }
         
         .notification-dropdown {
-            min-width: 300px;
+            min-width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .notification-item {
             padding: 10px 15px;
             border-bottom: 1px solid #eee;
             transition: background-color 0.2s;
+            cursor: pointer;
         }
         
         .notification-item:hover {
@@ -242,8 +245,20 @@
             border-left: 3px solid var(--primary);
         }
         
+        .notification-priority {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        .priority-urgente { background-color: #e74a3b; color: white; }
+        .priority-alta { background-color: #f6c23e; color: black; }
+        .priority-media { background-color: #36b9cc; color: white; }
+        .priority-baja { background-color: #858796; color: white; }
+        
         .notification-time {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #6c757d;
         }
         
@@ -251,6 +266,11 @@
             padding: 20px;
             text-align: center;
             color: #6c757d;
+        }
+        
+        .notification-actions {
+            padding: 10px;
+            border-top: 1px solid #eee;
         }
         
         @media (max-width: 768px) {
@@ -264,7 +284,7 @@
             }
             
             .notification-dropdown {
-                min-width: 250px;
+                min-width: 280px;
                 right: 0;
                 left: auto;
             }
@@ -287,32 +307,28 @@
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <!-- Campana de notificaciones -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link notification-bell dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link notification-bell dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" onclick="cargarNotificaciones()">
                             <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
+                            <span class="notification-badge" id="notificationCount">0</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
-                            <li class="dropdown-header">Notificaciones</li>
-                            <li>
-                                <a class="dropdown-item notification-item unread" href="#">
-                                    <div class="fw-bold">Nuevos partos registrados</div>
-                                    <small class="notification-time">Hace 2 horas</small>
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>Notificaciones</span>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="marcarTodasLeidas()">
+                                    <small>Marcar todas</small>
+                                </button>
+                            </li>
+                            <div id="notificationsList">
+                                <li class="notification-empty">
+                                    <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                    <div>No hay notificaciones</div>
+                                </li>
+                            </div>
+                            <li class="notification-actions">
+                                <a class="btn btn-primary btn-sm w-100" href="#" onclick="generarNotificaciones()">
+                                    <i class="fas fa-sync-alt me-1"></i> Actualizar
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item notification-item" href="#">
-                                    <div class="fw-bold">Recordatorio de destete</div>
-                                    <small class="notification-time">Ayer</small>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item notification-item" href="#">
-                                    <div class="fw-bold">Actualización del sistema</div>
-                                    <small class="notification-time">Hace 3 días</small>
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center text-primary" href="#">Ver todas las notificaciones</a></li>
                         </ul>
                     </li>
                     
@@ -594,8 +610,138 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Función para cargar notificaciones desde el backend
+        async function cargarNotificaciones() {
+            try {
+                const response = await fetch('/api/notificaciones');
+                const notificaciones = await response.json();
+                
+                const notificationsList = document.getElementById('notificationsList');
+                const notificationCount = document.getElementById('notificationCount');
+                
+                if (notificaciones.error) {
+                    notificationsList.innerHTML = `
+                        <li class="notification-empty">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <div>Error al cargar notificaciones</div>
+                        </li>
+                    `;
+                    return;
+                }
+                
+                if (notificaciones.length === 0) {
+                    notificationsList.innerHTML = `
+                        <li class="notification-empty">
+                            <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                            <div>No hay notificaciones</div>
+                        </li>
+                    `;
+                    notificationCount.textContent = '0';
+                    notificationCount.style.display = 'none';
+                } else {
+                    notificationCount.textContent = notificaciones.length;
+                    notificationCount.style.display = 'flex';
+                    
+                    let html = '';
+                    notificaciones.forEach(notif => {
+                        const fecha = new Date(notif.fecha_creacion).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        const priorityClass = `priority-${notif.prioridad || 'media'}`;
+                        
+                        html += `
+                            <li class="notification-item unread" onclick="marcarNotificacionLeida(${notif.id})">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="fw-bold">${notif.titulo}</span>
+                                    <span class="notification-priority ${priorityClass}">
+                                        ${notif.prioridad || 'media'}
+                                    </span>
+                                </div>
+                                <div class="text-muted small mb-1">${notif.mensaje}</div>
+                                <div class="notification-time">${fecha}</div>
+                            </li>
+                        `;
+                    });
+                    
+                    notificationsList.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error cargando notificaciones:', error);
+                document.getElementById('notificationsList').innerHTML = `
+                    <li class="notification-empty">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <div>Error de conexión</div>
+                    </li>
+                `;
+            }
+        }
+
+        // Función para marcar una notificación como leída
+        async function marcarNotificacionLeida(id) {
+            try {
+                const response = await fetch(`/api/notificaciones/${id}/leer`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    // Recargar las notificaciones
+                    await cargarNotificaciones();
+                }
+            } catch (error) {
+                console.error('Error marcando notificación como leída:', error);
+            }
+        }
+
+        // Función para marcar todas las notificaciones como leídas
+        async function marcarTodasLeidas() {
+            try {
+                const response = await fetch('/api/notificaciones/leer-todas', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    await cargarNotificaciones();
+                    showFlashMessage('Todas las notificaciones marcadas como leídas', 'success');
+                }
+            } catch (error) {
+                console.error('Error marcando todas las notificaciones:', error);
+                showFlashMessage('Error al marcar notificaciones', 'danger');
+            }
+        }
+
+        // Función para generar notificaciones (forzar actualización)
+        async function generarNotificaciones() {
+            try {
+                const response = await fetch('/api/notificaciones/generar', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    await cargarNotificaciones();
+                    showFlashMessage(`Se generaron ${result.generadas} nuevas notificaciones`, 'success');
+                }
+            } catch (error) {
+                console.error('Error generando notificaciones:', error);
+                showFlashMessage('Error al generar notificaciones', 'danger');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Sistema de registro de cuyes cargado');
+            
+            // Cargar notificaciones al iniciar
+            cargarNotificaciones();
+            
+            // Actualizar notificaciones cada 2 minutos
+            setInterval(cargarNotificaciones, 120000);
             
             // Activar tooltips de Bootstrap
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -612,13 +758,6 @@
                 card.addEventListener('mouseleave', () => {
                     card.style.transform = 'translateY(0)';
                 });
-            });
-
-            // Efecto de sonido para la campana de notificaciones
-            const notificationBell = document.querySelector('.notification-bell');
-            notificationBell.addEventListener('click', function() {
-                // Simular sonido de campana (podrías agregar un sonido real)
-                console.log('Campana de notificaciones clickeada');
             });
 
             // Mostrar notificaciones flash de Flask
