@@ -669,7 +669,7 @@ def index():
                     'reproductores': r,
                     'nacidos': n,
                     'destetados': d,
-                    'nacidos_vigentes': max(0, n - d),
+                    'nacidos_vigentes': max(0, n - d - m),
                     'muertos': m
                 }
 
