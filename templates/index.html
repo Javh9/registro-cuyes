@@ -192,6 +192,67 @@
             opacity: 0.5;
         }
         
+        /* Estilos para la campana de notificaciones */
+        .notification-bell {
+            position: relative;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .notification-bell:hover {
+            color: #ffd700;
+            transform: scale(1.1);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #e74a3b;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .notification-dropdown {
+            min-width: 300px;
+        }
+        
+        .notification-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .notification-item.unread {
+            background-color: #f0f8ff;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .notification-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .notification-empty {
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+        
         @media (max-width: 768px) {
             .sidebar {
                 min-height: auto;
@@ -200,6 +261,12 @@
             
             .topbar {
                 position: static;
+            }
+            
+            .notification-dropdown {
+                min-width: 250px;
+                right: 0;
+                left: auto;
             }
         }
     </style>
@@ -218,6 +285,38 @@
             
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <!-- Campana de notificaciones -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link notification-bell dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
+                            <li class="dropdown-header">Notificaciones</li>
+                            <li>
+                                <a class="dropdown-item notification-item unread" href="#">
+                                    <div class="fw-bold">Nuevos partos registrados</div>
+                                    <small class="notification-time">Hace 2 horas</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item notification-item" href="#">
+                                    <div class="fw-bold">Recordatorio de destete</div>
+                                    <small class="notification-time">Ayer</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item notification-item" href="#">
+                                    <div class="fw-bold">Actualización del sistema</div>
+                                    <small class="notification-time">Hace 3 días</small>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center text-primary" href="#">Ver todas las notificaciones</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Menú de usuario -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i> Administrador
@@ -236,7 +335,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar CORREGIDO -->
+            <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 sidebar d-md-block">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
@@ -244,9 +343,6 @@
                             <a class="nav-link active" href="/">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            {% include '/notificaciones.html' %}
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/ingresar_reproductores">
@@ -315,7 +411,7 @@
                     </div>
                 </div>
 
-                <!-- Stats Cards - ADAPTADO A TUS VARIABLES -->
+                <!-- Stats Cards -->
                 <div class="row mb-4 dashboard-stats">
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card stat-card primary h-100">
@@ -394,7 +490,7 @@
                     </div>
                 </div>
 
-                <!-- Resumen por Galpones - ADAPTADO -->
+                <!-- Resumen por Galpones -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
@@ -425,7 +521,6 @@
                                                         <small class="text-muted">Reproductores: {{ datos_galpones[galpon][poza].get('reproductores', 0) }}</small><br>
                                                         <small class="text-muted">Nacidos: {{ datos_galpones[galpon][poza].get('nacidos', 0) }}</small><br>
                                                         <small class="text-muted">Destetados: {{ datos_galpones[galpon][poza].get('destetados', 0) }}</small><br>
-                                                        <!--<small class="text-success">Nacidos Vigentes: {{ datos_galpones[galpon][poza].get('nacidos_vigentes', 0) }}</small><br>-->
                                                         <small class="text-danger">Muertos: {{ datos_galpones[galpon][poza].get('muertos', 0) }}</small>
                                                     </div>
                                                 </div>
@@ -517,6 +612,13 @@
                 card.addEventListener('mouseleave', () => {
                     card.style.transform = 'translateY(0)';
                 });
+            });
+
+            // Efecto de sonido para la campana de notificaciones
+            const notificationBell = document.querySelector('.notification-bell');
+            notificationBell.addEventListener('click', function() {
+                // Simular sonido de campana (podrías agregar un sonido real)
+                console.log('Campana de notificaciones clickeada');
             });
 
             // Mostrar notificaciones flash de Flask
