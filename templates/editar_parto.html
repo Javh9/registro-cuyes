@@ -3,34 +3,587 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Parto</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Editar Parto - Sistema de Cuyes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4e73df;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --secondary: #858796;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding-top: 0;
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary) 0%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 70px;
+        }
+        
+        .sidebar .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 1rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: var(--primary);
+            background-color: rgba(78, 115, 223, 0.15);
+            border-left-color: var(--primary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .topbar {
+            height: 70px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+            color: var(--dark);
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 0.35rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+            transform: translateY(-2px);
+            box-shadow: 0 0.15rem 0.75rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            border-color: var(--warning);
+        }
+        
+        .page-title {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            border-radius: 0.35rem;
+            border: 1px solid #d1d3e2;
+            padding: 0.75rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-top: 1px solid #e3e6f0;
+        }
+        
+        .form-card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: var(--danger);
+        }
+        
+        .parto-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: static;
+            }
+            
+            .topbar {
+                position: static;
+            }
+            
+            .form-card {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Editar Parto</h1>
-    <form method="POST">
-        <label for="galpon">Galpón:</label>
-        <input type="text" id="galpon" name="galpon" value="{{ parto.galpon }}" required>
+    <!-- Navbar IDÉNTICO al index -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-paw me-2"></i>
+                <span class="fw-bold">Registro de Cuyes</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> Administrador
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-        <label for="poza">Poza:</label>
-        <input type="text" id="poza" name="poza" value="{{ parto.poza }}" required>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar IDÉNTICO al index -->
+            <div class="col-md-3 col-lg-2 sidebar d-md-block">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ingresar_reproductores">
+                                <i class="fas fa-egg"></i> Reproductores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_partos">
+                                <i class="fas fa-baby"></i> Partos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_destete">
+                                <i class="fas fa-child"></i> Destetes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_muertes_destetados">
+                                <i class="fas fa-skull"></i> Mortalidad
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ventas">
+                                <i class="fas fa-money-bill-wave"></i> Ventas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/registrar_gastos">
+                                <i class="fas fa-receipt"></i> Gastos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/analisis_datos">
+                                <i class="fas fa-chart-bar"></i> Análisis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/balance">
+                                <i class="fas fa-calculator"></i> Balance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/resultados">
+                                <i class="fas fa-chart-line"></i> Resultados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/predicciones">
+                                <i class="fas fa-crystal-ball"></i> Predicciones
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-        <label for="numero_parto">Número de Parto:</label>
-        <input type="number" id="numero_parto" name="numero_parto" value="{{ parto.numero_parto }}" required>
+            <!-- Main Content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+                    <h1 class="h2 page-title">
+                        <i class="fas fa-edit me-2"></i>Editar Parto
+                    </h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="/registrar_partos" class="btn btn-sm btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-1"></i> Volver a Partos
+                        </a>
+                        <a href="/" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
 
-        <label for="nacidos">Nacidos:</label>
-        <input type="number" id="nacidos" name="nacidos" value="{{ parto.nacidos }}" required>
+                <!-- Información del Parto -->
+                <div class="parto-info">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-1">
+                                <i class="fas fa-baby me-2"></i>Editando Parto #{{ parto.id }}
+                            </h4>
+                            <p class="mb-0 opacity-75">
+                                Galpón {{ parto.galpon }} - Poza {{ parto.poza }} | Parto #{{ parto.numero_parto }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="row">
+                                <div class="col-4">
+                                    <h5 class="mb-0">{{ parto.nacidos }}</h5>
+                                    <small>Nacidos</small>
+                                </div>
+                                <div class="col-4">
+                                    <h5 class="mb-0 text-warning">{{ parto.muertos_bebes }}</h5>
+                                    <small>Muertos Bebés</small>
+                                </div>
+                                <div class="col-4">
+                                    <h5 class="mb-0 text-danger">{{ parto.muertos_reproductores }}</h5>
+                                    <small>Muertos Reprod.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <label for="muertos_bebes">Muertos Bebés:</label>
-        <input type="number" id="muertos_bebes" name="muertos_bebes" value="{{ parto.muertos_bebes }}" required>
+                <!-- Mensajes Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-        <label for="muertos_reproductores">Muertos Reproductores:</label>
-        <input type="number" id="muertos_reproductores" name="muertos_reproductores" value="{{ parto.muertos_reproductores }}" required>
+                <!-- Formulario de Edición -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h5 class="m-0"><i class="fas fa-edit me-2"></i>Datos del Parto</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="editarPartoForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="galpon" class="form-label required-field">
+                                        <i class="fas fa-building me-1"></i>Galpón
+                                    </label>
+                                    <input type="text" class="form-control" id="galpon" name="galpon" 
+                                           value="{{ parto.galpon }}" required maxlength="10">
+                                    <div class="form-text">Número o nombre del galpón</div>
+                                </div>
 
-        <button type="submit">Actualizar Parto</button>
-    </form>
-    <a href="{{ url_for('registrar_partos') }}" style="margin-top: 20px; display: inline-block;">
-        <button>Regresar a Registrar Partos</button>
-    </a>
+                                <div class="col-md-6 mb-3">
+                                    <label for="poza" class="form-label required-field">
+                                        <i class="fas fa-th me-1"></i>Poza
+                                    </label>
+                                    <input type="text" class="form-control" id="poza" name="poza" 
+                                           value="{{ parto.poza }}" required maxlength="10">
+                                    <div class="form-text">Número o identificador de la poza</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="numero_parto" class="form-label required-field">
+                                        <i class="fas fa-hashtag me-1"></i>Número de Parto
+                                    </label>
+                                    <input type="number" class="form-control" id="numero_parto" name="numero_parto" 
+                                           value="{{ parto.numero_parto }}" min="1" max="100" required>
+                                    <div class="form-text">Número secuencial del parto</div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="nacidos" class="form-label required-field">
+                                        <i class="fas fa-baby me-1"></i>Nacidos Vivos
+                                    </label>
+                                    <input type="number" class="form-control" id="nacidos" name="nacidos" 
+                                           value="{{ parto.nacidos }}" min="0" max="50" required>
+                                    <div class="form-text">Total de crías nacidas vivas</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="muertos_bebes" class="form-label required-field">
+                                        <i class="fas fa-baby-carriage me-1"></i>Muertos Bebés
+                                    </label>
+                                    <input type="number" class="form-control" id="muertos_bebes" name="muertos_bebes" 
+                                           value="{{ parto.muertos_bebes }}" min="0" max="50" required>
+                                    <div class="form-text">Crías que nacieron muertas</div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="muertos_reproductores" class="form-label required-field">
+                                        <i class="fas fa-skull me-1"></i>Muertos Reproductores
+                                    </label>
+                                    <input type="number" class="form-control" id="muertos_reproductores" name="muertos_reproductores" 
+                                           value="{{ parto.muertos_reproductores }}" min="0" max="10" required>
+                                    <div class="form-text">Reproductores que murieron durante el parto</div>
+                                </div>
+                            </div>
+
+                            <!-- Resumen Automático -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-calculator me-2"></i>Resumen del Parto</h6>
+                                        <div class="row text-center">
+                                            <div class="col-md-3">
+                                                <strong>Total Nacidos:</strong>
+                                                <span id="totalNacidos" class="badge bg-success fs-6">{{ parto.nacidos }}</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Total Muertos:</strong>
+                                                <span id="totalMuertos" class="badge bg-danger fs-6">{{ parto.muertos_bebes + parto.muertos_reproductores }}</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Supervivencia:</strong>
+                                                <span id="tasaSupervivencia" class="badge bg-primary fs-6">
+                                                    {% set total = parto.nacidos + parto.muertos_bebes %}
+                                                    {% if total > 0 %}
+                                                        {{ ((parto.nacidos / total) * 100)|round(1) }}%
+                                                    {% else %}
+                                                        0%
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Estado:</strong>
+                                                <span class="badge {% if parto.muertos_reproductores == 0 %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                                                    {% if parto.muertos_reproductores == 0 %}
+                                                        Normal
+                                                    {% else %}
+                                                        Con Pérdidas
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones de Acción -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="reset" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-undo me-1"></i> Restablecer
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Actualizar Parto
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Información Adicional -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0"><i class="fas fa-info-circle me-2"></i>Recomendaciones</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    <li>✔ Verifica que los números sean consistentes</li>
+                                    <li>✔ Actualiza solo si hay errores en el registro</li>
+                                    <li>✔ Mantén la secuencia correcta de números de parto</li>
+                                    <li>✔ Registra las mortalidades de manera precisa</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0"><i class="fas fa-exclamation-triangle me-2"></i>Precauciones</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    <li>⚠ Los cambios afectarán los reportes históricos</li>
+                                    <li>⚠ No modifiques datos sin una razón válida</li>
+                                    <li>⚠ Verifica la información antes de guardar</li>
+                                    <li>⚠ Mantén un registro de los cambios realizados</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Sistema de Registro de Cuyes &copy; 2023</span>
+                <span>v1.2.0</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animación para las tarjetas
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Cálculo automático del resumen
+            function actualizarResumen() {
+                const nacidos = parseInt(document.getElementById('nacidos').value) || 0;
+                const muertosBebes = parseInt(document.getElementById('muertos_bebes').value) || 0;
+                const muertosReproductores = parseInt(document.getElementById('muertos_reproductores').value) || 0;
+                
+                // Actualizar totales
+                document.getElementById('totalNacidos').textContent = nacidos;
+                document.getElementById('totalMuertos').textContent = muertosBebes + muertosReproductores;
+                
+                // Calcular tasa de supervivencia
+                const totalNacimientos = nacidos + muertosBebes;
+                const tasaSupervivencia = totalNacimientos > 0 ? ((nacidos / totalNacimientos) * 100).toFixed(1) : 0;
+                document.getElementById('tasaSupervivencia').textContent = tasaSupervivencia + '%';
+            }
+
+            // Escuchar cambios en los campos numéricos
+            document.getElementById('nacidos').addEventListener('input', actualizarResumen);
+            document.getElementById('muertos_bebes').addEventListener('input', actualizarResumen);
+            document.getElementById('muertos_reproductores').addEventListener('input', actualizarResumen);
+
+            // Validación del formulario
+            const form = document.getElementById('editarPartoForm');
+            form.addEventListener('submit', function(e) {
+                const nacidos = parseInt(document.getElementById('nacidos').value);
+                const muertosBebes = parseInt(document.getElementById('muertos_bebes').value);
+                const muertosReproductores = parseInt(document.getElementById('muertos_reproductores').value);
+                
+                if (nacidos < 0 || muertosBebes < 0 || muertosReproductores < 0) {
+                    e.preventDefault();
+                    alert('Los valores no pueden ser negativos.');
+                    return false;
+                }
+                
+                if (nacidos === 0 && muertosBebes === 0) {
+                    if (!confirm('¿Estás seguro de registrar un parto sin nacidos vivos ni muertos? Esto podría ser un error.')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                // Mostrar loading
+                const button = form.querySelector('button[type="submit"]');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Actualizando...';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            });
+
+            // Auto-enfoque en el primer campo
+            document.getElementById('galpon').focus();
+        });
+    </script>
 </body>
 </html>
